@@ -37,20 +37,28 @@ Four layers with deliberate seams. The two pure ones carry the test suite.
 | UI | `UI/*.swift` | SwiftUI, driven by `NotchState` |
 | Data | `NowPlaying/*.swift` | `NowPlayingSource` protocol + per-app implementations |
 
+**v1 supports Spotify only.** The `NowPlayingSource` protocol still exists and is
+still the seam — but only `SpotifySource` conforms to it for now. Apple Music is a
+later phase, and adding it must not require changing anything outside a new file
+plus one registration. If it does, the protocol is wrong.
+
 ### Invariants — do not break these
 
 1. **`NotchGeometry` and `NotchState` import nothing but Foundation/CoreGraphics.**
    They are pure value types. If you need AppKit in there, the boundary is wrong.
 2. **Never scripting-query a media app that isn't already running.** Check
-   `NSWorkspace.shared.runningApplications` for the bundle ID first, or we launch
-   Music.app on the user unprompted.
+   `NSWorkspace.shared.runningApplications` for `com.spotify.client` first, or we
+   launch Spotify on the user unprompted.
 3. **The panel is always sized to the maximum expanded footprint.** Only the
    SwiftUI content animates. Resizing the window per state causes visible jank.
 4. **Non-interactive regions get `.allowsHitTesting(false)`.** Transparent SwiftUI
    views still swallow clicks, and this panel sits over the menu bar.
-5. **Never use `MediaRemote`.** It is entitlement-gated since macOS 15.4 and
+5. **Spotify time units differ between fields.** `duration` is milliseconds,
+   `player position` is floating-point seconds. Normalise both to seconds at the
+   parsing boundary. See `docs/decisions/0002-spotify-only-for-v1.md`.
+6. **Never use `MediaRemote`.** It is entitlement-gated since macOS 15.4 and
    returns nil. See `docs/decisions/0001-mediaremote-unavailable.md`.
-6. **Collapsed state must be visually indistinguishable from the stock notch.**
+7. **Collapsed state must be visually indistinguishable from the stock notch.**
 
 ## Commands
 
@@ -61,10 +69,18 @@ xcodebuild test -scheme Atelier -destination 'platform=macOS'   # unit tests
 
 `/build` is a slash command that builds and relaunches the app.
 
+```sh
+osascript scripts/spotify-probe.applescript   # see exactly what Spotify returns
+```
+
 ## Testing
 
 Swift Testing (`import Testing`), not XCTest. Unit tests cover geometry math,
 state transitions, and AppleScript output parsing — all pure functions.
+
+Note for Spotify parsing: `duration` comes back in **milliseconds**, while
+`player position` is in **seconds** as a float. Getting this wrong yields a
+scrubber that is off by 1000x, so it gets an explicit test.
 
 Anything needing a real notch, a real TCC grant, or a running media player is
 **manual** and stays out of CI. Say so plainly rather than pretending coverage

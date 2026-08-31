@@ -6,6 +6,9 @@ Hover the notch and it expands into a native-feeling now-playing player. While
 music plays, a slim pill hugs the notch. When the track changes, it peeks for a
 moment and then retracts.
 
+v1 reads from **Spotify**. Apple Music and system-wide playback are on the
+backlog, behind the same `NowPlayingSource` seam.
+
 ## Status
 
 Phase 0 — scaffolding. See [the design spec](docs/superpowers/specs/2026-08-31-atelier-notch-design.md)
@@ -30,7 +33,7 @@ xcodebuild test -scheme Atelier -destination 'platform=macOS'
 
 ## Permissions
 
-Atelier reads now-playing data by sending Apple Events to Music and Spotify. On
+Atelier reads now-playing data by sending Apple Events to Spotify. On
 first launch macOS will ask you to allow this. If you decline, the app tells you
 so rather than silently showing nothing — re-enable it in
 **System Settings → Privacy & Security → Automation**.
