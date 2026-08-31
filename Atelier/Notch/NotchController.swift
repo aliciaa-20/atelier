@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 import SwiftUI
 
 /// Owns the notch panel's lifecycle. Per invariant 3, the panel itself is
@@ -9,6 +10,8 @@ import SwiftUI
 final class NotchController {
     private let panel = NotchPanel()
     private let viewModel: NotchViewModel
+    private let nowPlayingCoordinator = NowPlayingCoordinator()
+    private var nowPlayingCancellable: AnyCancellable?
 
     /// Phase 2 placeholder for how much wider/taller the expanded state
     /// grows relative to the real notch — proves the hover mechanism exists.
@@ -41,5 +44,30 @@ final class NotchController {
         panel.contentView = NSHostingView(rootView: NotchRootView(viewModel: viewModel))
         panel.setFrame(maxRect, display: true)
         panel.orderFrontRegardless()
+
+        // NotchController lives for the whole app run (owned by AtelierApp),
+        // so this observation never needs to be torn down.
+        NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.activeSpaceDidChangeNotification,
+            object: nil,
+            queue: .main
+        ) { [weak viewModel] _ in
+            Task { @MainActor in
+                viewModel?.notchLandedOnNewSpace()
+            }
+        }
+
+        // Phase 3 diagnostic: proves the AppleScript → parsing → coordinator
+        // pipeline end-to-end. Phase 4 replaces this print with a real
+        // binding into the expanded player UI.
+        nowPlayingCancellable = nowPlayingCoordinator.$current.sink { info in
+            if let info {
+                let position = "\(Int(info.elapsed))s/\(Int(info.duration))s"
+                print("Now playing: \(info.title) — \(info.artist) [\(info.isPlaying ? "playing" : "paused")] \(position)")
+            } else {
+                print("Now playing: (nothing)")
+            }
+        }
+        nowPlayingCoordinator.start()
     }
 }
