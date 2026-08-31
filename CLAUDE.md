@@ -60,6 +60,26 @@ plus one registration. If it does, the protocol is wrong.
    returns nil. See `docs/decisions/0001-mediaremote-unavailable.md`.
 7. **Collapsed state must be visually indistinguishable from the stock notch.**
 
+## Reference existing notch apps
+
+There are several real, shipped, open-source macOS notch apps worth checking
+before inventing something from scratch — they've already solved problems
+we'll hit (notch shape/geometry, hover/expand mechanics, now-playing
+integration, menu bar quirks). When stuck on "how does this kind of app
+usually do X," look at their actual source before hand-deriving it:
+
+- [TheBoredTeam/boring.notch](https://github.com/TheBoredTeam/boring.notch) —
+  where `Atelier/UI/NotchShape.swift` came from. Also has now-playing UI,
+  media controls, and file-shelf-style drag & drop (relevant to the backlog).
+- [MrKai77/DynamicNotchKit](https://github.com/MrKai77/DynamicNotchKit) — the
+  original source boring.notch itself credits for the notch shape algorithm.
+- Others worth a look if relevant: NotchNook, NotchDrop.
+
+Use `gh api repos/<owner>/<repo>/...` to pull real source directly (as done for
+`NotchShape.swift`) rather than guessing at how a technique works from a
+screenshot or from memory. Adapt with credit in a comment; don't copy
+wholesale without attribution.
+
 ## Commands
 
 ```sh
