@@ -14,6 +14,13 @@ struct AtelierApp: App {
     private static let isRunningTests =
         ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
 
+    /// Held for the app's lifetime; `NotchController` owns the panel itself.
+    private let notchController: NotchController?
+
+    init() {
+        notchController = Self.isRunningTests ? nil : NotchController()
+    }
+
     var body: some Scene {
         MenuBarExtra(
             "Atelier",
