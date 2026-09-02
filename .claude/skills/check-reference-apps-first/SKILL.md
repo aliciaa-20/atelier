@@ -50,6 +50,8 @@ Check these, roughly in this order of relevance to Atelier's stack:
 | [monuk7735/mew-notch](https://github.com/monuk7735/mew-notch) | Alternative notch-geometry/hover implementation |
 | [Lakr233/NotchDrop](https://github.com/Lakr233/NotchDrop) | File-shelf drag & drop (backlog item) |
 | [omerates760/AgentPulse](https://github.com/omerates760/AgentPulse) | Alternative notch app structure |
+| [Clayton630/QuartzNotch](https://github.com/Clayton630/QuartzNotch) | boring.notch fork taken further — divergent takes on the same mechanics |
+| [coaxel2/NotchIA](https://github.com/coaxel2/NotchIA) | Media player + shelf + focus + clipboard in one notch cockpit, on-device Apple Intelligence integration |
 
 This list also lives in the root `CLAUDE.md` — update both if you add a repo.
 
