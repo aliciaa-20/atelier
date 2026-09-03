@@ -5,6 +5,11 @@ import SwiftUI
 /// waveform's `.gradient` per the "match the album artwork" request —
 /// adapted from boring.notch's `avgColor`/`coloredSpectrogram` idea, done
 /// here as a small `CIAreaAverage` render rather than their approach.
+///
+/// Fetches through `ArtworkImageCache` (shared with `ArtworkView`) rather
+/// than its own `URLSession` call — two independent fetches of the same
+/// URL were racing each other and were the real cause of artwork taking
+/// ~1.5s to appear.
 @MainActor
 final class ArtworkColorLoader: ObservableObject {
     @Published private(set) var color: Color = .white
@@ -22,7 +27,7 @@ final class ArtworkColorLoader: ObservableObject {
         }
 
         Task {
-            guard let (data, _) = try? await URLSession.shared.data(from: url),
+            guard let data = await ArtworkImageCache.shared.data(for: url),
                   let nsImage = NSImage(data: data),
                   let cgImage = nsImage.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return }
 

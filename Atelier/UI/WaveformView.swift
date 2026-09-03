@@ -12,6 +12,9 @@ import SwiftUI
 struct WaveformView: View {
     let isPlaying: Bool
     let color: Color
+    var barWidth: CGFloat = 2.7
+    var barSpacing: CGFloat = 2
+    var height: CGFloat = 18
 
     private static let barCount = 6
     private static let minimumScale: CGFloat = 0.32
@@ -22,16 +25,16 @@ struct WaveformView: View {
     @State private var animationTask: Task<Void, Never>?
 
     var body: some View {
-        HStack(spacing: 2) {
+        HStack(spacing: barSpacing) {
             ForEach(0..<Self.barCount, id: \.self) { index in
                 Capsule()
                     .fill(color.gradient)
-                    .frame(width: 2.7)
+                    .frame(width: barWidth)
                     .scaleEffect(y: scales[index], anchor: .center)
                     .animation(.easeInOut(duration: Self.animationDuration), value: scales[index])
             }
         }
-        .frame(width: 23, height: 18)
+        .frame(width: CGFloat(Self.barCount) * barWidth + CGFloat(Self.barCount - 1) * barSpacing, height: height)
         .onAppear { setAnimating(isPlaying) }
         .onDisappear { setAnimating(false) }
         .onChange(of: isPlaying) { _, playing in setAnimating(playing) }

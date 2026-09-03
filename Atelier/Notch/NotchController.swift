@@ -31,17 +31,16 @@ final class NotchController {
     /// physical notch height on top of this.
     private static let playerContentHeight: CGFloat = 128
     private static let expandedWidth: CGFloat = 352
-    /// Narrower than the full player — a single artwork+text+waveform row
-    /// doesn't need as much horizontal room as artwork+text+transport row.
-    /// Widened twice now -- 260 and then 290 both still ran the actual
-    /// content (artwork + marquee column + waveform + spacing + padding)
-    /// right up against the edge instead of leaving real margin. This
-    /// value now has a genuine buffer, not just enough to exactly fit.
-    private static let peekWidth: CGFloat = 320
+    /// Narrower and more compact than the full player — a single
+    /// artwork(34)+text(92)+waveform(~18.5) row with 24pt horizontal
+    /// padding (buffer over peeking's 14pt corner radius — see
+    /// `PeekPlayerView`) needs ~169+48=217pt minimum; 222 leaves just
+    /// enough slack for the flexible spacer between text and waveform.
+    private static let peekWidth: CGFloat = 222
     /// `PeekPlayerView`'s own content — a single artwork+title/artist+
-    /// waveform row (40) + top/bottom padding (10+12), no scrubber or
-    /// transport row.
-    private static let peekContentHeight: CGFloat = 62
+    /// waveform row (34, governed by the two-line text block: 16+2+16)
+    /// + top/bottom padding (4+9).
+    private static let peekContentHeight: CGFloat = 47
     private static let peekDuration: Duration = .seconds(2.5)
 
     init() {
@@ -122,7 +121,9 @@ final class NotchController {
             .map { $0?.isPlaying ?? false }
             .removeDuplicates()
             .sink { [weak viewModel] isPlaying in
-                viewModel?.handle(.isPlayingChanged(isPlaying))
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                    viewModel?.handle(.isPlayingChanged(isPlaying))
+                }
             }
 
         // Peek on track change reuses our own persistent panel/state
@@ -149,7 +150,9 @@ final class NotchController {
 
     private func handleTrackChange() {
         guard AtelierSettings.peekOnTrackChangeEnabled else { return }
-        viewModel.handle(.trackChanged)
+        withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+            viewModel.handle(.trackChanged)
+        }
 
         // Cancel any still-pending decay from an earlier track change so a
         // rapid skip doesn't cut the new peek short.
@@ -158,7 +161,9 @@ final class NotchController {
             try? await Task.sleep(for: Self.peekDuration)
             guard !Task.isCancelled, let self else { return }
             let isPlaying = nowPlayingCoordinator.current?.isPlaying ?? false
-            viewModel.handle(.peekTimerElapsed(isPlaying: isPlaying))
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                viewModel.handle(.peekTimerElapsed(isPlaying: isPlaying))
+            }
         }
     }
 }
