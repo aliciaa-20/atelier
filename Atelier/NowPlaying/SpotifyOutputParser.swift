@@ -6,7 +6,7 @@ import Foundation
 /// in principle contain any ordinary punctuation.
 enum SpotifyOutputParser {
     static let fieldSeparator = "\u{1F}"
-    private static let expectedFieldCount = 7
+    private static let expectedFieldCount = 8
     private static let bundleID = "com.spotify.client"
 
     static func parse(_ raw: String) -> NowPlayingInfo? {
@@ -25,7 +25,8 @@ enum SpotifyOutputParser {
             isPlaying: playerState == "playing",
             duration: durationMs / 1000,
             elapsed: elapsedSeconds,
-            sourceBundleID: bundleID
+            sourceBundleID: bundleID,
+            isShuffling: fields[7] == "true"
         )
     }
 }

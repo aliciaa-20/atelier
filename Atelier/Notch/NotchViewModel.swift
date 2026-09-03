@@ -2,15 +2,17 @@ import Foundation
 
 /// Bridges the pure `NotchStateMachine` to SwiftUI. Holds the two sizes the
 /// view animates between — `collapsedSize` is real hardware geometry (from
-/// `NotchGeometry`, computed once by `NotchController`), `expandedSize` is a
-/// Phase 2 placeholder to prove the hover mechanism; Phase 4 replaces it with
-/// the real player's dimensions.
+/// `NotchGeometry`, computed once by `NotchController`); `expandedSize` is
+/// sized to `ExpandedPlayerView`'s actual content, also computed once by
+/// `NotchController` (see `playerContentHeight`).
 @MainActor
 final class NotchViewModel: ObservableObject {
     @Published private(set) var state: NotchState = .collapsed
 
     let collapsedSize: CGSize
     let expandedSize: CGSize
+    let pillSize: CGSize
+    let peekSize: CGSize
 
     /// Bumped each time `NotchController` observes the user landing on a
     /// different Space. There's no public API to detect a three-finger swipe
@@ -21,9 +23,11 @@ final class NotchViewModel: ObservableObject {
     /// moment you arrive, so the fixed position reads as deliberate.
     @Published private(set) var spaceChangeTick: Int = 0
 
-    init(collapsedSize: CGSize, expandedSize: CGSize) {
+    init(collapsedSize: CGSize, expandedSize: CGSize, pillSize: CGSize, peekSize: CGSize) {
         self.collapsedSize = collapsedSize
         self.expandedSize = expandedSize
+        self.pillSize = pillSize
+        self.peekSize = peekSize
     }
 
     func handle(_ event: NotchEvent) {
@@ -37,7 +41,9 @@ final class NotchViewModel: ObservableObject {
     var currentSize: CGSize {
         switch state {
         case .collapsed: collapsedSize
+        case .pill: pillSize
         case .expanded: expandedSize
+        case .peeking: peekSize
         }
     }
 }

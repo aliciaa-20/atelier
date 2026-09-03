@@ -1,0 +1,247 @@
+import CoreAudio
+import SwiftUI
+
+/// The hover-expanded player: artwork, title/artist, a waveform, a
+/// draggable scrubber, and transport controls including shuffle and
+/// output-device selection. Layout matches jackson-storm/dynamicnotch's
+/// `NowPlayingExpandedNotchView` — pulled via `gh api` as ground truth
+/// after earlier guesswork didn't match. Their `controlsSection` is the
+/// key piece: a `ZStack` of two separate rows, not one row of five evenly
+/// spaced buttons — a centered transport cluster (prev/play/next) with a
+/// second, edge-pinned row (favorite left, output-device right) overlaid
+/// on top. That's what makes the transport buttons read as a tight,
+/// deliberate group instead of being stretched across the whole width.
+struct ExpandedPlayerView: View {
+    let info: NowPlayingInfo?
+    /// The real notch cutout has no display pixels of its own, so content
+    /// must start below it rather than at the top of our own frame — see
+    /// `docs/decisions/0003-notch-panel-can-become-key.md`'s sibling sizing
+    /// note in `NotchController`.
+    let notchHeight: CGFloat
+    let waveformColor: Color
+    let outputDevices: [AudioOutputDevice]
+    let currentOutputDeviceID: AudioDeviceID?
+    let onPlayPause: () -> Void
+    let onNext: () -> Void
+    let onPrevious: () -> Void
+    let onSeek: (TimeInterval) -> Void
+    let onToggleShuffle: () -> Void
+    let onSelectOutputDevice: (AudioDeviceID) -> Void
+
+    var body: some View {
+        Group {
+            if let info {
+                player(for: info)
+            } else {
+                emptyState
+            }
+        }
+        .padding(.horizontal, 28)
+        .padding(.bottom, 16)
+        .padding(.top, notchHeight + 12)
+    }
+
+    private func player(for info: NowPlayingInfo) -> some View {
+        VStack(spacing: 0) {
+            headerSection(for: info)
+            Spacer(minLength: 6)
+            ScrubberView(duration: info.duration, elapsed: info.elapsed, onSeek: onSeek)
+            Spacer(minLength: 6)
+            controlsSection(for: info)
+        }
+    }
+
+    /// Sizes match jackson-storm/dynamicnotch's `headerSection` exactly:
+    /// 60x60 artwork, 15pt header spacing, 16pt medium title / 14pt artist,
+    /// 2pt spacing between them.
+    private func headerSection(for info: NowPlayingInfo) -> some View {
+        HStack(spacing: 12) {
+            ArtworkView(url: info.artworkURL)
+                .frame(width: 50, height: 50)
+
+            VStack(alignment: .leading, spacing: 2) {
+                MarqueeText(text: info.title, font: .system(size: 15, weight: .medium), color: .white, width: 148)
+                MarqueeText(text: info.artist, font: .system(size: 13), color: .white.opacity(0.65), width: 148)
+            }
+
+            Spacer(minLength: 0)
+
+            WaveformView(isPlaying: info.isPlaying, color: waveformColor)
+        }
+    }
+
+    /// Sizes/weights match jackson-storm/dynamicnotch's `PlayerControlButton`
+    /// usage in `NowPlayingExpandedNotchView.controlsSection`: prev/next at
+    /// 22pt, play/pause distinctly bigger at 32pt, both semibold — scaled
+    /// down here (18/26pt) for Atelier's narrower panel, same ratio. Their
+    /// favorite/output buttons are 21pt, close to prev/next, not tiny.
+    private func controlsSection(for info: NowPlayingInfo) -> some View {
+        ZStack {
+            HStack(spacing: 24) {
+                Button(action: onPrevious) {
+                    Image(systemName: "backward.fill")
+                        .font(.system(size: 18, weight: .semibold))
+                }
+                Button(action: onPlayPause) {
+                    Image(systemName: info.isPlaying ? "pause.fill" : "play.fill")
+                        .font(.system(size: 26, weight: .semibold))
+                }
+                Button(action: onNext) {
+                    Image(systemName: "forward.fill")
+                        .font(.system(size: 18, weight: .semibold))
+                }
+            }
+
+            HStack {
+                Button(action: onToggleShuffle) {
+                    Image(systemName: "shuffle")
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundStyle(info.isShuffling ? waveformColor : Color.white.opacity(0.35))
+                }
+
+                Spacer(minLength: 0)
+
+                OutputDeviceMenu(
+                    devices: outputDevices,
+                    currentDeviceID: currentOutputDeviceID,
+                    onSelect: onSelectOutputDevice
+                )
+                .font(.system(size: 15, weight: .medium))
+            }
+            .padding(.horizontal, 10)
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(.white)
+    }
+
+    private var emptyState: some View {
+        Text("Nothing playing")
+            .font(.subheadline)
+            .foregroundStyle(.white.opacity(0.65))
+    }
+}
+
+/// Spotify's artwork comes back as a URL (invariant 5's sibling fact — see
+/// `NowPlayingInfo`); a music-note glyph covers the loading and failure cases
+/// so a slow network or a missing image never shows a blank square.
+struct ArtworkView: View {
+    let url: URL?
+
+    var body: some View {
+        Group {
+            if let url {
+                AsyncImage(url: url) { phase in
+                    if case .success(let image) = phase {
+                        image.resizable().aspectRatio(contentMode: .fill)
+                    } else {
+                        placeholder
+                    }
+                }
+            } else {
+                placeholder
+            }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+    }
+
+    private var placeholder: some View {
+        RoundedRectangle(cornerRadius: 8)
+            .fill(.white.opacity(0.12))
+            .overlay(Image(systemName: "music.note").foregroundStyle(.white.opacity(0.5)))
+    }
+}
+
+/// A headphones-icon menu listing real output devices from
+/// `OutputDeviceManager`, matching the picker in the reference design.
+private struct OutputDeviceMenu: View {
+    let devices: [AudioOutputDevice]
+    let currentDeviceID: AudioDeviceID?
+    let onSelect: (AudioDeviceID) -> Void
+
+    var body: some View {
+        Menu {
+            ForEach(devices) { device in
+                Button {
+                    onSelect(device.id)
+                } label: {
+                    if device.id == currentDeviceID {
+                        Label(device.name, systemImage: "checkmark")
+                    } else {
+                        Text(device.name)
+                    }
+                }
+            }
+        } label: {
+            Image(systemName: "headphones")
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .fixedSize()
+    }
+}
+
+/// Adapted from jackson-storm/dynamicnotch's `PlayerProgressBar` — pulled
+/// via `gh api` after a below-the-bar time-label layout didn't match the
+/// reference. Their actual layout is one row: elapsed time, then the bar,
+/// then duration, all inline — not the bar with labels stacked underneath.
+private struct ScrubberView: View {
+    let duration: TimeInterval
+    let elapsed: TimeInterval
+    let onSeek: (TimeInterval) -> Void
+
+    @State private var dragValue: TimeInterval?
+    @State private var dragging = false
+
+    private var displayedElapsed: TimeInterval { dragValue ?? elapsed }
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Text(TimeFormatting.mmss(displayedElapsed))
+                .font(.system(size: 11, weight: .medium, design: .rounded))
+                .monospacedDigit()
+                .foregroundStyle(.white.opacity(0.55))
+
+            GeometryReader { geo in
+                let progress = duration > 0 ? min(max(displayedElapsed / duration, 0), 1) : 0
+                // Track thickens while dragging, same tactile cue as
+                // boring.notch's `CustomSlider`; the fill's own width
+                // animates on `displayedElapsed` so poll-driven updates
+                // (every 0.25s while expanded) ease into place instead of
+                // visibly stepping.
+                ZStack(alignment: .leading) {
+                    Capsule().fill(.white.opacity(0.2))
+                    Capsule().fill(.white.opacity(0.85)).frame(width: geo.size.width * progress)
+                }
+                .frame(height: dragging ? 6 : 4)
+                .frame(maxHeight: .infinity, alignment: .center)
+                .contentShape(Rectangle())
+                .gesture(
+                    DragGesture(minimumDistance: 0)
+                        .onChanged { value in
+                            guard duration > 0 else { return }
+                            dragging = true
+                            let ratio = min(max(value.location.x / geo.size.width, 0), 1)
+                            dragValue = ratio * duration
+                        }
+                        .onEnded { _ in
+                            if let dragValue {
+                                onSeek(dragValue)
+                            }
+                            dragValue = nil
+                            dragging = false
+                        }
+                )
+                .animation(.spring(response: 0.3, dampingFraction: 0.7), value: dragging)
+                // Only ease poll-driven updates; a live drag must track the
+                // finger 1:1, not lag behind an animation.
+                .animation(dragging ? nil : .easeOut(duration: 0.2), value: displayedElapsed)
+            }
+            .frame(height: 14)
+
+            Text(TimeFormatting.mmss(duration))
+                .font(.system(size: 11, weight: .medium, design: .rounded))
+                .monospacedDigit()
+                .foregroundStyle(.white.opacity(0.55))
+        }
+    }
+}

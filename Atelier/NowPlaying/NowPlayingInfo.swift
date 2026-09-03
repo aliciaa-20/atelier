@@ -13,4 +13,5 @@ struct NowPlayingInfo: Equatable {
     let duration: TimeInterval
     let elapsed: TimeInterval
     let sourceBundleID: String
+    let isShuffling: Bool
 }

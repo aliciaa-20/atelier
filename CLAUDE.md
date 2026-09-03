@@ -71,9 +71,34 @@ usually do X," look at their actual source before hand-deriving it:
 - [TheBoredTeam/boring.notch](https://github.com/TheBoredTeam/boring.notch) —
   where `Atelier/UI/NotchShape.swift` came from. Also has now-playing UI,
   media controls, and file-shelf-style drag & drop (relevant to the backlog).
+  Its `NotchHomeView.swift` (`MusicPlayerView`/`MusicControlsView`) is where
+  Phase 4's expanded-player layout (artwork left, title/artist/scrubber/
+  transport stacked right) came from.
 - [MrKai77/DynamicNotchKit](https://github.com/MrKai77/DynamicNotchKit) — the
   original source boring.notch itself credits for the notch shape algorithm.
-- Others worth a look if relevant: NotchNook, NotchDrop.
+- [Ebullioscopic/Atoll](https://github.com/Ebullioscopic/Atoll) (formerly
+  DynamicIsland) — a more elaborate notch app; also uses the
+  `mediaremote-adapter` bridge (relevant to the backlog item of the same
+  name). Its `DynamicIslandWindow`/`FirstMouseHostingView` pair is where
+  Phase 4's fix for unresponsive buttons in a non-activating panel came
+  from — see `docs/decisions/0003-notch-panel-can-become-key.md`.
+- Others worth a look if relevant: NotchNook,
+  [Lakr233/NotchDrop](https://github.com/Lakr233/NotchDrop),
+  [jackson-storm/dynamicnotch](https://github.com/jackson-storm/dynamicnotch),
+  [omerates760/AgentPulse](https://github.com/omerates760/AgentPulse),
+  [fr0sty1122/notchify](https://github.com/fr0sty1122/notchify) (media
+  controls, browser audio detection, file shelf),
+  [navtoj/NotchBar](https://github.com/navtoj/NotchBar) (notch-as-menu-bar
+  mechanics), [monuk7735/mew-notch](https://github.com/monuk7735/mew-notch)
+  (alternative geometry/hover implementation),
+  [Clayton630/QuartzNotch](https://github.com/Clayton630/QuartzNotch) (a
+  boring.notch fork taken further), and
+  [coaxel2/NotchIA](https://github.com/coaxel2/NotchIA) (media player +
+  shelf + focus + clipboard, on-device Apple Intelligence).
+
+This list is also kept in the `check-reference-apps-first` skill
+(`.claude/skills/check-reference-apps-first/SKILL.md`) — update both if you
+add a repo.
 
 Use `gh api repos/<owner>/<repo>/...` to pull real source directly (as done for
 `NotchShape.swift`) rather than guessing at how a technique works from a

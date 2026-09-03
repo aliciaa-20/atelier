@@ -18,6 +18,7 @@ struct AtelierApp: App {
     private let notchController: NotchController?
 
     init() {
+        AtelierSettings.registerDefaults()
         notchController = Self.isRunningTests ? nil : NotchController()
     }
 
@@ -28,6 +29,13 @@ struct AtelierApp: App {
             isInserted: .constant(!Self.isRunningTests)
         ) {
             Text("Atelier 0.1.0")
+
+            Divider()
+
+            Toggle("Peek on Track Change", isOn: Binding(
+                get: { AtelierSettings.peekOnTrackChangeEnabled },
+                set: { UserDefaults.standard.set($0, forKey: AtelierSettings.peekOnTrackChangeKey) }
+            ))
 
             Divider()
 
