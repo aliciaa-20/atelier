@@ -1,15 +1,19 @@
 import Foundation
 
-/// Polls the now-playing source and republishes its latest result once a
-/// second. Phase 3 proves this pipeline end-to-end (AppleScript → parsing →
-/// here); Phase 4 wires the output into the real player UI and adds a faster
-/// poll rate while expanded, once there's a scrubber that needs it.
+/// Polls the now-playing source and republishes its latest result. Polls
+/// once a second idle; the expanded player's scrubber needs smoother
+/// updates, so `setExpanded(true)` switches to a 0.25s interval while it's
+/// visible and back to 1s once it's not.
 @MainActor
 final class NowPlayingCoordinator: ObservableObject {
     @Published private(set) var current: NowPlayingInfo?
 
+    private static let idleInterval = Duration.seconds(1)
+    private static let expandedInterval = Duration.milliseconds(250)
+
     private let source: NowPlayingSource
     private var pollTask: Task<Void, Never>?
+    private var interval = NowPlayingCoordinator.idleInterval
 
     init(source: NowPlayingSource = SpotifySource()) {
         self.source = source
@@ -20,7 +24,7 @@ final class NowPlayingCoordinator: ObservableObject {
         pollTask = Task {
             while !Task.isCancelled {
                 current = await source.fetch()
-                try? await Task.sleep(for: .seconds(1))
+                try? await Task.sleep(for: interval)
             }
         }
     }
@@ -29,4 +33,14 @@ final class NowPlayingCoordinator: ObservableObject {
         pollTask?.cancel()
         pollTask = nil
     }
+
+    func setExpanded(_ expanded: Bool) {
+        interval = expanded ? Self.expandedInterval : Self.idleInterval
+    }
+
+    func playPause() async { await source.playPause() }
+    func next() async { await source.next() }
+    func previous() async { await source.previous() }
+    func seek(to time: TimeInterval) async { await source.seek(to: time) }
+    func toggleShuffle() async { await source.toggleShuffle() }
 }

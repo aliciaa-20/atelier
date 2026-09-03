@@ -6,6 +6,10 @@
 	objectVersion = 70;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		1A3B663630493DB40088E747 /* DynamicNotchKit in Frameworks */ = {isa = PBXBuildFile; productRef = 1A3B663530493DB40088E747 /* DynamicNotchKit */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		1A0000000000000000000019 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -41,6 +45,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1A3B663630493DB40088E747 /* DynamicNotchKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -59,6 +64,7 @@
 			children = (
 				1A0000000000000000000016 /* Atelier */,
 				1A0000000000000000000017 /* AtelierTests */,
+				1A3B663430493DB40088E747 /* Frameworks */,
 				1A0000000000000000000003 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -70,6 +76,13 @@
 				1A0000000000000000000007 /* AtelierTests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		1A3B663430493DB40088E747 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -92,6 +105,7 @@
 			);
 			name = Atelier;
 			packageProductDependencies = (
+				1A3B663530493DB40088E747 /* DynamicNotchKit */,
 			);
 			productName = Atelier;
 			productReference = 1A0000000000000000000006 /* Atelier.app */;
@@ -148,6 +162,9 @@
 			);
 			mainGroup = 1A0000000000000000000002;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				1A3B6633304937430088E747 /* XCRemoteSwiftPackageReference "DynamicNotchKit" */,
+			);
 			productRefGroup = 1A0000000000000000000003 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -367,6 +384,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		1A3B6633304937430088E747 /* XCRemoteSwiftPackageReference "DynamicNotchKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/MrKai77/DynamicNotchKit";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.1.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		1A3B663530493DB40088E747 /* DynamicNotchKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1A3B6633304937430088E747 /* XCRemoteSwiftPackageReference "DynamicNotchKit" */;
+			productName = DynamicNotchKit;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 1A0000000000000000000001 /* Project object */;
 }

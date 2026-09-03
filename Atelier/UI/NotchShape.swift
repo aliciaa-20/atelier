@@ -14,6 +14,18 @@ struct NotchShape: Shape {
     var topCornerRadius: CGFloat = 6
     var bottomCornerRadius: CGFloat = 14
 
+    /// Lets the corner radius itself animate across a state transition
+    /// (collapsed's sharp notch-cutout radii vs. expanded's softer,
+    /// rounder-card radii -- see `NotchRootView.cornerRadii`), instead of
+    /// snapping instantly while the frame size eases.
+    var animatableData: AnimatablePair<CGFloat, CGFloat> {
+        get { AnimatablePair(topCornerRadius, bottomCornerRadius) }
+        set {
+            topCornerRadius = newValue.first
+            bottomCornerRadius = newValue.second
+        }
+    }
+
     func path(in rect: CGRect) -> Path {
         var path = Path()
 

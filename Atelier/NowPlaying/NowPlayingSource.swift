@@ -10,4 +10,5 @@ protocol NowPlayingSource {
     func next() async
     func previous() async
     func seek(to time: TimeInterval) async
+    func toggleShuffle() async
 }

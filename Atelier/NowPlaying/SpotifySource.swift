@@ -32,21 +32,26 @@ struct SpotifySource: NowPlayingSource {
         _ = AppleScriptRunner.run(#"tell application "Spotify" to set player position to \#(time)"#)
     }
 
+    func toggleShuffle() async {
+        guard isAvailable else { return }
+        _ = AppleScriptRunner.run(#"tell application "Spotify" to set shuffling to not shuffling"#)
+    }
+
     /// Field order must match `SpotifyOutputParser`: state, name, artist,
-    /// album, duration (ms), position (seconds), artwork url. The separator
-    /// is built with `ASCII character 31` rather than typed directly, so
-    /// there's no ambiguity about how AppleScript's compiler treats a raw
-    /// control character in source text.
+    /// album, duration (ms), position (seconds), artwork url, shuffling.
+    /// The separator is built with `ASCII character 31` rather than typed
+    /// directly, so there's no ambiguity about how AppleScript's compiler
+    /// treats a raw control character in source text.
     private static let fetchScript = #"""
     set sep to (ASCII character 31)
     tell application "Spotify"
         set playerState to player state as text
         if playerState is "stopped" then
-            return playerState & sep & "" & sep & "" & sep & "" & sep & "0" & sep & "0" & sep & ""
+            return playerState & sep & "" & sep & "" & sep & "" & sep & "0" & sep & "0" & sep & "" & sep & "false"
         end if
         set playerPos to player position
         set theTrack to current track
-        return playerState & sep & (name of theTrack) & sep & (artist of theTrack) & sep & (album of theTrack) & sep & (duration of theTrack as text) & sep & (playerPos as text) & sep & (artwork url of theTrack)
+        return playerState & sep & (name of theTrack) & sep & (artist of theTrack) & sep & (album of theTrack) & sep & (duration of theTrack as text) & sep & (playerPos as text) & sep & (artwork url of theTrack) & sep & (shuffling as text)
     end tell
     """#
 }

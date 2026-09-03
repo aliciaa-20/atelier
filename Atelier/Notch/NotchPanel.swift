@@ -14,10 +14,15 @@ final class NotchPanel: NSPanel {
         isOpaque = false
         backgroundColor = .clear
         hasShadow = false
-        level = .statusBar
+        // .statusBar sits at the same level as the real menu bar, which
+        // appears to claim mouseDown dispatch in that exact screen strip
+        // even though hover tracking worked fine there — DynamicNotchKit
+        // (.screenSaver) and Atoll (.mainMenu + 3) both sit higher for
+        // their clickable notch content; matching Atoll's value here.
+        level = .init(rawValue: NSWindow.Level.mainMenu.rawValue + 3)
         collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
     }
 
-    override var canBecomeKey: Bool { false }
-    override var canBecomeMain: Bool { false }
+    override var canBecomeKey: Bool { true }
+    override var canBecomeMain: Bool { true }
 }

@@ -1,28 +1,91 @@
+import CoreAudio
 import SwiftUI
 
 struct NotchRootView: View {
     @ObservedObject var viewModel: NotchViewModel
+    @ObservedObject var nowPlaying: NowPlayingCoordinator
+    @StateObject private var artworkColor = ArtworkColorLoader()
     @State private var settleScale: CGFloat = 1
+    @State private var outputDevices: [AudioOutputDevice] = []
+    @State private var currentOutputDeviceID: AudioDeviceID?
+
+    /// Small/sharp notch-cutout radii at rest, softer/rounder-card radii
+    /// once expanded or peeking -- matching jackson-storm/dynamicnotch's
+    /// own distinction between its collapsed notch shape (~9/13) and its
+    /// expanded card shape (34/44, much closer to equal) rather than
+    /// reusing one small radius pair at every size.
+    private var cornerRadii: (top: CGFloat, bottom: CGFloat) {
+        switch viewModel.state {
+        case .collapsed, .pill:
+            (top: 6, bottom: 14)
+        case .expanded, .peeking:
+            (top: 14, bottom: 20)
+        }
+    }
 
     var body: some View {
         VStack(spacing: 0) {
-            NotchShape()
-                .fill(Color.black)
-                .frame(width: viewModel.currentSize.width, height: viewModel.currentSize.height)
-                .scaleEffect(settleScale, anchor: .top)
-                .overlay(
-                    HoverTrackingView { hovering in
-                        viewModel.handle(hovering ? .hoverStarted : .hoverEnded)
+            ZStack {
+                NotchShape(topCornerRadius: cornerRadii.top, bottomCornerRadius: cornerRadii.bottom)
+                    .fill(Color.black)
+
+                if viewModel.state == .expanded {
+                    ExpandedPlayerView(
+                        info: nowPlaying.current,
+                        notchHeight: viewModel.collapsedSize.height,
+                        waveformColor: artworkColor.color,
+                        outputDevices: outputDevices,
+                        currentOutputDeviceID: currentOutputDeviceID,
+                        onPlayPause: { Task { await nowPlaying.playPause() } },
+                        onNext: { Task { await nowPlaying.next() } },
+                        onPrevious: { Task { await nowPlaying.previous() } },
+                        onSeek: { time in Task { await nowPlaying.seek(to: time) } },
+                        onToggleShuffle: { Task { await nowPlaying.toggleShuffle() } },
+                        onSelectOutputDevice: { deviceID in
+                            OutputDeviceManager.setDefaultOutputDevice(deviceID)
+                            currentOutputDeviceID = deviceID
+                        }
+                    )
+                    .transition(.opacity)
+                    .onAppear {
+                        outputDevices = OutputDeviceManager.availableOutputDevices()
+                        currentOutputDeviceID = OutputDeviceManager.currentDefaultOutputDevice()
                     }
-                )
-                .allowsHitTesting(true)
+                } else if viewModel.state == .peeking {
+                    PeekPlayerView(
+                        info: nowPlaying.current,
+                        notchHeight: viewModel.collapsedSize.height,
+                        waveformColor: artworkColor.color
+                    )
+                    .transition(.opacity)
+                }
+            }
+            .frame(width: viewModel.currentSize.width, height: viewModel.currentSize.height)
+            .clipShape(NotchShape(topCornerRadius: cornerRadii.top, bottomCornerRadius: cornerRadii.bottom))
+            .scaleEffect(settleScale, anchor: .top)
+            .contentShape(Rectangle())
+            .onHover { hovering in
+                if hovering {
+                    viewModel.handle(.hoverStarted)
+                } else {
+                    viewModel.handle(.hoverEnded(isPlaying: nowPlaying.current?.isPlaying ?? false))
+                }
+            }
+            // `allowsHitTesting(false)` must sit on the Spacer alone, not on
+            // this whole VStack — an ancestor's `false` overrides a
+            // descendant's `true`, so applying it any higher up would (and
+            // did) silently swallow every click/hover in the notch/player
+            // region above, no matter what this ZStack sets on itself.
             Spacer(minLength: 0)
+                .allowsHitTesting(false)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .allowsHitTesting(false)
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: viewModel.state)
         .onChange(of: viewModel.spaceChangeTick) { _, _ in
             playSettleAnimation()
+        }
+        .onChange(of: nowPlaying.current?.artworkURL) { _, url in
+            artworkColor.load(from: url)
         }
     }
 

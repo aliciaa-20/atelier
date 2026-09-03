@@ -16,6 +16,7 @@ struct SpotifyOutputParserTests {
             "213693",
             "194.891006469727",
             "https://i.scdn.co/image/ab67616d0000b27357df7ce0eac715cf70e519a7",
+            "true",
         ].joined(separator: SpotifyOutputParser.fieldSeparator)
 
         let info = SpotifyOutputParser.parse(raw)
@@ -28,7 +29,8 @@ struct SpotifyOutputParserTests {
             isPlaying: true,
             duration: 213.693,
             elapsed: 194.891006469727,
-            sourceBundleID: "com.spotify.client"
+            sourceBundleID: "com.spotify.client",
+            isShuffling: true
         ))
     }
 }
@@ -36,7 +38,7 @@ struct SpotifyOutputParserTests {
 extension SpotifyOutputParserTests {
     @Test func returnsNilWhenStopped() {
         let raw = [
-            "stopped", "", "", "", "0", "0", "",
+            "stopped", "", "", "", "0", "0", "", "false",
         ].joined(separator: SpotifyOutputParser.fieldSeparator)
 
         let info = SpotifyOutputParser.parse(raw)

@@ -70,19 +70,27 @@ Goal: hovering the notch shows a native-feeling player, not just a black rect.
 
 - [ ] **Design pass before coding** — mockup the expanded layout (artwork, text,
       scrubber, transport row) so we build to a target, not by trial and error.
-- [ ] **Artwork** — Spotify returns an artwork **URL** (`ArtworkRef.url`); fetch
+- [x] **Artwork** — Spotify returns an artwork **URL** (`ArtworkRef.url`); fetch
       and display it, with a placeholder while loading and on failure.
-- [ ] **Title / artist** — bind to `NowPlayingInfo`; handle truncation/long titles.
-- [ ] **Scrubber** — driven by `duration` / `elapsed` (already normalised to
-      seconds). Faster poll (0.25 s) while expanded for a smooth bar.
-- [ ] **Transport controls** — play/pause, next, previous wired to
-      `NowPlayingSource` methods (`playPause`, `next`, `previous`).
-- [ ] **Seek** — dragging the scrubber calls `seek(to:)`.
-- [ ] **Hit-testing** — interactive controls receive events; non-interactive
-      regions keep `.allowsHitTesting(false)` (Invariant 4).
-- [ ] **Not-playing / no-Spotify state** — a legible empty state, not a blank panel.
+- [x] **Title / artist** — bind to `NowPlayingInfo`; handle truncation/long titles.
+- [x] **Scrubber** — driven by `duration` / `elapsed` (already normalised to
+      seconds). Faster poll (0.25 s) while expanded for a smooth bar. Works;
+      animation/feel still needs polish.
+- [x] **Transport controls** — play/pause, next, previous wired to
+      `NowPlayingSource` methods (`playPause`, `next`, `previous`). Confirmed
+      responding on-device.
+- [x] **Seek** — dragging the scrubber calls `seek(to:)`.
+- [x] **Hit-testing** — interactive controls receive events; non-interactive
+      regions keep `.allowsHitTesting(false)` scoped correctly (Invariant 4).
+      See [ADR 0004](decisions/0004-allowshittesting-scoped-to-spacer.md) —
+      it was scoped too broadly and silently ate every click until fixed.
+- [x] **Not-playing / no-Spotify state** — a legible empty state, not a blank panel.
 - [ ] Manual verification: play a track, confirm artwork/title/artist/scrubber,
-      exercise every transport control, drag the scrubber.
+      exercise every transport control, drag the scrubber. "(Buttons +
+      scrubber confirmed working on-device; artwork/empty-state with a real
+      track not yet explicitly confirmed.)"
+- [ ] **UI polish** — layout/visuals still rough; scrubber animation needs
+      improving. Functionally working, not yet "native-feeling."
 
 Claude Code mechanic to lean on: `artifact-design` / mockups before coding.
 
