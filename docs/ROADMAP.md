@@ -6,8 +6,11 @@ overall plan is [the design spec](superpowers/specs/2026-08-31-atelier-notch-des
 this file tracks progress against it.
 
 **Where we are:** Phases 0–4 complete. Phase 5 (pill + auto-peek) is
-implemented and unit-tested but not yet verified on-device.
-**Next up: Phase 5 manual verification.**
+implemented, unit-tested, and its peek/retract behavior is now confirmed
+on-device after a substantial UI polish pass (peek sizing/padding, a
+cohesive corner radius, a continuous-loop marquee, a real artwork-loading
+latency fix, and per-transition hover animation timing).
+**Next up: confirm hover-holds-the-peek-open, then Phase 6.**
 
 ---
 
@@ -100,8 +103,25 @@ implemented and unit-tested but not yet verified on-device.
       `collapsed`) covered by `NotchStateTests`.
 - [x] **Extra, ahead of Phase 6:** `AtelierSettings` + a menu-bar toggle for
       "Peek on Track Change."
-- [ ] **Manual verification** — skip tracks and watch it peek then retract;
-      hover during a peek and confirm it holds open. **Not yet done.**
+- [x] **Manual verification (peek/retract)** — skipped tracks repeatedly
+      on-device and confirmed the peek appears and auto-retracts correctly.
+- [ ] **Manual verification (hover-holds-open)** — hover during a peek and
+      confirm it holds open instead of retracting. **Not yet re-tested**
+      after this session's animation/timing changes.
+- [x] **Extra, beyond the original checklist:** a full UI polish pass on
+      the peek pill — corner radius unified to a single cohesive 14pt
+      (was mismatched 14/20, inherited from the expanded player), padding
+      tightened and balanced on all edges, artwork enlarged and its own
+      corner radius reduced to read as concentric with the panel, waveform
+      shrunk to fit, and a real fix for ~1.5s artwork-load latency (two
+      independent network fetches — the visible `ArtworkView` and the
+      waveform's `ArtworkColorLoader` — were racing on the same URL; both
+      now share one fetch via a new `ArtworkImageCache`). The marquee
+      itself was rebuilt from a snap-back-to-start cycle into a genuine
+      continuous ticker loop, applied to both title and artist. Hover-close
+      also got its own, more damped animation, separate from hover-open,
+      via explicit per-trigger `withAnimation` calls replacing one blanket
+      state-based modifier.
 
 Claude Code mechanic: hooks (auto-build on Swift file save).
 
