@@ -1,6 +1,6 @@
 ---
 name: check-reference-apps-first
-description: Use when about to write or debug AppKit/SwiftUI window, panel, or notch-geometry code in Atelier — NSPanel behavior, canBecomeKey/canBecomeMain, acceptsFirstMouse, hit-testing, click-through, hover tracking, window level, or notch shape/geometry — before reasoning about it from first principles.
+description: Use when about to implement or debug any notch-app feature in Atelier — window/panel behavior, hover/peek mechanics, now-playing polling, artwork loading, transport controls, file shelf, settings/launch-at-login, Automation-permission UX, menu bar behavior — before designing it from first principles.
 ---
 
 # Check Reference Apps First
@@ -20,6 +20,27 @@ records a real instance — a full debugging session on `canBecomeKey`/
 already solved. The fix came from reading Atoll's source, not from further
 manual trial and error.
 
+**A second instance, worth naming explicitly because it repeated the same
+mistake in a different shape:** the v2 feature pass built a real-time audio
+visualizer, a scrolling-title component, and an expanded-player layout each
+by hand-coding a first attempt, hitting a real bug or a "doesn't match"
+rejection, and only *then* pulling reference source to fix it — instead of
+checking first. Every one of those reference lookups, once actually done,
+either fixed the bug in one shot (Ebullioscopic/Atoll's `AudioTap.swift` for
+the CoreAudio Process Tap API) or revealed the manual approach was solving
+the wrong problem entirely (jackson-storm/dynamicnotch's own "equalizer"
+turned out to be a fake `isPlaying`-driven animation, not real audio — the
+same technique a from-scratch first attempt would have reasonably tried,
+except *this* reference confirmed it was the right call instead of a guess).
+Checking references is cheap; each round of build-fail-then-check cost a
+full iteration that checking first would have skipped.
+
+This isn't only about window/panel plumbing. The same apps have already
+shipped working versions of most features on Atelier's roadmap — artwork
+fetch/caching, transport-control wiring, file-shelf drag & drop, a Settings
+window, launch-at-login, Automation-permission UX. Before designing any of
+those from scratch, check how an already-shipped app did it.
+
 ## When to Use
 
 Before writing or debugging any code touching:
@@ -29,11 +50,17 @@ Before writing or debugging any code touching:
 - Notch shape/geometry math
 - Hover tracking (`NSTrackingArea`) or peek/expand/collapse mechanics
 - Now-playing polling, AppleScript scripting patterns for media apps
+- Artwork fetching/caching, and placeholder/failure states for it
+- Transport control wiring (play/pause/next/previous, seek) end to end
+- File-shelf drag & drop
+- A Settings window, launch-at-login (`SMAppService`)
+- Automation-permission (TCC) UX — detecting denial, prompting, re-checking
+- Menu bar (`NSStatusItem`) behavior and quirks
 
-Not needed for: SwiftUI layout/styling with no window-level behavior, pure
-logic in `NotchGeometry`/`NotchState` (already covered by unit tests, not
-AppKit trivia), Spotify-specific parsing (that's `docs/decisions/0002-*`
-territory, not a window-behavior question).
+Not needed for: pure logic in `NotchGeometry`/`NotchState` (already covered
+by unit tests, not reference-app territory), Spotify-specific parsing
+(that's `docs/decisions/0002-*` territory), and visual styling choices with
+no behavioral counterpart to check (colors, fonts, spacing).
 
 ## The Reference Set
 
@@ -57,8 +84,10 @@ This list also lives in the root `CLAUDE.md` — update both if you add a repo.
 
 ## Procedure
 
-1. **Name the AppKit/SwiftUI behavior you're unsure about** in one sentence
-   ("why doesn't this button respond to a first click on a nonactivating panel?").
+1. **Name the feature or behavior you're about to build or debug** in one
+   sentence ("why doesn't this button respond to a first click on a
+   nonactivating panel?", "how should artwork loading degrade when the URL
+   fetch fails?", "how does launch-at-login get wired to a Settings toggle?").
 2. **Search the reference repos for it before writing code or guessing.**
    Use `gh api` to pull real source rather than trusting memory or a
    screenshot — same approach used to obtain `NotchShape.swift` and
@@ -89,6 +118,10 @@ This list also lives in the root `CLAUDE.md` — update both if you add a repo.
   having checked a reference repo first
 - Debugging the same click/focus/hit-testing symptom for more than one
   iteration without having pulled reference source
+- "I'll build a first version and check references if it doesn't work" —
+  this is the failure mode itself, not a mitigation. Check first; a
+  reference lookup costs one `gh api` call, a wrong-guess-then-fix costs a
+  full build/test/relaunch cycle, sometimes several.
 
 ## Common Mistakes
 
