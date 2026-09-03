@@ -5,7 +5,9 @@ something runnable, a green test suite, and a commit. Source of truth for the
 overall plan is [the design spec](superpowers/specs/2026-08-31-atelier-notch-design.md);
 this file tracks progress against it.
 
-**Where we are:** Phases 0–3 complete. **Next up: Phase 4 — the expanded player.**
+**Where we are:** Phases 0–4 complete. Phase 5 (pill + auto-peek) is
+implemented and unit-tested but not yet verified on-device.
+**Next up: Phase 5 manual verification.**
 
 ---
 
@@ -59,51 +61,47 @@ this file tracks progress against it.
 > `SpotifySource` conforms for now. See
 > [ADR 0002](decisions/0002-spotify-only-for-v1.md).
 
+### ✅ Phase 4 — Full expanded player
+*Commit `1bd1e4a`*
+
+- Artwork (with placeholder while loading and on failure), title/artist,
+  scrubber, transport controls (play/pause, next, previous), and seek all
+  wired to `NowPlayingSource`; a legible not-playing/no-Spotify empty state.
+- Design pass done against reference apps (boring.notch's `MusicPlayerView`)
+  rather than from first principles — see `check-reference-apps-first`.
+- Real hit-testing bug fixed: `.allowsHitTesting(false)` was scoped to the
+  whole root `VStack` instead of just the `Spacer`, silently eating clicks
+  across the whole player since Phase 4 began. See
+  [ADR 0004](decisions/0004-allowshittesting-scoped-to-spacer.md).
+- Layout redesigned multiple passes (panel/artwork sizing, marquee title
+  scroll, waveform, shuffle, output-device switching).
+- Claude Code mechanics: reference-app lookups; ADR 0003/0004 debugging.
+
+> **Verification note:** transport controls and scrubber were confirmed
+> responding on-device. Artwork rendering and the empty state were not
+> explicitly re-confirmed against a live track after the Phase 4 redesign —
+> worth a quick on-device look before calling the layout fully settled.
+
 ---
 
 ## Upcoming
 
-### 🔜 Phase 4 — Full expanded player
-*Ships: artwork, title/artist, scrubber, transport controls in the expanded state.*
-
-Goal: hovering the notch shows a native-feeling player, not just a black rect.
-
-- [ ] **Design pass before coding** — mockup the expanded layout (artwork, text,
-      scrubber, transport row) so we build to a target, not by trial and error.
-- [x] **Artwork** — Spotify returns an artwork **URL** (`ArtworkRef.url`); fetch
-      and display it, with a placeholder while loading and on failure.
-- [x] **Title / artist** — bind to `NowPlayingInfo`; handle truncation/long titles.
-- [x] **Scrubber** — driven by `duration` / `elapsed` (already normalised to
-      seconds). Faster poll (0.25 s) while expanded for a smooth bar. Works;
-      animation/feel still needs polish.
-- [x] **Transport controls** — play/pause, next, previous wired to
-      `NowPlayingSource` methods (`playPause`, `next`, `previous`). Confirmed
-      responding on-device.
-- [x] **Seek** — dragging the scrubber calls `seek(to:)`.
-- [x] **Hit-testing** — interactive controls receive events; non-interactive
-      regions keep `.allowsHitTesting(false)` scoped correctly (Invariant 4).
-      See [ADR 0004](decisions/0004-allowshittesting-scoped-to-spacer.md) —
-      it was scoped too broadly and silently ate every click until fixed.
-- [x] **Not-playing / no-Spotify state** — a legible empty state, not a blank panel.
-- [ ] Manual verification: play a track, confirm artwork/title/artist/scrubber,
-      exercise every transport control, drag the scrubber. "(Buttons +
-      scrubber confirmed working on-device; artwork/empty-state with a real
-      track not yet explicitly confirmed.)"
-- [ ] **UI polish** — layout/visuals still rough; scrubber animation needs
-      improving. Functionally working, not yet "native-feeling."
-
-Claude Code mechanic to lean on: `artifact-design` / mockups before coding.
-
-### ⬜ Phase 5 — Pill + auto-peek
+### 🔜 Phase 5 — Pill + auto-peek
 *Ships: slim pill while music plays; auto-peek on track change, then retract.*
 
-- [ ] **Pill state** — slim always-on sliver hugging the notch while `isPlaying`.
-- [ ] **Peek on track change** — detect a track change in the coordinator, drive
-      `NotchState.peeking(until:)`, decay back after ~2.5 s unless hovered.
-- [ ] Confirm the state machine transitions (`pill` ↔ `peeking` ↔ `expanded` ↔
-      `collapsed`) all behave; extend `NotchStateTests` for peek decay.
-- [ ] Manual verification: skip tracks and watch it peek then retract; hover
-      during a peek and confirm it holds open.
+- [x] **Pill state** — slim always-on sliver hugging the notch while
+      `isPlaying`, driven by real Spotify state.
+- [x] **Peek on track change** — track change drives `NotchState.peeking`,
+      decays back after ~2.5 s unless hovered; reuses the persistent
+      panel/state machine with a dedicated `PeekPlayerView` rather than a
+      second window (a `DynamicNotchKit` popover was tried first and
+      visually conflicted with the main panel on-device).
+- [x] State machine transitions (`pill` ↔ `peeking` ↔ `expanded` ↔
+      `collapsed`) covered by `NotchStateTests`.
+- [x] **Extra, ahead of Phase 6:** `AtelierSettings` + a menu-bar toggle for
+      "Peek on Track Change."
+- [ ] **Manual verification** — skip tracks and watch it peek then retract;
+      hover during a peek and confirm it holds open. **Not yet done.**
 
 Claude Code mechanic: hooks (auto-build on Swift file save).
 
