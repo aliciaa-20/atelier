@@ -17,27 +17,39 @@ struct PeekPlayerView: View {
                 content(for: info)
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.bottom, 12)
-        .padding(.top, notchHeight + 10)
+        // NotchShape's vertical edges are inset by `topCornerRadius`
+        // (flat, for their whole height) then curve further inward near
+        // the very bottom by up to `bottomCornerRadius` more (see
+        // NotchShape.swift) — but that curve is a quadratic Bezier whose
+        // control point pulls it mostly *vertical* at first, so the extra
+        // inset stays small until content gets close to the true bottom
+        // edge. Peeking uses equal 14/14 radii (see NotchRootView) for a
+        // cohesive rounded-card look, so the flat-zone inset is 14pt —
+        // horizontal padding needs real buffer over that.
+        .padding(.horizontal, 24)
+        .padding(.bottom, 9)
+        .padding(.top, notchHeight + 4)
     }
 
     private func content(for info: NowPlayingInfo) -> some View {
-        HStack(spacing: 12) {
-            ArtworkView(url: info.artworkURL)
-                .frame(width: 40, height: 40)
+        HStack(spacing: 8) {
+            // A smaller radius than ExpandedPlayerView's default (8) —
+            // Peek's panel corner (14, see NotchRootView) is large
+            // relative to this 34pt square, so the artwork's own rounding
+            // needs to be more subtle to read as concentric with it
+            // rather than competing with a second, differently-scaled
+            // rounded shape right next to it.
+            ArtworkView(url: info.artworkURL, cornerRadius: 5)
+                .frame(width: 34, height: 34)
 
             VStack(alignment: .leading, spacing: 2) {
-                MarqueeText(text: info.title, font: .headline, color: .white, width: 110)
-                Text(info.artist)
-                    .font(.subheadline)
-                    .foregroundStyle(.white.opacity(0.65))
-                    .lineLimit(1)
+                MarqueeText(text: info.title, font: .headline, color: .white, width: 92, height: 16)
+                MarqueeText(text: info.artist, font: .subheadline, color: .white.opacity(0.65), width: 92, height: 16)
             }
 
             Spacer(minLength: 0)
 
-            WaveformView(isPlaying: info.isPlaying, color: waveformColor)
+            WaveformView(isPlaying: info.isPlaying, color: waveformColor, barWidth: 2, barSpacing: 1.3, height: 14)
         }
     }
 }

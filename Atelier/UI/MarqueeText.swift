@@ -1,8 +1,7 @@
 import SwiftUI
 
 /// Scrolls text horizontally when it doesn't fit its container, instead of
-/// truncating with "…". Two real bugs in earlier versions drove this
-/// shape:
+/// truncating with "…". Real bugs in earlier versions drove this shape:
 ///
 /// 1. A `GeometryReader`-measured container width, combined with a
 ///    `.clipped()` buried inside a nested view, let the scrolling text
@@ -12,13 +11,16 @@ import SwiftUI
 ///    measured at runtime, and `.clipped()` sits on the outermost, already
 ///    `.frame()`-constrained view so there's exactly one clip boundary,
 ///    not a chain of them.
-/// 2. `.repeatForever(autoreverses: true)` scrolls right, then *back*
+/// 2. `.repeatForever(autoreverses: true)` scrolled right, then *back*
 ///    right-to-left, forever — a back-and-forth wobble, not what a real
-///    marquee does. This scrolls left once, snaps back to the start with
-///    no visible animation, pauses, and repeats — via `withAnimation`'s
-///    completion handler rather than the declarative `.animation(value:)`
-///    form, since that form has no "animate one way, reset instantly"
-///    primitive.
+///    marquee does.
+/// 3. A "scroll to the end, snap back to the start, pause" cycle read as
+///    restarting rather than continuing — a real ticker never resets, it
+///    keeps moving. This renders a second copy of the text right after the
+///    first (separated by a gap) and animates a continuous, non-reversing
+///    linear scroll by exactly one copy-width + gap — at that point the
+///    second copy sits exactly where the first started, so the loop point
+///    is invisible instead of a visible jump back to the start.
 ///
 /// `.id(text)` resets all state cleanly on every track change.
 struct MarqueeText: View {
@@ -28,51 +30,47 @@ struct MarqueeText: View {
     var width: CGFloat = 170
     var height: CGFloat = 20
 
-    var body: some View {
-        MarqueeTextContent(text: text, font: font, color: color, containerWidth: width)
-            .frame(width: width, height: height, alignment: .leading)
-            .clipped()
-            .id(text)
-    }
-}
-
-private struct MarqueeTextContent: View {
-    let text: String
-    let font: Font
-    let color: Color
-    let containerWidth: CGFloat
+    private static let gap: CGFloat = 24
 
     @State private var textWidth: CGFloat = 0
+    @State private var looping = false
     @State private var offset: CGFloat = 0
 
-    private var overflow: CGFloat { max(0, textWidth - containerWidth) }
-
     var body: some View {
+        HStack(spacing: Self.gap) {
+            line.background(WidthReader(width: $textWidth))
+            if looping {
+                line
+            }
+        }
+        .offset(x: offset)
+        .frame(width: width, height: height, alignment: .leading)
+        .clipped()
+        .id(text)
+        .onChange(of: textWidth) { _, newValue in
+            guard newValue > 0, newValue > width, !looping else { return }
+            startLooping(textWidth: newValue)
+        }
+    }
+
+    private var line: some View {
         Text(text)
             .font(font)
             .foregroundStyle(color)
             .lineLimit(1)
             .fixedSize()
-            .background(WidthReader(width: $textWidth))
-            .offset(x: offset)
-            .onChange(of: textWidth) { _, newValue in
-                guard newValue > 0 else { return }
-                scheduleScroll()
-            }
     }
 
-    private func scheduleScroll() {
-        guard overflow > 0 else { return }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-            withAnimation(.easeInOut(duration: max(3.5, overflow / 11))) {
-                offset = -overflow
-            } completion: {
-                // Hold the fully-scrolled position (the title's end) on
-                // screen for a beat before wrapping, instead of snapping
-                // back the instant the scroll finishes.
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) {
-                    offset = 0
-                    scheduleScroll()
+    private func startLooping(textWidth: CGFloat) {
+        let distance = textWidth + Self.gap
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            looping = true
+            // The second copy has to actually be laid out (one runloop
+            // turn) before animating past it, or the jump-to-loop-point is
+            // visible for one frame instead of seamless.
+            DispatchQueue.main.async {
+                withAnimation(.linear(duration: max(4.5, distance / 18)).repeatForever(autoreverses: false)) {
+                    offset = -distance
                 }
             }
         }
