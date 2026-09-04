@@ -1,3 +1,4 @@
+import AppKit
 import CoreAudio
 import SwiftUI
 
@@ -53,15 +54,18 @@ struct ExpandedPlayerView: View {
 
     /// Sizes match jackson-storm/dynamicnotch's `headerSection` exactly:
     /// 60x60 artwork, 15pt header spacing, 16pt medium title / 14pt artist,
-    /// 2pt spacing between them.
+    /// 2pt spacing between them. Text column widened to 170 (from the
+    /// original 148) so more titles fit before either line needs to
+    /// marquee. Both lines use the same continuous `MarqueeText` — title
+    /// and artist marquee independently, whichever actually overflows.
     private func headerSection(for info: NowPlayingInfo) -> some View {
         HStack(spacing: 12) {
             ArtworkView(url: info.artworkURL)
                 .frame(width: 50, height: 50)
 
             VStack(alignment: .leading, spacing: 2) {
-                MarqueeText(text: info.title, font: .system(size: 15, weight: .medium), color: .white, width: 148)
-                MarqueeText(text: info.artist, font: .system(size: 13), color: .white.opacity(0.65), width: 148)
+                MarqueeText(text: info.title, font: .system(size: 15, weight: .medium), color: .white, width: 170, height: 20)
+                MarqueeText(text: info.artist, font: .system(size: 13), color: .white.opacity(0.65), width: 170, height: 20)
             }
 
             Spacer(minLength: 0)
@@ -124,28 +128,34 @@ struct ExpandedPlayerView: View {
 /// Spotify's artwork comes back as a URL (invariant 5's sibling fact — see
 /// `NowPlayingInfo`); a music-note glyph covers the loading and failure cases
 /// so a slow network or a missing image never shows a blank square.
+///
+/// Loads through `ArtworkImageCache` rather than `AsyncImage` so this and
+/// `ArtworkColorLoader` share one fetch per URL instead of racing two.
 struct ArtworkView: View {
     let url: URL?
+    var cornerRadius: CGFloat = 8
+    @State private var image: NSImage?
 
     var body: some View {
         Group {
-            if let url {
-                AsyncImage(url: url) { phase in
-                    if case .success(let image) = phase {
-                        image.resizable().aspectRatio(contentMode: .fill)
-                    } else {
-                        placeholder
-                    }
-                }
+            if let image {
+                Image(nsImage: image).resizable().aspectRatio(contentMode: .fill)
             } else {
                 placeholder
             }
         }
-        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+        .task(id: url) {
+            image = nil
+            guard let url,
+                  let data = await ArtworkImageCache.shared.data(for: url),
+                  let nsImage = NSImage(data: data) else { return }
+            image = nsImage
+        }
     }
 
     private var placeholder: some View {
-        RoundedRectangle(cornerRadius: 8)
+        RoundedRectangle(cornerRadius: cornerRadius)
             .fill(.white.opacity(0.12))
             .overlay(Image(systemName: "music.note").foregroundStyle(.white.opacity(0.5)))
     }

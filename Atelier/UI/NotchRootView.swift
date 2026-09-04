@@ -10,16 +10,24 @@ struct NotchRootView: View {
     @State private var currentOutputDeviceID: AudioDeviceID?
 
     /// Small/sharp notch-cutout radii at rest, softer/rounder-card radii
-    /// once expanded or peeking -- matching jackson-storm/dynamicnotch's
-    /// own distinction between its collapsed notch shape (~9/13) and its
+    /// once expanded -- matching jackson-storm/dynamicnotch's own
+    /// distinction between its collapsed notch shape (~9/13) and its
     /// expanded card shape (34/44, much closer to equal) rather than
     /// reusing one small radius pair at every size.
+    ///
+    /// `.peeking` gets its own equal top/bottom radius rather than
+    /// reusing `.expanded`'s 14/20 — at the peek pill's small, compact
+    /// size, mismatched radii read as an inconsistent shape rather than
+    /// one cohesive rounded card (design feedback after seeing it
+    /// on-device).
     private var cornerRadii: (top: CGFloat, bottom: CGFloat) {
         switch viewModel.state {
         case .collapsed, .pill:
             (top: 6, bottom: 14)
-        case .expanded, .peeking:
+        case .expanded:
             (top: 14, bottom: 20)
+        case .peeking:
+            (top: 14, bottom: 14)
         }
     }
 
@@ -66,9 +74,17 @@ struct NotchRootView: View {
             .contentShape(Rectangle())
             .onHover { hovering in
                 if hovering {
-                    viewModel.handle(.hoverStarted)
+                    withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                        viewModel.handle(.hoverStarted)
+                    }
                 } else {
-                    viewModel.handle(.hoverEnded(isPlaying: nowPlaying.current?.isPlaying ?? false))
+                    // Slower and more damped than the open — closing snapped
+                    // shut at the same speed it opened, which read as
+                    // abrupt since there's no destination content to draw
+                    // the eye the way the expanding player does on open.
+                    withAnimation(.spring(response: 0.55, dampingFraction: 0.92)) {
+                        viewModel.handle(.hoverEnded(isPlaying: nowPlaying.current?.isPlaying ?? false))
+                    }
                 }
             }
             // `allowsHitTesting(false)` must sit on the Spacer alone, not on
@@ -80,7 +96,6 @@ struct NotchRootView: View {
                 .allowsHitTesting(false)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .animation(.spring(response: 0.35, dampingFraction: 0.8), value: viewModel.state)
         .onChange(of: viewModel.spaceChangeTick) { _, _ in
             playSettleAnimation()
         }
