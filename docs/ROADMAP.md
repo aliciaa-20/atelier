@@ -10,9 +10,11 @@ implemented, unit-tested, and its peek/retract behavior is now confirmed
 on-device after a substantial UI polish pass (peek sizing/padding, a
 cohesive corner radius, a continuous-loop marquee, a real artwork-loading
 latency fix, and per-transition hover animation timing).
-**Next up: Phase 6.** (On-device check found that skipping a track currently
-opens the full hover/expanded panel rather than the distinct peek — deferred
-rather than blocking, see the Phase 5 checklist note below.)
+**Next up: Phase 6 — Live Activity / widget architecture**, the first of a
+longer phase sequence drawn from a full survey of reference notch apps (see
+[FEATURES.md](FEATURES.md)). (On-device check found that skipping a track
+currently opens the full hover/expanded panel rather than the distinct
+peek — deferred rather than blocking, see the Phase 5 checklist note below.)
 
 ---
 
@@ -131,8 +133,113 @@ rather than blocking, see the Phase 5 checklist note below.)
 
 Claude Code mechanic: hooks (auto-build on Swift file save).
 
-### ⬜ Phase 6 — Settings + launch at login
-*Ships: a Settings window and launch-at-login.*
+### ⬜ Phase 6 — Live Activity / widget architecture
+*Ships: an extensible `NotchWidget`/`LiveActivity` protocol that later
+phases plug into, instead of each bolting a new surface onto `NotchState`
+directly.*
+
+- [ ] `check-reference-apps-first` spike against Atoll/QuartzNotch/
+      dynamicnotch source before designing — this is the foundational
+      architecture for most of the rest of the backlog.
+- [ ] Generalize `NotchState`'s peek/pill mechanism into an extensible
+      Live Activity concept.
+- [ ] Define the `NotchWidget`/`LiveActivity` protocol other phases conform to.
+
+See [FEATURES.md §5](FEATURES.md#5-live-activities--system-alerts-extensible-framework).
+
+### ⬜ Phase 7 — Interaction feel
+*Ships: gestures and physics-based animation. Can run in parallel with
+Phase 6.*
+
+- [ ] Gesture controls — swipe to open/close, horizontal swipe to seek/skip.
+- [ ] Physics-based spring/"jelly" morph animation mimicking real iOS
+      Dynamic Island motion.
+
+See [FEATURES.md §2](FEATURES.md#2-interaction--feel).
+
+### ⬜ Phase 8 — System HUD replacement
+*Ships: volume/brightness, battery, keyboard backlight, and power-state
+HUD replacements.*
+
+- [ ] Volume/brightness HUD replacement.
+- [ ] Battery/charging indicator.
+- [ ] Keyboard backlight HUD.
+- [ ] Power state / time remaining.
+- [ ] Suppress stock macOS HUDs while ours is shown.
+
+See [FEATURES.md §3](FEATURES.md#3-system-hud-replacement).
+
+### ⬜ Phase 9 — File shelf + AirDrop
+*Ships: drag & drop file shelf, AirDrop integration, format converter.*
+
+- [ ] File shelf drag & drop.
+- [ ] AirDrop integration.
+- [ ] File format converter.
+
+See [FEATURES.md §4](FEATURES.md#4-file-shelf--related-utilities).
+
+### ⬜ Phase 10 — System alerts as Live Activities
+*Ships: system state alerts built on Phase 6's architecture.*
+**Depends on Phase 6.**
+
+- [ ] Focus mode, screen recording, downloads, personal hotspot, Bluetooth,
+      Wi-Fi, VPN state alerts.
+
+See [FEATURES.md §5](FEATURES.md#5-live-activities--system-alerts-extensible-framework).
+
+### ⬜ Phase 11 — Now-Playing Live Activity + lock-screen widget
+*Ships: now-playing elevated to a first-class Live Activity; lock-screen
+surface scope gated on a feasibility spike.*
+**Depends on Phase 6.**
+
+- [ ] Elevate now-playing to a first-class Live Activity.
+- [ ] Real-time audio visualizer.
+- [ ] Synced lyrics.
+- [ ] Lock-screen now-playing widget — **spike first**: macOS has no public
+      lock-screen widget API for third-party apps; confirm what reference
+      apps actually built before committing to scope.
+
+See [FEATURES.md §1](FEATURES.md#1-now-playing--live-activity-core).
+
+### ⬜ Phase 12 — Productivity widgets
+*Ships: calendar/reminders, quick notes, timers, color picker — each as a
+widget plugged into Phase 6's architecture.*
+**Depends on Phase 6.**
+
+- [ ] Calendar / reminders (EventKit).
+- [ ] Quick notes.
+- [ ] Timers / Pomodoro.
+- [ ] Color picker.
+
+See [FEATURES.md §6](FEATURES.md#6-productivity-widgets).
+
+### ⬜ Phase 13 — System resource monitor
+*Ships: CPU/GPU/memory/network/disk usage and SMC-based temperature.*
+**Depends on Phase 6.**
+
+See [FEATURES.md §7](FEATURES.md#7-system-resource-monitor).
+
+### ⬜ Phase 14 — Camera mirror mode
+*Ships: a camera-preview mirror widget.*
+
+See [FEATURES.md §2](FEATURES.md#2-interaction--feel).
+
+### ⬜ Phase 15 — Dev-agent session monitoring
+*Ships: live session tracking and permission-approval UI for Claude
+Code/Cursor/Codex. Standalone subsystem — sequenced last as the most novel
+and highest-effort item in the backlog.*
+
+- [ ] Live session tracking (duration, tool activity, context/rate-limit
+      progress).
+- [ ] Permission-approval UI (Allow Once/Always/Deny) from the notch.
+- [ ] Hook-install + IPC bridge design (à la AgentPulse's Unix domain
+      socket bridge).
+
+See [FEATURES.md §8](FEATURES.md#8-dev-agent-session-monitoring).
+
+### ⬜ Phase 16 — Settings + launch at login
+*Ships: a Settings window and launch-at-login. (Originally Phase 6; moved
+here so the feature survey above ships first.)*
 
 - [ ] **Settings window** — surfaced from the `NSStatusItem` menu.
 - [ ] **Launch at login** via `SMAppService`.
@@ -158,6 +265,9 @@ Claude Code mechanic: custom slash commands; `/code-review`.
 
 ## 💤 Backlog — after v1
 
+Items not part of the Phase 6–16 feature survey (see
+[FEATURES.md](FEATURES.md)):
+
 - **Apple Music source** — a second `NowPlayingSource` conformer. Must not
   require changes outside a new file plus one registration; if it does, the
   protocol is wrong.
@@ -165,6 +275,4 @@ Claude Code mechanic: custom slash commands; `/code-review`.
   (including browsers), as an optional source. Weigh against the third-party
   helper that can break on any macOS release. See
   [ADR 0001](decisions/0001-mediaremote-unavailable.md).
-- **File shelf** — drag & drop into the notch (see boring.notch / NotchDrop).
-- **System HUD replacement** — volume/brightness overlays.
 - **Multi-monitor polish** — notchless / external display handling.
