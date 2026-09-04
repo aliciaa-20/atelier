@@ -130,6 +130,13 @@ peek — deferred rather than blocking, see the Phase 5 checklist note below.)
       also got its own, more damped animation, separate from hover-open,
       via explicit per-trigger `withAnimation` calls replacing one blanket
       state-based modifier.
+- [x] **Extra, added after this session's roadmap reorder:** peek now also
+      fires on a play/pause toggle, not just a track change (a new
+      `playbackToggled` event, reusing `trackChanged`'s resting-state-only
+      reducer logic — unit-tested in `NotchStateTests`). The peek's decay
+      animation was also switched from the snappy open-speed spring to the
+      same slower, more damped one used for hover-close, so it retracts
+      smoothly instead of snapping shut.
 
 Claude Code mechanic: hooks (auto-build on Swift file save).
 
