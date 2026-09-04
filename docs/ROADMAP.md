@@ -10,7 +10,9 @@ implemented, unit-tested, and its peek/retract behavior is now confirmed
 on-device after a substantial UI polish pass (peek sizing/padding, a
 cohesive corner radius, a continuous-loop marquee, a real artwork-loading
 latency fix, and per-transition hover animation timing).
-**Next up: confirm hover-holds-the-peek-open, then Phase 6.**
+**Next up: Phase 6.** (On-device check found that skipping a track currently
+opens the full hover/expanded panel rather than the distinct peek — deferred
+rather than blocking, see the Phase 5 checklist note below.)
 
 ---
 
@@ -106,8 +108,12 @@ latency fix, and per-transition hover animation timing).
 - [x] **Manual verification (peek/retract)** — skipped tracks repeatedly
       on-device and confirmed the peek appears and auto-retracts correctly.
 - [ ] **Manual verification (hover-holds-open)** — hover during a peek and
-      confirm it holds open instead of retracting. **Not yet re-tested**
-      after this session's animation/timing changes.
+      confirm it holds open instead of retracting. **Deferred:** on-device
+      check on 2026-09-04 showed skipping a track opens the full
+      hover/expanded panel instead of the distinct peek UI, so this couldn't
+      be exercised as designed. Not a blocker for Phase 6, but worth
+      revisiting — likely a hover-region or state-machine transition
+      overlapping the peek trigger.
 - [x] **Extra, beyond the original checklist:** a full UI polish pass on
       the peek pill — corner radius unified to a single cohesive 14pt
       (was mismatched 14/20, inherited from the expanded player), padding
