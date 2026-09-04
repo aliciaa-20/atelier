@@ -117,12 +117,24 @@ final class NotchController {
         // state, independent of hover. `removeDuplicates` keeps a steady
         // isPlaying value across every 1s/0.25s poll tick from feeding the
         // state machine an event it'd just no-op on.
+        //
+        // When peek-on-change is enabled, a play/pause toggle earns a peek
+        // too (`.playbackToggled`), same as a track change — it already
+        // resolves resting state (pill vs collapsed) correctly on decay via
+        // `peekTimerElapsed`'s fresh `isPlaying` read, so `.isPlayingChanged`
+        // only needs to run when peek is off and there's no decay to do that
+        // resolution later.
         isPlayingCancellable = nowPlayingCoordinator.$current
             .map { $0?.isPlaying ?? false }
             .removeDuplicates()
-            .sink { [weak viewModel] isPlaying in
-                withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
-                    viewModel?.handle(.isPlayingChanged(isPlaying))
+            .sink { [weak self] isPlaying in
+                guard let self else { return }
+                if AtelierSettings.peekOnTrackChangeEnabled {
+                    triggerPeek(with: .playbackToggled)
+                } else {
+                    withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                        viewModel.handle(.isPlayingChanged(isPlaying))
+                    }
                 }
             }
 
@@ -142,26 +154,30 @@ final class NotchController {
                 let key = "\(info.title)|\(info.artist)"
                 guard key != self?.lastTrackKey else { return }
                 self?.lastTrackKey = key
-                self?.handleTrackChange()
+                self?.triggerPeek(with: .trackChanged)
             }
 
         nowPlayingCoordinator.start()
     }
 
-    private func handleTrackChange() {
+    private func triggerPeek(with event: NotchEvent) {
         guard AtelierSettings.peekOnTrackChangeEnabled else { return }
         withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
-            viewModel.handle(.trackChanged)
+            viewModel.handle(event)
         }
 
-        // Cancel any still-pending decay from an earlier track change so a
-        // rapid skip doesn't cut the new peek short.
+        // Cancel any still-pending decay from an earlier peek so a rapid
+        // skip or play/pause flurry doesn't cut the new peek short.
         peekDecayTask?.cancel()
         peekDecayTask = Task { [weak self] in
             try? await Task.sleep(for: Self.peekDuration)
             guard !Task.isCancelled, let self else { return }
             let isPlaying = nowPlayingCoordinator.current?.isPlaying ?? false
-            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+            // Slower and more damped than the open, matching hoverEnded's
+            // treatment in NotchRootView — the peek retracting at the same
+            // snappy speed it opened with read as abrupt, the same problem
+            // already fixed once for hover-close.
+            withAnimation(.spring(response: 0.55, dampingFraction: 0.92)) {
                 viewModel.handle(.peekTimerElapsed(isPlaying: isPlaying))
             }
         }
