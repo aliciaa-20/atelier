@@ -11,10 +11,10 @@ final class NotchController {
     private let panel = NotchPanel()
     private let viewModel: NotchViewModel
     private let nowPlayingCoordinator = NowPlayingCoordinator()
+    private let liveActivityCoordinator: LiveActivityCoordinator
     private var notchStateCancellable: AnyCancellable?
     private var isPlayingCancellable: AnyCancellable?
     private var trackChangeCancellable: AnyCancellable?
-    private var lastTrackKey: String?
     private var peekDecayTask: Task<Void, Never>?
 
     /// The pill hugs the notch's own height but extends past its width so
@@ -46,14 +46,24 @@ final class NotchController {
     init() {
         guard let screen = NSScreen.notchedOrMain else {
             viewModel = NotchViewModel(collapsedSize: .zero, expandedSize: .zero, pillSize: .zero, peekSize: .zero)
+            liveActivityCoordinator = LiveActivityCoordinator(sources: [
+                NowPlayingLiveActivitySource(coordinator: nowPlayingCoordinator, notchHeight: 0)
+            ])
             panel.contentView = ClickThroughHostingView(
-                rootView: NotchRootView(viewModel: viewModel, nowPlaying: nowPlayingCoordinator)
+                rootView: NotchRootView(
+                    viewModel: viewModel,
+                    nowPlaying: nowPlayingCoordinator,
+                    liveActivity: liveActivityCoordinator
+                )
             )
             return
         }
 
         let metrics = ScreenMetrics(screen: screen)
         let collapsedRect = NotchGeometry.notchRect(for: metrics)
+        liveActivityCoordinator = LiveActivityCoordinator(sources: [
+            NowPlayingLiveActivitySource(coordinator: nowPlayingCoordinator, notchHeight: collapsedRect.height)
+        ])
         let expandedSize = CGSize(
             width: Self.expandedWidth,
             height: collapsedRect.height + Self.playerContentHeight
@@ -81,7 +91,11 @@ final class NotchController {
         )
 
         panel.contentView = ClickThroughHostingView(
-            rootView: NotchRootView(viewModel: viewModel, nowPlaying: nowPlayingCoordinator)
+            rootView: NotchRootView(
+                viewModel: viewModel,
+                nowPlaying: nowPlayingCoordinator,
+                liveActivity: liveActivityCoordinator
+            )
         )
         panel.setFrame(maxRect, display: true)
         panel.orderFrontRegardless()
@@ -124,16 +138,21 @@ final class NotchController {
         // `peekTimerElapsed`'s fresh `isPlaying` read, so `.isPlayingChanged`
         // only needs to run when peek is off and there's no decay to do that
         // resolution later.
-        isPlayingCancellable = nowPlayingCoordinator.$current
-            .map { $0?.isPlaying ?? false }
+        // Generalizes the old isPlaying signal to "does the stack have
+        // any content at all" -- for now-playing that's still exactly
+        // isPlaying, since NowPlayingLiveActivitySource only publishes
+        // content while playing (Task 4). `removeDuplicates` preserves
+        // the exact behavior the old `.map { isPlaying }.removeDuplicates()`
+        // had: only fire on an actual true<->false transition.
+        isPlayingCancellable = liveActivityCoordinator.$hasContent
             .removeDuplicates()
-            .sink { [weak self] isPlaying in
+            .sink { [weak self] hasContent in
                 guard let self else { return }
                 if AtelierSettings.peekOnTrackChangeEnabled {
                     triggerPeek(with: .playbackToggled)
                 } else {
                     withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
-                        viewModel.handle(.isPlayingChanged(isPlaying))
+                        viewModel.handle(.isPlayingChanged(hasContent))
                     }
                 }
             }
@@ -148,12 +167,11 @@ final class NotchController {
         // with itself. DynamicNotchKit stays a dependency for later,
         // genuinely separate activity types (timers, calendar) that aren't
         // just "a preview of what the panel already shows."
-        trackChangeCancellable = nowPlayingCoordinator.$current
-            .compactMap { $0 }
-            .sink { [weak self] info in
-                let key = "\(info.title)|\(info.artist)"
-                guard key != self?.lastTrackKey else { return }
-                self?.lastTrackKey = key
+        // liveActivityCoordinator.identityChanged already dedups by
+        // content id (Task 5) -- the old lastTrackKey bookkeeping lived
+        // here only because that dedup didn't exist yet.
+        trackChangeCancellable = liveActivityCoordinator.identityChanged
+            .sink { [weak self] in
                 self?.triggerPeek(with: .trackChanged)
             }
 
@@ -172,13 +190,13 @@ final class NotchController {
         peekDecayTask = Task { [weak self] in
             try? await Task.sleep(for: Self.peekDuration)
             guard !Task.isCancelled, let self else { return }
-            let isPlaying = nowPlayingCoordinator.current?.isPlaying ?? false
+            let hasContent = liveActivityCoordinator.hasContent
             // Slower and more damped than the open, matching hoverEnded's
             // treatment in NotchRootView — the peek retracting at the same
             // snappy speed it opened with read as abrupt, the same problem
             // already fixed once for hover-close.
             withAnimation(.spring(response: 0.55, dampingFraction: 0.92)) {
-                viewModel.handle(.peekTimerElapsed(isPlaying: isPlaying))
+                viewModel.handle(.peekTimerElapsed(isPlaying: hasContent))
             }
         }
     }

@@ -4,15 +4,11 @@ import SwiftUI
 struct NotchRootView: View {
     @ObservedObject var viewModel: NotchViewModel
     @ObservedObject var nowPlaying: NowPlayingCoordinator
+    @ObservedObject var liveActivity: LiveActivityCoordinator
     @StateObject private var artworkColor = ArtworkColorLoader()
     @State private var settleScale: CGFloat = 1
     @State private var outputDevices: [AudioOutputDevice] = []
     @State private var currentOutputDeviceID: AudioDeviceID?
-
-    private var topContent: LiveActivityContent? {
-        guard let info = nowPlaying.current, info.isPlaying else { return nil }
-        return NowPlayingActivityContent(info: info, notchHeight: viewModel.collapsedSize.height)
-    }
 
     /// Small/sharp notch-cutout radii at rest, softer/rounder-card radii
     /// once expanded -- matching jackson-storm/dynamicnotch's own
@@ -65,12 +61,12 @@ struct NotchRootView: View {
                         currentOutputDeviceID = OutputDeviceManager.currentDefaultOutputDevice()
                     }
                 } else if viewModel.state == .peeking {
-                    if let topContent {
+                    if let topContent = liveActivity.topContent {
                         topContent.peekView()
                             .transition(.opacity)
                     }
                 } else if viewModel.state == .pill {
-                    if let topContent {
+                    if let topContent = liveActivity.topContent {
                         topContent.pillView()
                             .transition(.opacity)
                     }
