@@ -73,8 +73,11 @@ struct NotchRootView: View {
                             .transition(.opacity)
                     }
                 } else if viewModel.state == .pill {
-                    if let topContent = liveActivity.topContent {
-                        topContent.pillView()
+                    // interruptContent (e.g. Battery briefly surfacing
+                    // over music) wins while it's set; otherwise the real
+                    // top content shows as usual.
+                    if let content = liveActivity.interruptContent ?? liveActivity.topContent {
+                        content.pillView()
                             .transition(.opacity)
                     }
                 }

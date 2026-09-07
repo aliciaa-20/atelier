@@ -6,10 +6,11 @@ struct BatteryActivityContent: LiveActivityContent {
     /// cutout has no display pixels, so peek content starts below it.
     let notchHeight: CGFloat
 
-    /// Deliberately does NOT include `.low`'s percent -- see Fix 6 in the
-    /// final review pass. Including the percent made `LiveActivityCoordinator`
-    /// treat every 1% drop as a new peek-worthy identity change; the percent
-    /// still updates live in `label`, just not in identity.
+    /// Percent-free on purpose -- identity is about *which state*, not the
+    /// live number (which updates every poll via `percent` below without
+    /// needing a new identity). Doesn't gate a peek either way any more
+    /// (`peeksOnChange` is `false`), but keeping identity stable avoids
+    /// unnecessary view-identity churn on every 1% change.
     var id: String {
         switch state {
         case .charging: "battery:charging"
@@ -18,10 +19,22 @@ struct BatteryActivityContent: LiveActivityContent {
         }
     }
 
+    /// Battery is ambient state, not a discrete event worth interrupting
+    /// for -- only ever shows as the small pill icon, never the auto-peek.
+    var peeksOnChange: Bool { false }
+
+    private var percent: Int {
+        switch state {
+        case .charging(let percent): percent
+        case .low(let percent): percent
+        case .full: 100
+        }
+    }
+
     private var symbolName: String {
         switch state {
         case .charging: "bolt.fill"
-        case .low(let percent):
+        case .low:
             if percent <= 10 { "battery.0" }
             else if percent <= 35 { "battery.25" }
             else { "battery.50" }
@@ -39,8 +52,8 @@ struct BatteryActivityContent: LiveActivityContent {
 
     private var label: String {
         switch state {
-        case .charging: "Charging"
-        case .low(let percent): "Battery Low  \(percent)%"
+        case .charging: "Charging  \(percent)%"
+        case .low: "Battery Low  \(percent)%"
         case .full: "Full Battery"
         }
     }
@@ -48,13 +61,34 @@ struct BatteryActivityContent: LiveActivityContent {
     func pillView() -> AnyView {
         AnyView(
             HStack(spacing: 0) {
-                Image(systemName: symbolName)
+                // The real, live percent -- always, not just for `.low`.
+                // `minimumScaleFactor` only does anything once the text is
+                // actually width-constrained -- without the `.frame`
+                // below it had nothing to shrink against, so "100%" (the
+                // widest case) rendered at full size and overflowed
+                // anyway. The frame is the real fix; the smaller base
+                // size and scale factor are the safety margin under it.
+                Text("\(percent)%")
+                    .font(.system(size: 9.5, weight: .medium))
+                    .monospacedDigit()
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
+                    .frame(maxWidth: 22, alignment: .leading)
                     .foregroundStyle(tint)
-                    .font(.system(size: 12))
 
                 Spacer(minLength: 0)
+
+                // Smaller and with more trailing clearance than the pill's
+                // flat-edge padding alone -- NotchShape's bottom corner
+                // curves inward more than the padding accounted for, so a
+                // 12pt icon at 13pt padding was bleeding past the visible
+                // black area right at the corner.
+                Image(systemName: symbolName)
+                    .foregroundStyle(tint)
+                    .font(.system(size: 10))
             }
-            .padding(.horizontal, 6)
+            .padding(.leading, 6)
+            .padding(.trailing, 16)
         )
     }
 

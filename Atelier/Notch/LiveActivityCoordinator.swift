@@ -1,5 +1,6 @@
 import Combine
 import Foundation
+import SwiftUI
 
 /// Merges every `LiveActivitySource`'s content into a `LiveActivityStack`
 /// and republishes two generic signals `NotchController` maps onto
@@ -13,11 +14,26 @@ import Foundation
 final class LiveActivityCoordinator: ObservableObject {
     @Published private(set) var topContent: LiveActivityContent?
     @Published private(set) var hasContent = false
+    /// A lower-priority source's content, shown briefly in the pill even
+    /// while a higher-priority source (e.g. now-playing) is on top --
+    /// otherwise something like Battery would be invisible for as long as
+    /// music plays. Only `NotchRootView`'s `.pill` branch reads this; peek
+    /// and expanded are untouched, so this never pops the bigger view,
+    /// just briefly swaps what the small pill shows.
+    @Published private(set) var interruptContent: LiveActivityContent?
     let identityChanged = PassthroughSubject<Void, Never>()
+
+    private static let interruptDuration: Duration = .seconds(3)
 
     private var stack = LiveActivityStack()
     private var latestContent: [String: LiveActivityContent] = [:]
     private var lastContentID: String?
+    /// Per-source last-seen content id, independent of `lastContentID`
+    /// (which only tracks the *top* content's id) -- this is what lets a
+    /// source that's never on top still be noticed when its own content
+    /// changes, to drive `interruptContent`.
+    private var lastContentIDBySource: [String: String] = [:]
+    private var interruptClearTask: Task<Void, Never>?
     private var cancellables: Set<AnyCancellable> = []
 
     init(sources: [LiveActivitySource]) {
@@ -53,12 +69,41 @@ final class LiveActivityCoordinator: ObservableObject {
         // its id differs from whatever stale id is still held here.
         let newContentID = topContent?.id
         if let newContentID {
-            if newContentID != lastContentID {
+            // Only peek-worthy content (peeksOnChange == true) fires
+            // identityChanged -- ambient content like Battery becoming
+            // top (or a different battery state arriving) should only
+            // ever update the pill, never auto-pop a peek.
+            if newContentID != lastContentID, topContent?.peeksOnChange == true {
                 identityChanged.send()
             }
             lastContentID = newContentID
         }
 
         hasContent = topContent != nil
+
+        // Briefly interrupt the pill with a lower-priority source's
+        // content when it changes, even though it isn't the current top
+        // (the top content is already visible via `topContent` itself --
+        // no need to interrupt for that). Auto-clears back to the real
+        // top after `interruptDuration`.
+        if let content, sourceID != stack.topID, lastContentIDBySource[sourceID] != content.id {
+            interruptClearTask?.cancel()
+            // Quick pop in, same speed as a peek opening; slower and more
+            // damped going back out, same reasoning as hoverEnded's own
+            // asymmetric treatment in NotchRootView -- retracting at the
+            // same snappy speed it appeared with reads as abrupt.
+            withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
+                interruptContent = content
+            }
+            interruptClearTask = Task { [weak self] in
+                try? await Task.sleep(for: Self.interruptDuration)
+                guard !Task.isCancelled else { return }
+                guard let self else { return }
+                withAnimation(.spring(response: 0.6, dampingFraction: 0.92)) {
+                    self.interruptContent = nil
+                }
+            }
+        }
+        lastContentIDBySource[sourceID] = content?.id
     }
 }
