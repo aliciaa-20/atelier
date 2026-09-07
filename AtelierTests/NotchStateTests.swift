@@ -96,3 +96,29 @@ extension NotchStateTests {
         #expect(result == .expanded)
     }
 }
+
+extension NotchStateTests {
+    @Test func playbackToggledPeeksFromCollapsed() {
+        let result = NotchStateMachine.reduce(.collapsed, on: .playbackToggled)
+
+        #expect(result == .peeking)
+    }
+
+    @Test func playbackToggledPeeksFromPill() {
+        let result = NotchStateMachine.reduce(.pill, on: .playbackToggled)
+
+        #expect(result == .peeking)
+    }
+
+    @Test func playbackToggledDoesNothingWhileAlreadyExpanded() {
+        let result = NotchStateMachine.reduce(.expanded, on: .playbackToggled)
+
+        #expect(result == .expanded)
+    }
+
+    @Test func playbackToggledDoesNothingWhileAlreadyPeeking() {
+        let result = NotchStateMachine.reduce(.peeking, on: .playbackToggled)
+
+        #expect(result == .peeking)
+    }
+}

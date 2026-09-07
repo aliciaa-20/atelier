@@ -24,6 +24,11 @@ enum NotchEvent {
     /// Fired on a detected track change, gated by the user's "peek on
     /// track change" setting before it ever reaches the state machine.
     case trackChanged
+    /// Fired when playback starts or stops, same gating as `trackChanged`.
+    /// A separate case from `isPlayingChanged` (which only governs the
+    /// collapsed/pill resting state) so a play/pause toggle earns a peek
+    /// too, not just a track change.
+    case playbackToggled
     /// Fired by a timer started when entering `.peeking`; a no-op unless
     /// still `.peeking` (i.e. the user hasn't started hovering since).
     case peekTimerElapsed(isPlaying: Bool)
@@ -45,7 +50,7 @@ enum NotchStateMachine {
             case .collapsed, .pill:
                 return isPlaying ? .pill : .collapsed
             }
-        case .trackChanged:
+        case .trackChanged, .playbackToggled:
             // Only takes over from a resting state; an active hover
             // already shows everything a peek would.
             switch state {
