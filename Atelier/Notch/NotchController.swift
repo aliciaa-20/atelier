@@ -178,7 +178,7 @@ final class NotchController {
                 if shouldPeek {
                     triggerPeek(with: .playbackToggled)
                 } else {
-                    withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                    withAnimation(NotchAnimations.open) {
                         viewModel.handle(.isPlayingChanged(hasContent))
                     }
                 }
@@ -212,7 +212,7 @@ final class NotchController {
 
     private func triggerPeek(with event: NotchEvent) {
         guard AtelierSettings.peekOnTrackChangeEnabled else { return }
-        withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+        withAnimation(NotchAnimations.peekOpen) {
             viewModel.handle(event)
         }
 
@@ -227,7 +227,7 @@ final class NotchController {
             // treatment in NotchRootView — the peek retracting at the same
             // snappy speed it opened with read as abrupt, the same problem
             // already fixed once for hover-close.
-            withAnimation(.spring(response: 0.55, dampingFraction: 0.92)) {
+            withAnimation(NotchAnimations.peekClose) {
                 viewModel.handle(.peekTimerElapsed(isPlaying: hasContent))
             }
         }
