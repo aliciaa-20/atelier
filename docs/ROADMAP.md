@@ -9,7 +9,13 @@ this file tracks progress against it.
 architecture) is implemented, unit-tested with 56 tests passing (up from 29),
 and ships the generalized `LiveActivitySource`/`LiveActivityContent` protocol
 for later phases. Pill/peek/hover/decay behavior and the Battery widget were
-confirmed on real hardware this session — see the on-device notes below.
+confirmed on real hardware this session, then iterated live into its final
+shape: Battery is deliberately pill-only (`peeksOnChange == false` — no
+auto-peek, ever), reads state instantly via a real `IOKit.ps` push
+notification instead of polling, always shows a live percent, and briefly
+interrupts the music pill (3s) when its own state changes even while music
+is playing, via a new `LiveActivityCoordinator.interruptContent` mechanism —
+see the on-device notes below for the full list of what was tuned.
 **AirPods is disabled, not shipped**: `IOBluetoothDevice.register(forConnectNotifications:)`
 crashes the app 100% of the time on this machine's current macOS build (a bug
 in Apple's own CoreBluetooth bridge, not something fixable from our code —
@@ -161,11 +167,20 @@ directly.*
 - [x] **Extra, requested mid-implementation:** Resting `.pill` state, previously
       rendering only the bare notch shape, now shows artwork + mini waveform via
       new `PillPlayerView`.
-- [x] **Extra:** Battery widget shipped (charging/low/full alerts via `IOKit.ps`),
-      the first non-now-playing widget proving the protocol seam works.
-      On-device peek behavior not separately exercised (no charger event
-      happened to occur during testing) but the pipeline and rendering are the
-      same code path already confirmed working for now-playing.
+- [x] **Extra:** Battery widget shipped and iterated live on real hardware
+      into its final shape (charging/low/full via `IOKit.ps`), the first
+      non-now-playing widget proving the protocol seam works. Deliberately
+      pill-only per direct on-device feedback (`peeksOnChange == false` —
+      never auto-peeks; a real percent shows in the pill at all times, not
+      just for `.low`); reads state via `IOPSNotificationCreateRunLoopSource`
+      (an instant push notification) rather than a poll, which read as
+      laggy on-device; briefly interrupts the music pill for 3s when its
+      own state changes, via a new `LiveActivityCoordinator.interruptContent`
+      mechanism, so it isn't permanently invisible whenever music plays
+      (music's own priority still wins the pill the rest of the time).
+      **Known open question, not yet decided:** the interrupt is purely
+      change-triggered — it does not periodically re-surface while just
+      sitting there charging. Whether it should is undecided.
 - [x] **Extra:** Now-playing wrapped as the first `LiveActivitySource` without
       rewriting `NowPlayingCoordinator`, proving the seam scales.
 - [x] **Manual verification (pill/peek/hover/decay)** — confirmed on real
