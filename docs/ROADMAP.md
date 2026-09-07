@@ -5,25 +5,29 @@ something runnable, a green test suite, and a commit. Source of truth for the
 overall plan is [the design spec](superpowers/specs/2026-08-31-atelier-notch-design.md);
 this file tracks progress against it.
 
-**Where we are:** Phases 0–6 complete. Phase 6 (Live Activity / widget
-architecture) is implemented, unit-tested with 56 tests passing (up from 29),
-and ships the generalized `LiveActivitySource`/`LiveActivityContent` protocol
-for later phases. Pill/peek/hover/decay behavior and the Battery widget were
-confirmed on real hardware this session, then iterated live into its final
-shape: Battery is deliberately pill-only (`peeksOnChange == false` — no
-auto-peek, ever), reads state instantly via a real `IOKit.ps` push
-notification instead of polling, always shows a live percent, and briefly
-interrupts the music pill (3s) when its own state changes even while music
-is playing, via a new `LiveActivityCoordinator.interruptContent` mechanism —
-see the on-device notes below for the full list of what was tuned.
+**Where we are:** Phases 0–7 code-complete. Phase 6 (Live Activity / widget
+architecture) is implemented and confirmed on real hardware: pill/peek/hover/
+decay behavior and the Battery widget were tuned live into their final shape
+— Battery is deliberately pill-only (`peeksOnChange == false` — no auto-peek,
+ever), reads state instantly via a real `IOKit.ps` push notification instead
+of polling, always shows a live percent, and briefly interrupts the music
+pill (3s) when its own state changes even while music is playing, via a new
+`LiveActivityCoordinator.interruptContent` mechanism — see the on-device
+notes below for the full list of what was tuned.
 **AirPods is disabled, not shipped**: `IOBluetoothDevice.register(forConnectNotifications:)`
 crashes the app 100% of the time on this machine's current macOS build (a bug
 in Apple's own CoreBluetooth bridge, not something fixable from our code —
 see `AirPodsSource.swift`'s doc comment and the commit that disabled it).
-**Next up: Phase 7 — Interaction feel** (gestures and physics-based animation),
-the next item in the reference-app-informed feature survey (see
-[FEATURES.md](FEATURES.md)) — or first, deciding whether/how to pursue a fix
-for the AirPods crash.
+Phase 7 (Interaction feel) is implemented and unit-tested — swipe gestures
+(open/close, skip forward/backward) and a tuned "jelly" spring animation are
+both wired and gated behind `AtelierSettings.gesturesEnabled` — but **neither
+has been confirmed on a real trackpad yet**; see Phase 7's entry below for
+what's still outstanding. 66 tests passing (up from 29 at the end of Phase 5).
+**Next up: Phase 8 — System HUD replacement**, the next item in the
+reference-app-informed feature survey (see [FEATURES.md](FEATURES.md)) — but
+Phase 7's on-device trackpad/jelly verification (see below) is still open and
+should happen before or alongside starting Phase 8. Also still undecided:
+whether/how to pursue a fix for the AirPods crash.
 
 ---
 
@@ -221,13 +225,42 @@ directly.*
 
 See [FEATURES.md §5](FEATURES.md#5-live-activities--system-alerts-extensible-framework).
 
-### ⬜ Phase 7 — Interaction feel
+### ✅ Phase 7 — Interaction feel
 *Ships: gestures and physics-based animation. Can run in parallel with
 Phase 6.*
 
-- [ ] Gesture controls — swipe to open/close, horizontal swipe to seek/skip.
-- [ ] Physics-based spring/"jelly" morph animation mimicking real iOS
-      Dynamic Island motion.
+- [x] Gesture controls — swipe to open/close, horizontal swipe to seek/skip.
+      `NotchGestureInterpreter` is pure, Foundation-only threshold/direction/
+      momentum-discarding logic (unit-tested, 10 new tests — capability
+      gating, direction-dominance lock, momentum discarded); the AppKit-side
+      `NotchGestureModifier` monitors local + global `NSEvent` scroll-wheel
+      streams and feeds it. Wired into `NotchRootView`: swipe down/up over
+      the notch reuses the same `.hoverStarted`/`.hoverEnded` events hover
+      already dispatches to open/close; swipe left/right skips tracks,
+      discretely (no scrub-while-swiping), gated on
+      `liveActivity.topContent?.isExpandable == true` — reusing Phase 6's
+      `isExpandable` flag for the first time since it was declared but left
+      unwired. All of it sits behind a new `AtelierSettings.gesturesEnabled`
+      toggle, mirroring `peekOnTrackChangeEnabled`.
+- [x] Physics-based spring/"jelly" morph animation mimicking real iOS
+      Dynamic Island motion. Spring presets consolidated into
+      `NotchAnimations.swift` (was scattered inline literals); the open
+      spring's `dampingFraction` tuned from 0.8 to 0.65 as a starting point
+      for more overshoot/bounce.
+- [x] **Test suite:** 66 tests passing (up from 56 at Phase 6's end), all new
+      gesture-resolution logic unit-tested in `NotchGestureInterpreterTests`.
+
+> **Verification note:** two things here genuinely need a human with a
+> physical trackpad and could not be verified by any agent in this pipeline:
+> (1) the actual gesture interaction — swipe open/close, swipe skip
+> forward/backward, the gestures-toggle-off gating, and the Battery-active
+> skip-gating — was checked only at the code level (capability-gating logic
+> reviewed correct, build succeeds, full suite passes), never by an actual
+> swipe on an actual trackpad; (2) the "jelly" feel — `dampingFraction: 0.65`
+> is an untested starting point, not a value anyone has watched animate and
+> confirmed looks right. Both need an on-device pass before Phase 7 can be
+> called fully done, same as Phase 4's transport-controls note and Phase 6's
+> IOKit/widget note above.
 
 See [FEATURES.md §2](FEATURES.md#2-interaction--feel).
 

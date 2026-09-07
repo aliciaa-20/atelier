@@ -59,6 +59,13 @@ plus one registration. If it does, the protocol is wrong.
 6. **Never use `MediaRemote`.** It is entitlement-gated since macOS 15.4 and
    returns nil. See `docs/decisions/0001-mediaremote-unavailable.md`.
 7. **Collapsed state must be visually indistinguishable from the stock notch.**
+8. **Gesture-resolution logic stays AppKit-free, mirroring Invariant 1.**
+   `NotchGestureInterpreter` (threshold crossing, direction-dominance lock,
+   momentum discarding, capability gating) imports nothing but Foundation —
+   no `NSEvent`. Raw `NSEvent.Phase`/`momentumPhase` is translated into the
+   interpreter's own `NotchGesturePhase` vocabulary by the AppKit-side
+   `NotchGestureModifier` before crossing the boundary. If you need AppKit
+   in the interpreter, the boundary is wrong.
 
 ## Reference existing notch apps
 
