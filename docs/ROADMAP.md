@@ -18,16 +18,14 @@ notes below for the full list of what was tuned.
 crashes the app 100% of the time on this machine's current macOS build (a bug
 in Apple's own CoreBluetooth bridge, not something fixable from our code —
 see `AirPodsSource.swift`'s doc comment and the commit that disabled it).
-Phase 7 (Interaction feel) is implemented and unit-tested — swipe gestures
-(open/close, skip forward/backward) and a tuned "jelly" spring animation are
-both wired and gated behind `AtelierSettings.gesturesEnabled` — but **neither
-has been confirmed on a real trackpad yet**; see Phase 7's entry below for
-what's still outstanding. 66 tests passing (up from 29 at the end of Phase 5).
+Phase 7 (Interaction feel) is implemented, unit-tested, and confirmed
+on-device — swipe gestures (open/close, skip forward/backward) and a tuned
+"jelly" spring animation are both wired, gated behind
+`AtelierSettings.gesturesEnabled`, and were tried on real hardware (see
+Phase 7's entry below). 70 tests passing (up from 29 at the end of Phase 5).
 **Next up: Phase 8 — System HUD replacement**, the next item in the
-reference-app-informed feature survey (see [FEATURES.md](FEATURES.md)) — but
-Phase 7's on-device trackpad/jelly verification (see below) is still open and
-should happen before or alongside starting Phase 8. Also still undecided:
-whether/how to pursue a fix for the AirPods crash.
+reference-app-informed feature survey (see [FEATURES.md](FEATURES.md)).
+Still undecided: whether/how to pursue a fix for the AirPods crash.
 
 ---
 
@@ -225,42 +223,42 @@ directly.*
 
 See [FEATURES.md §5](FEATURES.md#5-live-activities--system-alerts-extensible-framework).
 
-### ✅ Phase 7 — Interaction feel (pending on-device verification)
+### ✅ Phase 7 — Interaction feel
 *Ships: gestures and physics-based animation. Can run in parallel with
 Phase 6.*
 
 - [x] Gesture controls — swipe to open/close, horizontal swipe to seek/skip.
       `NotchGestureInterpreter` is pure, Foundation-only threshold/direction/
-      momentum-discarding logic (unit-tested, 10 new tests — capability
-      gating, direction-dominance lock, momentum discarded); the AppKit-side
-      `NotchGestureModifier` monitors local + global `NSEvent` scroll-wheel
-      streams and feeds it. Wired into `NotchRootView`: swipe down/up over
-      the notch reuses the same `.hoverStarted`/`.hoverEnded` events hover
-      already dispatches to open/close; swipe left/right skips tracks,
-      discretely (no scrub-while-swiping), gated on
+      momentum-discarding logic (unit-tested — capability gating,
+      direction-dominance lock, momentum discarded, signed accumulation so a
+      suppressed gesture followed by a small reversal can't fire the wrong
+      action); the AppKit-side `NotchGestureModifier` monitors local +
+      global `NSEvent` scroll-wheel streams and feeds it. Wired into
+      `NotchRootView`: swipe down/up over the notch reuses the same
+      `.hoverStarted`/`.hoverEnded` events hover already dispatches to
+      open/close; swipe left/right skips tracks, discretely (no
+      scrub-while-swiping), gated on
       `liveActivity.topContent?.isExpandable == true` — reusing Phase 6's
       `isExpandable` flag for the first time since it was declared but left
       unwired. All of it sits behind a new `AtelierSettings.gesturesEnabled`
-      toggle, mirroring `peekOnTrackChangeEnabled`.
+      toggle, mirroring `peekOnTrackChangeEnabled`. The gesture trigger zone
+      is deliberately notch-local, matching both cited reference apps — see
+      [ADR 0005](decisions/0005-gesture-trigger-zone-is-notch-local.md).
 - [x] Physics-based spring/"jelly" morph animation mimicking real iOS
       Dynamic Island motion. Spring presets consolidated into
       `NotchAnimations.swift` (was scattered inline literals); the open
-      spring's `dampingFraction` tuned from 0.8 to 0.65 as a starting point
-      for more overshoot/bounce.
-- [x] **Test suite:** 66 tests passing (up from 56 at Phase 6's end), all new
+      spring's `dampingFraction` tuned from 0.8 to 0.65, confirmed on-device
+      to read as a genuine elastic overshoot.
+- [x] **Test suite:** 70 tests passing (up from 56 at Phase 6's end), all new
       gesture-resolution logic unit-tested in `NotchGestureInterpreterTests`.
-
-> **Verification note:** two things here genuinely need a human with a
-> physical trackpad and could not be verified by any agent in this pipeline:
-> (1) the actual gesture interaction — swipe open/close, swipe skip
-> forward/backward, the gestures-toggle-off gating, and the Battery-active
-> skip-gating — was checked only at the code level (capability-gating logic
-> reviewed correct, build succeeds, full suite passes), never by an actual
-> swipe on an actual trackpad; (2) the "jelly" feel — `dampingFraction: 0.65`
-> is an untested starting point, not a value anyone has watched animate and
-> confirmed looks right. Both need an on-device pass before Phase 7 can be
-> called fully done, same as Phase 4's transport-controls note and Phase 6's
-> IOKit/widget note above.
+- [x] **On-device verification:** confirmed working — swipe open/close and
+      swipe skip both function as designed, and the tuned jelly overshoot
+      reads correctly. A final whole-branch review (run before the on-device
+      pass) caught and fixed one real bug first: the interpreter accumulated
+      swipe distance as unsigned magnitude but read direction from the
+      latest single sample, so a suppressed gesture followed by a tiny
+      opposite-direction jitter could fire the wrong action — fixed by
+      switching to signed accumulation, with a regression test added.
 
 See [FEATURES.md §2](FEATURES.md#2-interaction--feel).
 
