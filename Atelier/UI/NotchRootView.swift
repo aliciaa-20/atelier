@@ -9,6 +9,11 @@ struct NotchRootView: View {
     @State private var outputDevices: [AudioOutputDevice] = []
     @State private var currentOutputDeviceID: AudioDeviceID?
 
+    private var topContent: LiveActivityContent? {
+        guard let info = nowPlaying.current, info.isPlaying else { return nil }
+        return NowPlayingActivityContent(info: info, notchHeight: viewModel.collapsedSize.height)
+    }
+
     /// Small/sharp notch-cutout radii at rest, softer/rounder-card radii
     /// once expanded -- matching jackson-storm/dynamicnotch's own
     /// distinction between its collapsed notch shape (~9/13) and its
@@ -60,19 +65,15 @@ struct NotchRootView: View {
                         currentOutputDeviceID = OutputDeviceManager.currentDefaultOutputDevice()
                     }
                 } else if viewModel.state == .peeking {
-                    PeekPlayerView(
-                        info: nowPlaying.current,
-                        notchHeight: viewModel.collapsedSize.height,
-                        waveformColor: artworkColor.color
-                    )
-                    .transition(.opacity)
+                    if let topContent {
+                        topContent.peekView()
+                            .transition(.opacity)
+                    }
                 } else if viewModel.state == .pill {
-                    PillPlayerView(
-                        info: nowPlaying.current,
-                        notchHeight: viewModel.collapsedSize.height,
-                        waveformColor: artworkColor.color
-                    )
-                    .transition(.opacity)
+                    if let topContent {
+                        topContent.pillView()
+                            .transition(.opacity)
+                    }
                 }
             }
             .frame(width: viewModel.currentSize.width, height: viewModel.currentSize.height)
