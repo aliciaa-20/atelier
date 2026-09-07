@@ -6,7 +6,7 @@ import Foundation
 /// its own file.
 enum NotchLiveActivityPriority {
     static let nowPlaying = 10
-    // Battery/AirPods priorities are added here in later tasks.
+    static let battery = 5
 }
 
 /// Wraps the existing `NowPlayingCoordinator` as a `LiveActivitySource`,

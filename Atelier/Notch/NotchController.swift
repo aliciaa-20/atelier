@@ -47,7 +47,8 @@ final class NotchController {
         guard let screen = NSScreen.notchedOrMain else {
             viewModel = NotchViewModel(collapsedSize: .zero, expandedSize: .zero, pillSize: .zero, peekSize: .zero)
             liveActivityCoordinator = LiveActivityCoordinator(sources: [
-                NowPlayingLiveActivitySource(coordinator: nowPlayingCoordinator, notchHeight: 0)
+                NowPlayingLiveActivitySource(coordinator: nowPlayingCoordinator, notchHeight: 0),
+                BatterySource()
             ])
             panel.contentView = ClickThroughHostingView(
                 rootView: NotchRootView(
@@ -62,7 +63,8 @@ final class NotchController {
         let metrics = ScreenMetrics(screen: screen)
         let collapsedRect = NotchGeometry.notchRect(for: metrics)
         liveActivityCoordinator = LiveActivityCoordinator(sources: [
-            NowPlayingLiveActivitySource(coordinator: nowPlayingCoordinator, notchHeight: collapsedRect.height)
+            NowPlayingLiveActivitySource(coordinator: nowPlayingCoordinator, notchHeight: collapsedRect.height),
+            BatterySource()
         ])
         let expandedSize = CGSize(
             width: Self.expandedWidth,
