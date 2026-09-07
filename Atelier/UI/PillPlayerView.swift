@@ -13,7 +13,7 @@ import SwiftUI
 struct PillPlayerView: View {
     let info: NowPlayingInfo?
     let notchHeight: CGFloat
-    let waveformColor: Color
+    @StateObject private var artworkColor = ArtworkColorLoader()
 
     private var artworkSide: CGFloat { min(notchHeight - 6, 20) }
 
@@ -28,7 +28,7 @@ struct PillPlayerView: View {
 
                     WaveformView(
                         isPlaying: info.isPlaying,
-                        color: waveformColor,
+                        color: artworkColor.color,
                         barWidth: 1.5,
                         barSpacing: 1,
                         height: 12
@@ -37,5 +37,7 @@ struct PillPlayerView: View {
             }
         }
         .padding(.horizontal, 6)
+        .onAppear { artworkColor.load(from: info?.artworkURL) }
+        .onChange(of: info?.artworkURL) { _, url in artworkColor.load(from: url) }
     }
 }

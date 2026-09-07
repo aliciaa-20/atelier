@@ -1,0 +1,36 @@
+import Combine
+import Foundation
+
+/// Priorities for every `LiveActivitySource`, kept in one place so a new
+/// source's ranking is a one-line addition, not a magic number buried in
+/// its own file.
+enum NotchLiveActivityPriority {
+    static let nowPlaying = 10
+    // Battery/AirPods priorities are added here in later tasks.
+}
+
+/// Wraps the existing `NowPlayingCoordinator` as a `LiveActivitySource`,
+/// per the design spec's migration note: `NowPlayingCoordinator` itself
+/// is not rewritten, just wrapped.
+final class NowPlayingLiveActivitySource: LiveActivitySource {
+    let id = "nowPlaying"
+    let priority = NotchLiveActivityPriority.nowPlaying
+
+    private let notchHeight: CGFloat
+
+    init(coordinator: NowPlayingCoordinator, notchHeight: CGFloat) {
+        self.notchHeight = notchHeight
+        self.coordinator = coordinator
+    }
+
+    private let coordinator: NowPlayingCoordinator
+
+    var contentPublisher: AnyPublisher<LiveActivityContent?, Never> {
+        coordinator.$current
+            .map { [notchHeight] info -> LiveActivityContent? in
+                guard let info, info.isPlaying else { return nil }
+                return NowPlayingActivityContent(info: info, notchHeight: notchHeight)
+            }
+            .eraseToAnyPublisher()
+    }
+}
