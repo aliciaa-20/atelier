@@ -23,6 +23,7 @@ final class LiveActivityCoordinator: ObservableObject {
     init(sources: [LiveActivitySource]) {
         for source in sources {
             source.contentPublisher
+                .receive(on: RunLoop.main)
                 .sink { [weak self] content in
                     self?.handle(sourceID: source.id, priority: source.priority, content: content)
                 }

@@ -30,6 +30,17 @@ private final class FakeSource: LiveActivitySource {
 
 @MainActor
 struct LiveActivityCoordinatorTests {
+    /// `LiveActivityCoordinator` now applies `.receive(on: RunLoop.main)`
+    /// to every source (Fix 2 in the final review pass, so a source that
+    /// publishes off the main actor -- `BatterySource`, in this codebase --
+    /// can't corrupt `@Published` state). That makes delivery asynchronous
+    /// even when the publish happens on the main thread, so tests need to
+    /// pump the main run loop briefly after each `publish()` before
+    /// asserting on the coordinator's state.
+    private func drainMainRunLoop() {
+        RunLoop.main.run(until: Date().addingTimeInterval(0.01))
+    }
+
     @Test func topContentIsNilWithNothingPublished() {
         let source = FakeSource(id: "battery", priority: 1)
         let coordinator = LiveActivityCoordinator(sources: [source])
@@ -41,6 +52,7 @@ struct LiveActivityCoordinatorTests {
         let source = FakeSource(id: "battery", priority: 1)
         let coordinator = LiveActivityCoordinator(sources: [source])
         source.publish(contentID: "battery:low")
+        drainMainRunLoop()
         #expect(coordinator.topContent?.id == "battery:low")
         #expect(coordinator.hasContent == true)
     }
@@ -51,6 +63,7 @@ struct LiveActivityCoordinatorTests {
         let coordinator = LiveActivityCoordinator(sources: [low, high])
         low.publish(contentID: "battery:low")
         high.publish(contentID: "trackA")
+        drainMainRunLoop()
         #expect(coordinator.topContent?.id == "trackA")
     }
 
@@ -61,6 +74,7 @@ struct LiveActivityCoordinatorTests {
         low.publish(contentID: "battery:low")
         high.publish(contentID: "trackA")
         high.publish(contentID: nil)
+        drainMainRunLoop()
         #expect(coordinator.topContent?.id == "battery:low")
     }
 
@@ -71,6 +85,7 @@ struct LiveActivityCoordinatorTests {
         let cancellable = coordinator.identityChanged.sink { fireCount += 1 }
         source.publish(contentID: "trackA")
         source.publish(contentID: "trackB")
+        drainMainRunLoop()
         #expect(fireCount == 2) // nil -> trackA, trackA -> trackB
         cancellable.cancel()
     }
@@ -79,9 +94,11 @@ struct LiveActivityCoordinatorTests {
         let source = FakeSource(id: "nowPlaying", priority: 10)
         let coordinator = LiveActivityCoordinator(sources: [source])
         source.publish(contentID: "trackA")
+        drainMainRunLoop()
         var fireCount = 0
         let cancellable = coordinator.identityChanged.sink { fireCount += 1 }
         source.publish(contentID: nil)
+        drainMainRunLoop()
         #expect(fireCount == 0)
         cancellable.cancel()
     }
@@ -95,10 +112,12 @@ struct LiveActivityCoordinatorTests {
         let source = FakeSource(id: "nowPlaying", priority: 10)
         let coordinator = LiveActivityCoordinator(sources: [source])
         source.publish(contentID: "trackA")
+        drainMainRunLoop()
         var fireCount = 0
         let cancellable = coordinator.identityChanged.sink { fireCount += 1 }
         source.publish(contentID: nil) // pause
         source.publish(contentID: "trackA") // resume, same track
+        drainMainRunLoop()
         #expect(fireCount == 0)
         cancellable.cancel()
     }

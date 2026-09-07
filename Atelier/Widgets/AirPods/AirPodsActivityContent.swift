@@ -3,6 +3,9 @@ import SwiftUI
 struct AirPodsActivityContent: LiveActivityContent {
     let kind: AirPodsKind
     let percent: Int?
+    /// Same reasoning as `PeekPlayerView.notchHeight`: the physical notch
+    /// cutout has no display pixels, so peek content starts below it.
+    let notchHeight: CGFloat
 
     var id: String { "airpods:\(kind)" }
 
@@ -17,10 +20,14 @@ struct AirPodsActivityContent: LiveActivityContent {
 
     func pillView() -> AnyView {
         AnyView(
-            Image(systemName: "airpods")
-                .foregroundStyle(.white)
-                .font(.system(size: 12))
-                .padding(.horizontal, 6)
+            HStack(spacing: 0) {
+                Image(systemName: "airpods")
+                    .foregroundStyle(.white)
+                    .font(.system(size: 12))
+
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, 6)
         )
     }
 
@@ -40,6 +47,7 @@ struct AirPodsActivityContent: LiveActivityContent {
             }
             .padding(.horizontal, 24)
             .padding(.bottom, 9)
+            .padding(.top, notchHeight + 4)
         )
     }
 }

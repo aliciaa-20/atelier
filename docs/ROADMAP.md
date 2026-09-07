@@ -9,8 +9,8 @@ this file tracks progress against it.
 architecture) is implemented, unit-tested with 56 tests passing (up from 29),
 and ships two widgets (Battery, AirPods), both unit-tested, plus the generalized
 `LiveActivitySource`/`LiveActivityContent` protocol for later phases. Pill
-display with artwork + mini waveform is implemented and unit-tested, with
-on-device confirmation still pending (no display access in this session).
+display with artwork + mini waveform is implemented, with on-device
+confirmation still pending (no display access in this session).
 **Next up: Phase 7 — Interaction feel** (gestures and physics-based animation),
 the next item in the reference-app-informed feature survey (see
 [FEATURES.md](FEATURES.md)).
@@ -176,6 +176,13 @@ directly.*
       charging/low/full alerts are unit-tested for state thresholds, but the visual
       peek/retract behavior under real charging state transitions needs on-device
       confirmation. **Deferred:** no display access in this session.
+- [ ] **Accepted and deferred: `isExpandable` not wired into hover-gating** —
+      `LiveActivityContent.isExpandable` is declared (only now-playing returns
+      `true`) but `NotchRootView`'s hover-to-expand path isn't gated on it yet,
+      so hovering during a Battery/AirPods peek still opens the now-playing
+      `ExpandedPlayerView` (which may be empty/paused) instead of doing nothing.
+      Not a bug to fix this phase — only now-playing has an expanded view so
+      far; documenting it now so it isn't rediscovered later as a surprise.
 - [x] **Test suite:** 56 tests passing (up from 29 at Phase 5's end), all new logic
       unit-tested (`LiveActivityStack`, `LiveActivityCoordinator` merge/priority/
       dedup logic, `BatteryActivityState` thresholds, `AirPodsKind` classification).

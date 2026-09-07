@@ -19,12 +19,18 @@ final class BatterySource: LiveActivitySource {
     private let subject = CurrentValueSubject<LiveActivityContent?, Never>(nil)
     private var pollTask: Task<Void, Never>?
     private var wasCharging = false
+    /// Tracks whether the last publish carried content, so `poll()` only
+    /// sends `nil` on the content -> no-content transition rather than on
+    /// every idle 2s tick -- see Fix 5 in the final review pass.
+    private var lastPublishWasContent = false
+    private let notchHeight: CGFloat
 
     var contentPublisher: AnyPublisher<LiveActivityContent?, Never> {
         subject.eraseToAnyPublisher()
     }
 
-    init() {
+    init(notchHeight: CGFloat) {
+        self.notchHeight = notchHeight
         pollTask = Task { [weak self] in
             while let self, !Task.isCancelled {
                 self.poll()
@@ -51,10 +57,14 @@ final class BatterySource: LiveActivitySource {
 
         guard let state = BatteryActivityState.evaluate(percent: percent, isCharging: isCharging, wasCharging: wasCharging) else {
             wasCharging = isCharging
-            subject.send(nil)
+            if lastPublishWasContent {
+                subject.send(nil)
+                lastPublishWasContent = false
+            }
             return
         }
         wasCharging = isCharging
-        subject.send(BatteryActivityContent(state: state))
+        lastPublishWasContent = true
+        subject.send(BatteryActivityContent(state: state, notchHeight: notchHeight))
     }
 }

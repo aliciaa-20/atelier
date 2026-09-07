@@ -9,6 +9,13 @@ struct NotchRootView: View {
     @State private var settleScale: CGFloat = 1
     @State private var outputDevices: [AudioOutputDevice] = []
     @State private var currentOutputDeviceID: AudioDeviceID?
+    /// The last real `liveActivity.topContent` seen, kept around so the
+    /// `.peeking` branch has something to render even if the source has
+    /// already withdrawn its content (e.g. `BatterySource`'s "Charging"
+    /// state, which decays after one poll) while the 2.5s peek animation
+    /// is still playing out. Not cleared on retract -- see Fix 3 in the
+    /// final review pass.
+    @State private var lastPeekContent: LiveActivityContent?
 
     /// Small/sharp notch-cutout radii at rest, softer/rounder-card radii
     /// once expanded -- matching jackson-storm/dynamicnotch's own
@@ -61,7 +68,7 @@ struct NotchRootView: View {
                         currentOutputDeviceID = OutputDeviceManager.currentDefaultOutputDevice()
                     }
                 } else if viewModel.state == .peeking {
-                    if let topContent = liveActivity.topContent {
+                    if let topContent = liveActivity.topContent ?? lastPeekContent {
                         topContent.peekView()
                             .transition(.opacity)
                     }
@@ -87,7 +94,7 @@ struct NotchRootView: View {
                     // abrupt since there's no destination content to draw
                     // the eye the way the expanding player does on open.
                     withAnimation(.spring(response: 0.55, dampingFraction: 0.92)) {
-                        viewModel.handle(.hoverEnded(isPlaying: nowPlaying.current?.isPlaying ?? false))
+                        viewModel.handle(.hoverEnded(isPlaying: liveActivity.hasContent))
                     }
                 }
             }
@@ -105,6 +112,11 @@ struct NotchRootView: View {
         }
         .onChange(of: nowPlaying.current?.artworkURL) { _, url in
             artworkColor.load(from: url)
+        }
+        .onChange(of: liveActivity.topContent?.id) { _, _ in
+            if let topContent = liveActivity.topContent {
+                lastPeekContent = topContent
+            }
         }
     }
 
