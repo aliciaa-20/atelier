@@ -167,7 +167,15 @@ final class NotchController {
             .removeDuplicates()
             .sink { [weak self] hasContent in
                 guard let self else { return }
-                if AtelierSettings.peekOnTrackChangeEnabled {
+                // Only peek-worthy content (peeksOnChange == true, the
+                // default -- false for ambient content like Battery)
+                // earns the pop-out peek; `nil` on departure (`?? false`)
+                // also means going to no-content never peeks either, so
+                // an ambient-only pill doesn't flash a peek on its way
+                // down to collapsed.
+                let shouldPeek = AtelierSettings.peekOnTrackChangeEnabled
+                    && (liveActivityCoordinator.topContent?.peeksOnChange ?? false)
+                if shouldPeek {
                     triggerPeek(with: .playbackToggled)
                 } else {
                     withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {

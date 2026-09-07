@@ -2,26 +2,28 @@ import Combine
 import Foundation
 import IOKit.ps
 
-/// Polls `IOKit.ps` (public API, no entitlement) for charging state and
+/// Watches `IOKit.ps` (public API, no entitlement) for charging state and
 /// current capacity, republishing a `BatteryActivityContent?` whenever
 /// `BatteryActivityState.evaluate` finds something worth surfacing.
 /// Adapted from Clayton630/QuartzNotch's `BatteryActivityManager`, read
 /// via `gh api` before designing (see check-reference-apps-first) --
-/// simplified to a single poll loop instead of its
-/// `IOPSNotificationCreateRunLoopSource` run-loop source + event
-/// coalescing, since a 2s poll is more than fast enough for a battery
-/// alert (unlike now-playing's scrubber, nothing here needs sub-second
-/// latency).
+/// uses the same `IOPSNotificationCreateRunLoopSource` push notification
+/// QuartzNotch's own manager does, rather than a poll loop: a 2s poll
+/// read as laggy on-device for something as immediate as plugging in a
+/// charger.
 final class BatterySource: LiveActivitySource {
     let id = "battery"
     let priority = NotchLiveActivityPriority.battery
 
     private let subject = CurrentValueSubject<LiveActivityContent?, Never>(nil)
-    private var pollTask: Task<Void, Never>?
-    private var wasCharging = false
+    // `deinit` runs nonisolated regardless of this class's actor, and this
+    // property is only ever touched from `init` (MainActor, constructed
+    // once at app startup) and `deinit` at teardown -- same reasoning as
+    // AirPodsSource's `nonisolated(unsafe)` properties.
+    nonisolated(unsafe) private var runLoopSource: CFRunLoopSource?
     /// Tracks whether the last publish carried content, so `poll()` only
     /// sends `nil` on the content -> no-content transition rather than on
-    /// every idle 2s tick -- see Fix 5 in the final review pass.
+    /// every notification -- see Fix 5 in the final review pass.
     private var lastPublishWasContent = false
     private let notchHeight: CGFloat
 
@@ -31,16 +33,22 @@ final class BatterySource: LiveActivitySource {
 
     init(notchHeight: CGFloat) {
         self.notchHeight = notchHeight
-        pollTask = Task { [weak self] in
-            while let self, !Task.isCancelled {
-                self.poll()
-                try? await Task.sleep(for: .seconds(2))
-            }
-        }
+        poll()
+
+        let context = Unmanaged.passUnretained(self).toOpaque()
+        guard let source = IOPSNotificationCreateRunLoopSource({ context in
+            guard let context else { return }
+            Unmanaged<BatterySource>.fromOpaque(context).takeUnretainedValue().poll()
+        }, context)?.takeRetainedValue() else { return }
+
+        runLoopSource = source
+        CFRunLoopAddSource(CFRunLoopGetMain(), source, .defaultMode)
     }
 
     deinit {
-        pollTask?.cancel()
+        if let runLoopSource {
+            CFRunLoopRemoveSource(CFRunLoopGetMain(), runLoopSource, .defaultMode)
+        }
     }
 
     private func poll() {
@@ -55,15 +63,13 @@ final class BatterySource: LiveActivitySource {
 
         let percent = Int((Double(currentCapacity) / Double(maxCapacity) * 100).rounded())
 
-        guard let state = BatteryActivityState.evaluate(percent: percent, isCharging: isCharging, wasCharging: wasCharging) else {
-            wasCharging = isCharging
+        guard let state = BatteryActivityState.evaluate(percent: percent, isCharging: isCharging) else {
             if lastPublishWasContent {
                 subject.send(nil)
                 lastPublishWasContent = false
             }
             return
         }
-        wasCharging = isCharging
         lastPublishWasContent = true
         subject.send(BatteryActivityContent(state: state, notchHeight: notchHeight))
     }

@@ -40,10 +40,17 @@ protocol LiveActivityContent {
     /// `NotchContentProtocol.isExpandable` defaulting to `false` in the
     /// dynamicnotch reference.
     var isExpandable: Bool { get }
+    /// Whether this content arriving/becoming top should auto-pop the
+    /// `.peeking` view. `false` for ambient state like Battery, which
+    /// should only ever show as the small pill icon -- surfacing a full
+    /// peek every time the charger state changes reads as noisy, not
+    /// informative, on-device (confirmed by the user directly).
+    var peeksOnChange: Bool { get }
     @ViewBuilder func pillView() -> AnyView
     @ViewBuilder func peekView() -> AnyView
 }
 
 extension LiveActivityContent {
     var isExpandable: Bool { false }
+    var peeksOnChange: Bool { true }
 }
