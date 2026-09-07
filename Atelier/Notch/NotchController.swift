@@ -169,7 +169,12 @@ final class NotchController {
         // just "a preview of what the panel already shows."
         // liveActivityCoordinator.identityChanged already dedups by
         // content id (Task 5) -- the old lastTrackKey bookkeeping lived
-        // here only because that dedup didn't exist yet.
+        // here only because that dedup didn't exist yet. The coordinator's
+        // dedup id survives a pause/resume of the same track (it's only
+        // ever updated to a non-nil id, never cleared when content
+        // disappears), so it does not spuriously re-fire on resume --
+        // matching lastTrackKey's own behavior, which was likewise
+        // untouched by isPlaying transitions.
         trackChangeCancellable = liveActivityCoordinator.identityChanged
             .sink { [weak self] in
                 self?.triggerPeek(with: .trackChanged)

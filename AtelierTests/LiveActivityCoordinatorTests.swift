@@ -85,4 +85,21 @@ struct LiveActivityCoordinatorTests {
         #expect(fireCount == 0)
         cancellable.cancel()
     }
+
+    /// Pausing then resuming the *same* track makes the source publish
+    /// nil (pause) and then the same id again (resume) -- `lastContentID`
+    /// must survive the nil publish so the resume doesn't look like a
+    /// new track. Regression test for the double-`identityChanged`-fire
+    /// bug found in review of Task 6.
+    @Test func identityChangedDoesNotFireOnResumeOfSameTrackAfterPause() {
+        let source = FakeSource(id: "nowPlaying", priority: 10)
+        let coordinator = LiveActivityCoordinator(sources: [source])
+        source.publish(contentID: "trackA")
+        var fireCount = 0
+        let cancellable = coordinator.identityChanged.sink { fireCount += 1 }
+        source.publish(contentID: nil) // pause
+        source.publish(contentID: "trackA") // resume, same track
+        #expect(fireCount == 0)
+        cancellable.cancel()
+    }
 }

@@ -41,11 +41,22 @@ final class LiveActivityCoordinator: ObservableObject {
 
         topContent = stack.topID.flatMap { latestContent[$0] }
 
+        // `lastContentID` is only ever updated to a non-nil id -- it is
+        // NOT cleared when content disappears (e.g. a pause). That way a
+        // pause/resume of the *same* track leaves `lastContentID`
+        // pointing at that track's still-correct id, so the resume
+        // publish sees `newContentID == lastContentID` and does not fire
+        // `identityChanged` -- matching the pre-Task-6 `lastTrackKey`
+        // behavior, which was likewise untouched by isPlaying transitions.
+        // A genuinely different track appearing later still fires, since
+        // its id differs from whatever stale id is still held here.
         let newContentID = topContent?.id
-        if let newContentID, newContentID != lastContentID {
-            identityChanged.send()
+        if let newContentID {
+            if newContentID != lastContentID {
+                identityChanged.send()
+            }
+            lastContentID = newContentID
         }
-        lastContentID = newContentID
 
         hasContent = topContent != nil
     }
