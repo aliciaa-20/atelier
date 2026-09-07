@@ -48,7 +48,8 @@ final class NotchController {
             viewModel = NotchViewModel(collapsedSize: .zero, expandedSize: .zero, pillSize: .zero, peekSize: .zero)
             liveActivityCoordinator = LiveActivityCoordinator(sources: [
                 NowPlayingLiveActivitySource(coordinator: nowPlayingCoordinator, notchHeight: 0),
-                BatterySource()
+                BatterySource(),
+                AirPodsSource()
             ])
             panel.contentView = ClickThroughHostingView(
                 rootView: NotchRootView(
@@ -64,7 +65,8 @@ final class NotchController {
         let collapsedRect = NotchGeometry.notchRect(for: metrics)
         liveActivityCoordinator = LiveActivityCoordinator(sources: [
             NowPlayingLiveActivitySource(coordinator: nowPlayingCoordinator, notchHeight: collapsedRect.height),
-            BatterySource()
+            BatterySource(),
+            AirPodsSource()
         ])
         let expandedSize = CGSize(
             width: Self.expandedWidth,
