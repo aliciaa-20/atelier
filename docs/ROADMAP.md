@@ -225,7 +225,7 @@ directly.*
 
 See [FEATURES.md §5](FEATURES.md#5-live-activities--system-alerts-extensible-framework).
 
-### ✅ Phase 7 — Interaction feel
+### ✅ Phase 7 — Interaction feel (pending on-device verification)
 *Ships: gestures and physics-based animation. Can run in parallel with
 Phase 6.*
 

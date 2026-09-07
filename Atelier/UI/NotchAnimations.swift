@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Every spring/easing curve the notch's transitions use, named and
+/// The notch's open/close/peek/settle transition curves, named and
 /// centralized instead of scattered inline literals — same shape as
 /// dynamicnotch's `NotchAnimations.swift` (read via `gh api` during
 /// Phase 7 design), though Atelier keeps fixed values rather than
