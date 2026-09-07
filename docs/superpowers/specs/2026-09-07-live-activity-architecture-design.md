@@ -197,3 +197,19 @@ built second and its on-device verification is deferred until they do.
 Existing pill/peek/expanded now-playing behavior must not regress.
 `NowPlayingCoordinator` gets wrapped as a `LiveActivitySource` rather than
 rewritten; its existing tests continue to apply to the wrapped behavior.
+
+## Addendum — resting pill gets real content
+
+`NotchRootView`'s `.pill` case currently renders nothing but the bare
+`NotchShape` — `.peeking` and `.expanded` have content, `.pill` doesn't,
+which undershoots Phase 5's own "slim pill hugs the notch while music
+plays" goal. `pillSize` is only `pillExtraWidth` (40pt) wider than the real
+notch cutout and the *same height* — no room for text, only two ~20pt
+flanks either side of the true notch. That matches the QuartzNotch
+reference image directly: artwork icon on the left flank, a mini waveform
+on the right flank, nothing else.
+
+`PillPlayerView` (new, reuses `ArtworkView`/`WaveformView` — same pattern
+as `PeekPlayerView`) becomes `NowPlayingLiveActivityContent`'s
+`pillView()`, so this ships as part of the `LiveActivityContent` work
+rather than a separate pass.
