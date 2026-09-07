@@ -88,7 +88,7 @@ struct NotchRootView: View {
             .contentShape(Rectangle())
             .onHover { hovering in
                 if hovering {
-                    withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                    withAnimation(NotchAnimations.open) {
                         viewModel.handle(.hoverStarted)
                     }
                 } else {
@@ -96,7 +96,7 @@ struct NotchRootView: View {
                     // shut at the same speed it opened, which read as
                     // abrupt since there's no destination content to draw
                     // the eye the way the expanding player does on open.
-                    withAnimation(.spring(response: 0.55, dampingFraction: 0.92)) {
+                    withAnimation(NotchAnimations.close) {
                         viewModel.handle(.hoverEnded(isPlaying: liveActivity.hasContent))
                     }
                 }
@@ -128,10 +128,10 @@ struct NotchRootView: View {
     /// `NotchViewModel.spaceChangeTick`) reads as an intentional arrival cue
     /// rather than an accidental float.
     private func playSettleAnimation() {
-        withAnimation(.easeOut(duration: 0.12)) {
+        withAnimation(NotchAnimations.settleTuck) {
             settleScale = 0.55
         }
-        withAnimation(.spring(response: 0.35, dampingFraction: 0.5).delay(0.12)) {
+        withAnimation(NotchAnimations.settleSpringBack.delay(0.12)) {
             settleScale = 1
         }
     }
