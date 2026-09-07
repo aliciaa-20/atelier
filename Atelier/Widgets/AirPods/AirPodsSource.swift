@@ -22,12 +22,14 @@ final class AirPodsSource: LiveActivitySource {
     // checking for any other IOBluetooth use in this file.
     nonisolated(unsafe) private var connectNotification: IOBluetoothUserNotification?
     nonisolated(unsafe) private var disconnectNotification: IOBluetoothUserNotification?
+    private let notchHeight: CGFloat
 
     var contentPublisher: AnyPublisher<LiveActivityContent?, Never> {
         subject.eraseToAnyPublisher()
     }
 
-    init() {
+    init(notchHeight: CGFloat) {
+        self.notchHeight = notchHeight
         connectNotification = IOBluetoothDevice.register(
             forConnectNotifications: self,
             selector: #selector(deviceConnected(_:device:))
@@ -49,7 +51,7 @@ final class AirPodsSource: LiveActivitySource {
         }
 
         let percent = AirPodsBatteryReader.percent(for: device)
-        subject.send(AirPodsActivityContent(kind: kind, percent: percent))
+        subject.send(AirPodsActivityContent(kind: kind, percent: percent, notchHeight: notchHeight))
 
         disconnectNotification = device.register(
             forDisconnectNotification: self,

@@ -20,6 +20,9 @@ protocol LiveActivitySource {
     /// content (a track, a battery state) and changes far more often.
     var id: String { get }
     var priority: Int { get }
+    /// May emit from any thread/actor -- `LiveActivityCoordinator` applies
+    /// `.receive(on: RunLoop.main)` itself, so implementations don't need
+    /// to guarantee main-thread delivery on their own.
     var contentPublisher: AnyPublisher<LiveActivityContent?, Never> { get }
 }
 
