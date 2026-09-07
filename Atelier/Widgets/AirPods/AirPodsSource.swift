@@ -1,6 +1,6 @@
 import Combine
 import Foundation
-@preconcurrency import IOBluetooth
+import IOBluetooth
 
 /// Detects AirPods connect/disconnect via `IOBluetoothDevice`'s public
 /// connect-notification API -- adapted from Clayton630/QuartzNotch's
@@ -13,8 +13,15 @@ final class AirPodsSource: LiveActivitySource {
     let priority = NotchLiveActivityPriority.airpods
 
     private let subject = CurrentValueSubject<LiveActivityContent?, Never>(nil)
-    private var connectNotification: IOBluetoothUserNotification?
-    private var disconnectNotification: IOBluetoothUserNotification?
+    // `deinit` runs nonisolated regardless of this class's actor, and these
+    // two properties are only ever touched from `init`/the connect
+    // notification callback (both effectively MainActor, since this class
+    // is constructed once at app startup and lives for the process
+    // lifetime) and from `deinit` at teardown -- `nonisolated(unsafe)`
+    // accepts that narrow, understood risk without downgrading concurrency
+    // checking for any other IOBluetooth use in this file.
+    nonisolated(unsafe) private var connectNotification: IOBluetoothUserNotification?
+    nonisolated(unsafe) private var disconnectNotification: IOBluetoothUserNotification?
 
     var contentPublisher: AnyPublisher<LiveActivityContent?, Never> {
         subject.eraseToAnyPublisher()
