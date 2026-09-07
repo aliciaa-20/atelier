@@ -7,13 +7,17 @@ this file tracks progress against it.
 
 **Where we are:** Phases 0–6 complete. Phase 6 (Live Activity / widget
 architecture) is implemented, unit-tested with 56 tests passing (up from 29),
-and ships two widgets (Battery, AirPods), both unit-tested, plus the generalized
-`LiveActivitySource`/`LiveActivityContent` protocol for later phases. Pill
-display with artwork + mini waveform is implemented, with on-device
-confirmation still pending (no display access in this session).
+and ships the generalized `LiveActivitySource`/`LiveActivityContent` protocol
+for later phases. Pill/peek/hover/decay behavior and the Battery widget were
+confirmed on real hardware this session — see the on-device notes below.
+**AirPods is disabled, not shipped**: `IOBluetoothDevice.register(forConnectNotifications:)`
+crashes the app 100% of the time on this machine's current macOS build (a bug
+in Apple's own CoreBluetooth bridge, not something fixable from our code —
+see `AirPodsSource.swift`'s doc comment and the commit that disabled it).
 **Next up: Phase 7 — Interaction feel** (gestures and physics-based animation),
 the next item in the reference-app-informed feature survey (see
-[FEATURES.md](FEATURES.md)).
+[FEATURES.md](FEATURES.md)) — or first, deciding whether/how to pursue a fix
+for the AirPods crash.
 
 ---
 
@@ -140,7 +144,7 @@ the next item in the reference-app-informed feature survey (see
 Claude Code mechanic: hooks (auto-build on Swift file save).
 
 ### ✅ Phase 6 — Live Activity / widget architecture
-*Commit `5eac25f`*
+*Commits `109f51a`..`bc5f737`*
 *Ships: an extensible `LiveActivitySource`/`LiveActivityContent` protocol that
 later phases plug into, instead of each bolting a new surface onto `NotchState`
 directly.*
@@ -159,28 +163,40 @@ directly.*
       new `PillPlayerView`.
 - [x] **Extra:** Battery widget shipped (charging/low/full alerts via `IOKit.ps`),
       the first non-now-playing widget proving the protocol seam works.
-- [x] **Extra:** AirPods widget shipped (connection status + best-effort battery
-      percentage via isolated, undocumented-API helper), second widget, built
-      after Battery per explicit user request.
+      On-device peek behavior not separately exercised (no charger event
+      happened to occur during testing) but the pipeline and rendering are the
+      same code path already confirmed working for now-playing.
 - [x] **Extra:** Now-playing wrapped as the first `LiveActivitySource` without
       rewriting `NowPlayingCoordinator`, proving the seam scales.
-- [ ] **Manual verification (AirPods on-device)** — no AirPods hardware was
-      available this session, so even a first connection test hasn't happened yet.
-      **Deferred:** on-device check needed for full AirPods implementation.
-- [ ] **Manual verification (pill/peek/hover/decay)** — the generalized pill/peek
-      state wiring (Task 6's NotchController rewiring) is implemented and
-      unit-tested, but on-device confirmation of the full interaction flow
-      (pill → hover-expand → peek → decay → retract, with proper hover-holds
-      behavior) is pending. **Deferred:** no display access in this session.
-- [ ] **Manual verification (Battery widget peek behavior)** — the Battery widget's
-      charging/low/full alerts are unit-tested for state thresholds, but the visual
-      peek/retract behavior under real charging state transitions needs on-device
-      confirmation. **Deferred:** no display access in this session.
+- [x] **Manual verification (pill/peek/hover/decay)** — confirmed on real
+      hardware: pill shows artwork + waveform, peek fires on track change and
+      decays back to pill, hover expands/collapses correctly. Two real bugs
+      found and fixed live: a build was accidentally run from the main
+      checkout instead of this branch's worktree (not a code bug, but worth
+      recording since it looked like one), and the pill's content was
+      overflowing its bounds — several on-device tuning passes landed on the
+      sizing now in `PillPlayerView` (see its commit history).
+- [ ] **AirPods — disabled, not shipped.** `IOBluetoothDevice.register(forConnectNotifications:)`
+      crashes the app 100% of the time on-device: `EXC_BREAKPOINT` deep inside
+      Apple's own CoreBluetooth bridge (`-[CBPeripheral initWithCentralManager:info:]`,
+      reached via `IOBluetoothRegisterForNotifications` enumerating already-paired
+      devices). Confirmed independent of call timing (deferring registration one
+      run-loop tick made no difference) and independent of a missing
+      `NSBluetoothAlwaysUsageDescription` (added to Info.plist regardless — a
+      real gap either way — made no difference to the crash). This reads as a
+      bug in Apple's framework on this machine's current macOS build, not
+      something fixable from Swift. `AirPodsSource` is built, unit-tested
+      (classification logic), and wired to conform to the protocol, but is not
+      registered in `NotchController`'s source list — see the commit that
+      disabled it. **Needs a decision:** wait for an OS update, try an
+      alternative Bluetooth API, or drop AirPods from this phase's scope
+      entirely and revisit later.
 - [ ] **Accepted and deferred: `isExpandable` not wired into hover-gating** —
       `LiveActivityContent.isExpandable` is declared (only now-playing returns
       `true`) but `NotchRootView`'s hover-to-expand path isn't gated on it yet,
-      so hovering during a Battery/AirPods peek still opens the now-playing
-      `ExpandedPlayerView` (which may be empty/paused) instead of doing nothing.
+      so hovering during a Battery peek (or AirPods, once its crash is fixed)
+      still opens the now-playing `ExpandedPlayerView` (which may be
+      empty/paused) instead of doing nothing.
       Not a bug to fix this phase — only now-playing has an expanded view so
       far; documenting it now so it isn't rediscovered later as a surprise.
 - [x] **Test suite:** 56 tests passing (up from 29 at Phase 5's end), all new logic
