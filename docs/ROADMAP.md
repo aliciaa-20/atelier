@@ -5,16 +5,15 @@ something runnable, a green test suite, and a commit. Source of truth for the
 overall plan is [the design spec](superpowers/specs/2026-08-31-atelier-notch-design.md);
 this file tracks progress against it.
 
-**Where we are:** Phases 0–4 complete. Phase 5 (pill + auto-peek) is
-implemented, unit-tested, and its peek/retract behavior is now confirmed
-on-device after a substantial UI polish pass (peek sizing/padding, a
-cohesive corner radius, a continuous-loop marquee, a real artwork-loading
-latency fix, and per-transition hover animation timing).
-**Next up: Phase 6 — Live Activity / widget architecture**, the first of a
-longer phase sequence drawn from a full survey of reference notch apps (see
-[FEATURES.md](FEATURES.md)). (On-device check found that skipping a track
-currently opens the full hover/expanded panel rather than the distinct
-peek — deferred rather than blocking, see the Phase 5 checklist note below.)
+**Where we are:** Phases 0–6 complete. Phase 6 (Live Activity / widget
+architecture) is implemented, unit-tested with 56 tests passing (up from 29),
+and ships two working widgets (Battery, AirPods) plus the generalized
+`LiveActivitySource`/`LiveActivityContent` protocol for later phases. Pill
+display with artwork + mini waveform is working on-device; AirPods on-device
+verification is deferred pending hardware.
+**Next up: Phase 7 — Interaction feel** (gestures and physics-based animation),
+the next item in the reference-app-informed feature survey (see
+[FEATURES.md](FEATURES.md)).
 
 ---
 
@@ -140,17 +139,38 @@ peek — deferred rather than blocking, see the Phase 5 checklist note below.)
 
 Claude Code mechanic: hooks (auto-build on Swift file save).
 
-### ⬜ Phase 6 — Live Activity / widget architecture
-*Ships: an extensible `NotchWidget`/`LiveActivity` protocol that later
-phases plug into, instead of each bolting a new surface onto `NotchState`
+### ✅ Phase 6 — Live Activity / widget architecture
+*Commit `5eac25f`*
+*Ships: an extensible `LiveActivitySource`/`LiveActivityContent` protocol that
+later phases plug into, instead of each bolting a new surface onto `NotchState`
 directly.*
 
-- [ ] `check-reference-apps-first` spike against Atoll/QuartzNotch/
-      dynamicnotch source before designing — this is the foundational
-      architecture for most of the rest of the backlog.
-- [ ] Generalize `NotchState`'s peek/pill mechanism into an extensible
-      Live Activity concept.
-- [ ] Define the `NotchWidget`/`LiveActivity` protocol other phases conform to.
+- [x] `check-reference-apps-first` spike against jackson-storm/dynamicnotch and
+      Clayton630/QuartzNotch source before designing — foundational architecture
+      for most of the rest of the backlog.
+- [x] Generalize `NotchState`'s peek/pill mechanism into an extensible
+      Live Activity concept via `LiveActivityStack` (pure, priority-sorted) +
+      `LiveActivityCoordinator`, preserving the existing event vocabulary without
+      modifying `NotchState.swift` itself.
+- [x] Define the `LiveActivitySource`/`LiveActivityContent` protocol (mirrors
+      `NowPlayingSource`'s seam) that other phases conform to.
+- [x] **Extra, requested mid-implementation:** Resting `.pill` state, previously
+      rendering only the bare notch shape, now shows artwork + mini waveform via
+      new `PillPlayerView`.
+- [x] **Extra:** Battery widget shipped (charging/low/full alerts via `IOKit.ps`),
+      the first non-now-playing widget proving the protocol seam works.
+- [x] **Extra:** AirPods widget shipped (connection status + best-effort battery
+      percentage via isolated, undocumented-API helper), second widget, built
+      after Battery per explicit user request.
+- [x] **Extra:** Now-playing wrapped as the first `LiveActivitySource` without
+      rewriting `NowPlayingCoordinator`, proving the seam scales.
+- [ ] **Manual verification (AirPods on-device)** — no AirPods hardware was
+      available this session, so even a first connection test hasn't happened yet.
+      **Deferred:** on-device check needed for full AirPods implementation.
+- [x] **Test suite:** 56 tests passing (up from 29 at Phase 5's end), all new logic
+      unit-tested (`LiveActivityStack`, `LiveActivityCoordinator` merge/priority/
+      dedup logic, `BatteryActivityState` thresholds, `AirPodsKind` classification).
+      IOKit/IOBluetooth polling and widget on-device verification remain manual.
 
 See [FEATURES.md §5](FEATURES.md#5-live-activities--system-alerts-extensible-framework).
 
