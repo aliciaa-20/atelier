@@ -37,6 +37,11 @@ struct AtelierApp: App {
                 set: { UserDefaults.standard.set($0, forKey: AtelierSettings.peekOnTrackChangeKey) }
             ))
 
+            Toggle("Enable Gestures", isOn: Binding(
+                get: { AtelierSettings.gesturesEnabled },
+                set: { UserDefaults.standard.set($0, forKey: AtelierSettings.gesturesEnabledKey) }
+            ))
+
             Divider()
 
             Button("Quit Atelier") {
