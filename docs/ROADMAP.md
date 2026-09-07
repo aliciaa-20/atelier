@@ -7,10 +7,10 @@ this file tracks progress against it.
 
 **Where we are:** Phases 0–6 complete. Phase 6 (Live Activity / widget
 architecture) is implemented, unit-tested with 56 tests passing (up from 29),
-and ships two working widgets (Battery, AirPods) plus the generalized
+and ships two widgets (Battery, AirPods), both unit-tested, plus the generalized
 `LiveActivitySource`/`LiveActivityContent` protocol for later phases. Pill
-display with artwork + mini waveform is working on-device; AirPods on-device
-verification is deferred pending hardware.
+display with artwork + mini waveform is implemented and unit-tested, with
+on-device confirmation still pending (no display access in this session).
 **Next up: Phase 7 — Interaction feel** (gestures and physics-based animation),
 the next item in the reference-app-informed feature survey (see
 [FEATURES.md](FEATURES.md)).
@@ -167,6 +167,15 @@ directly.*
 - [ ] **Manual verification (AirPods on-device)** — no AirPods hardware was
       available this session, so even a first connection test hasn't happened yet.
       **Deferred:** on-device check needed for full AirPods implementation.
+- [ ] **Manual verification (pill/peek/hover/decay)** — the generalized pill/peek
+      state wiring (Task 6's NotchController rewiring) is implemented and
+      unit-tested, but on-device confirmation of the full interaction flow
+      (pill → hover-expand → peek → decay → retract, with proper hover-holds
+      behavior) is pending. **Deferred:** no display access in this session.
+- [ ] **Manual verification (Battery widget peek behavior)** — the Battery widget's
+      charging/low/full alerts are unit-tested for state thresholds, but the visual
+      peek/retract behavior under real charging state transitions needs on-device
+      confirmation. **Deferred:** no display access in this session.
 - [x] **Test suite:** 56 tests passing (up from 29 at Phase 5's end), all new logic
       unit-tested (`LiveActivityStack`, `LiveActivityCoordinator` merge/priority/
       dedup logic, `BatteryActivityState` thresholds, `AirPodsKind` classification).
