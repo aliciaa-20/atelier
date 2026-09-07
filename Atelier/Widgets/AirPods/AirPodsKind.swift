@@ -1,6 +1,9 @@
 /// Pure AirPods model classification -- no IOBluetooth import, so it's
 /// unit-testable against fixture vendor/product IDs without a real
-/// device connected.
+/// device connected. Adapted from Clayton630/QuartzNotch's
+/// `BluetoothActivityManager` (specifically `airPodsKindFromApplePID` /
+/// `airPodsKindFromName`), read via `gh api` before designing (see
+/// check-reference-apps-first).
 enum AirPodsKind: Equatable {
     case pro, max, basic, legacy
 
