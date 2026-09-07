@@ -101,35 +101,40 @@ struct NotchRootView: View {
                     }
                 }
             }
+            // Always wired with the real capabilities/closures — the
+            // enabled/disabled gate lives solely in
+            // `NotchGestureModifier`'s own `handleScroll`, which reads
+            // `AtelierSettings.gesturesEnabled` fresh on every scroll
+            // event. A ternary here that swapped in an inert modifier
+            // when the setting was off double-gated on a value SwiftUI
+            // doesn't observe (`UserDefaults`, not `@Published`), so
+            // toggling the setting back on could leave the inert
+            // modifier in place until an unrelated re-render happened to
+            // sweep it away.
             .modifier(
-                AtelierSettings.gesturesEnabled
-                    ? NotchGestureModifier(
-                        capabilities: NotchGestureCapabilities(
-                            canOpen: viewModel.state == .collapsed || viewModel.state == .pill,
-                            canClose: viewModel.state == .expanded || viewModel.state == .peeking,
-                            canSkip: liveActivity.topContent?.isExpandable == true
-                        ),
-                        onOpen: {
-                            withAnimation(NotchAnimations.open) {
-                                viewModel.handle(.hoverStarted)
-                            }
-                        },
-                        onClose: {
-                            withAnimation(NotchAnimations.close) {
-                                viewModel.handle(.hoverEnded(isPlaying: liveActivity.hasContent))
-                            }
-                        },
-                        onSkipForward: {
-                            Task { await nowPlaying.next() }
-                        },
-                        onSkipBackward: {
-                            Task { await nowPlaying.previous() }
+                NotchGestureModifier(
+                    capabilities: NotchGestureCapabilities(
+                        canOpen: viewModel.state == .collapsed || viewModel.state == .pill,
+                        canClose: viewModel.state == .expanded || viewModel.state == .peeking,
+                        canSkip: liveActivity.topContent?.isExpandable == true
+                    ),
+                    onOpen: {
+                        withAnimation(NotchAnimations.open) {
+                            viewModel.handle(.hoverStarted)
                         }
-                    )
-                    : NotchGestureModifier(
-                        capabilities: NotchGestureCapabilities(canOpen: false, canClose: false, canSkip: false),
-                        onOpen: {}, onClose: {}, onSkipForward: {}, onSkipBackward: {}
-                    )
+                    },
+                    onClose: {
+                        withAnimation(NotchAnimations.close) {
+                            viewModel.handle(.hoverEnded(isPlaying: liveActivity.hasContent))
+                        }
+                    },
+                    onSkipForward: {
+                        Task { await nowPlaying.next() }
+                    },
+                    onSkipBackward: {
+                        Task { await nowPlaying.previous() }
+                    }
+                )
             )
             // `allowsHitTesting(false)` must sit on the Spacer alone, not on
             // this whole VStack — an ancestor's `false` overrides a

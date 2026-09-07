@@ -119,6 +119,12 @@ private final class NotchGestureMonitorView: NSView {
         globalMonitor = nil
         resetTracking()
     }
+
+    /// This view exists purely to install `NSEvent` monitors — the
+    /// monitors fire regardless of AppKit hit-testing, so it has no
+    /// business intercepting clicks meant for the SwiftUI content above
+    /// it. Same class of concern as `ClickThroughHostingView` (ADR 0004).
+    override func hitTest(_ point: NSPoint) -> NSView? { nil }
 }
 
 private extension NotchGestureMonitorView {
@@ -174,15 +180,18 @@ private extension NotchGestureMonitorView {
         let result = NotchGestureInterpreter.reduce(trackingState, delta: delta, capabilities: capabilities)
         trackingState = result.state
 
+        // `NSEvent` monitor callbacks (both local and global) already run
+        // on the main thread, so dispatching here only added a run-loop
+        // turn of latency to a feature whose whole point is feel.
         switch result.action {
         case .open:
-            DispatchQueue.main.async { [weak self] in self?.onOpen?() }
+            onOpen?()
         case .close:
-            DispatchQueue.main.async { [weak self] in self?.onClose?() }
+            onClose?()
         case .skipForward:
-            DispatchQueue.main.async { [weak self] in self?.onSkipForward?() }
+            onSkipForward?()
         case .skipBackward:
-            DispatchQueue.main.async { [weak self] in self?.onSkipBackward?() }
+            onSkipBackward?()
         case nil:
             break
         }

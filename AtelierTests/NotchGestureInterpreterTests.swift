@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 @testable import Atelier
 
@@ -170,5 +171,95 @@ struct NotchGestureInterpreterTests {
         }
 
         #expect(fireCount == 1)
+    }
+
+    /// Reproduces the reversal-after-suppressed-action bug from the Phase 7
+    /// final review: with unsigned (`abs()`-summed) accumulation, a net
+    /// upward swipe whose `.close` action was suppressed by capabilities
+    /// left enough accumulated "distance" that a single, tiny reversal
+    /// sample (whose *own* sign happened to be positive) could fire
+    /// `.open` — even though the gesture's real net direction never
+    /// changed. Signed accumulation (deriving direction from the sign of
+    /// the accumulated value, not the latest sample) fixes this: the net
+    /// direction is still upward, so no action should fire at all.
+    @Test func reversalAfterSuppressedActionDoesNotFireOppositeAction() {
+        // .collapsed-like capabilities: open allowed, close is not.
+        let collapsedLike = NotchGestureCapabilities(canOpen: true, canClose: false, canSkip: true)
+        var state = NotchGestureTrackingState()
+
+        // Swipe up (negative dy) well past threshold. The would-be action
+        // is `.close`, which capabilities suppress, so `hasFired` never
+        // gets set and accumulation keeps going.
+        for _ in 0..<10 {
+            let step = NotchGestureInterpreter.reduce(
+                state,
+                delta: NotchGestureDelta(dx: 0, dy: -20, phase: .changed, isMomentum: false),
+                capabilities: collapsedLike
+            )
+            state = step.state
+            #expect(step.action == nil)
+        }
+        #expect(state.hasFired == false)
+        #expect(state.accumulatedDY < 0)
+
+        // A tiny downward jitter. Net accumulated direction is still
+        // firmly negative (upward) -- this must NOT fire `.open`.
+        let jitter = NotchGestureInterpreter.reduce(
+            state,
+            delta: NotchGestureDelta(dx: 0, dy: 1, phase: .changed, isMomentum: false),
+            capabilities: collapsedLike
+        )
+
+        #expect(jitter.action != .open)
+        #expect(jitter.action == nil)
+    }
+
+    @Test func progressReflectsFractionOfThresholdTravelled() {
+        let step = NotchGestureInterpreter.reduce(
+            NotchGestureTrackingState(),
+            delta: NotchGestureDelta(dx: 0, dy: 30, phase: .changed, isMomentum: false),
+            capabilities: allowAll
+        )
+
+        // 30 accumulated points over a 60pt threshold.
+        #expect(step.progress == 0.5)
+        #expect(step.action == nil)
+    }
+
+    @Test func progressClampsAtOneOncePastThreshold() {
+        // 60pt threshold; a single 100pt delta overshoots it in one step,
+        // so progress must clamp to 1 rather than reporting > 1.
+        let step = NotchGestureInterpreter.reduce(
+            NotchGestureTrackingState(),
+            delta: NotchGestureDelta(dx: 0, dy: 100, phase: .changed, isMomentum: false),
+            capabilities: allowAll
+        )
+
+        #expect(step.progress == 1)
+        #expect(step.action == .open)
+    }
+
+    @Test func cancelledPhaseResetsTrackingIdenticallyToEnded() {
+        var state = NotchGestureTrackingState()
+        for _ in 0..<3 {
+            state = NotchGestureInterpreter.reduce(
+                state,
+                delta: NotchGestureDelta(dx: 0, dy: 10, phase: .changed, isMomentum: false),
+                capabilities: allowAll
+            ).state
+        }
+
+        let cancelled = NotchGestureInterpreter.reduce(
+            state,
+            delta: NotchGestureDelta(dx: 0, dy: 0, phase: .cancelled, isMomentum: false),
+            capabilities: allowAll
+        )
+
+        #expect(cancelled.state.accumulatedDX == 0)
+        #expect(cancelled.state.accumulatedDY == 0)
+        #expect(cancelled.state.lockedAxis == nil)
+        #expect(cancelled.state.hasFired == false)
+        #expect(cancelled.action == nil)
+        #expect(cancelled.progress == 0)
     }
 }

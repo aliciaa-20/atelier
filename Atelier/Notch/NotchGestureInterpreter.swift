@@ -87,12 +87,19 @@ enum NotchGestureInterpreter {
         }
 
         var next = state
-        next.accumulatedDX += abs(delta.dx)
-        next.accumulatedDY += abs(delta.dy)
+        // Signed accumulation, not `abs()`-summed magnitude — a
+        // back-and-forth wobble should partially cancel out in net
+        // displacement, and the fired direction must come from the sign
+        // of that net displacement, not from whichever way the finger
+        // happened to be moving on the threshold-crossing sample. See
+        // the Phase 7 final-review fix for the reversal-after-suppressed
+        // -action bug this replaced.
+        next.accumulatedDX += delta.dx
+        next.accumulatedDY += delta.dy
 
         if next.lockedAxis == nil {
-            let dx = next.accumulatedDX
-            let dy = next.accumulatedDY
+            let dx = abs(next.accumulatedDX)
+            let dy = abs(next.accumulatedDY)
             if dx > dy * Self.dominanceMultiplier {
                 next.lockedAxis = .horizontal
             } else if dy > dx * Self.dominanceMultiplier {
@@ -109,11 +116,11 @@ enum NotchGestureInterpreter {
 
         switch axis {
         case .vertical:
-            progress = min(next.accumulatedDY / Self.threshold, 1)
-            if next.accumulatedDY >= Self.threshold {
-                if delta.dy > 0, capabilities.canOpen {
+            progress = min(abs(next.accumulatedDY) / Self.threshold, 1)
+            if abs(next.accumulatedDY) >= Self.threshold {
+                if next.accumulatedDY > 0, capabilities.canOpen {
                     action = .open
-                } else if delta.dy < 0, capabilities.canClose {
+                } else if next.accumulatedDY < 0, capabilities.canClose {
                     action = .close
                 } else {
                     action = nil
@@ -122,9 +129,9 @@ enum NotchGestureInterpreter {
                 action = nil
             }
         case .horizontal:
-            progress = min(next.accumulatedDX / Self.threshold, 1)
-            if next.accumulatedDX >= Self.threshold, capabilities.canSkip {
-                action = delta.dx > 0 ? .skipForward : .skipBackward
+            progress = min(abs(next.accumulatedDX) / Self.threshold, 1)
+            if abs(next.accumulatedDX) >= Self.threshold, capabilities.canSkip {
+                action = next.accumulatedDX > 0 ? .skipForward : .skipBackward
             } else {
                 action = nil
             }
