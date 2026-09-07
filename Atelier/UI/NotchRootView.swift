@@ -66,6 +66,13 @@ struct NotchRootView: View {
                         waveformColor: artworkColor.color
                     )
                     .transition(.opacity)
+                } else if viewModel.state == .pill {
+                    PillPlayerView(
+                        info: nowPlaying.current,
+                        notchHeight: viewModel.collapsedSize.height,
+                        waveformColor: artworkColor.color
+                    )
+                    .transition(.opacity)
                 }
             }
             .frame(width: viewModel.currentSize.width, height: viewModel.currentSize.height)
