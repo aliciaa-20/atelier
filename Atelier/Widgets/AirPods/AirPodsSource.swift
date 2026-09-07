@@ -1,0 +1,58 @@
+import Combine
+import Foundation
+@preconcurrency import IOBluetooth
+
+/// Detects AirPods connect/disconnect via `IOBluetoothDevice`'s public
+/// connect-notification API -- adapted from Clayton630/QuartzNotch's
+/// `BluetoothActivityManager`, read via `gh api` before designing (see
+/// check-reference-apps-first). Classification is `AirPodsKind.classify`
+/// (Task 9); battery percentage is best-effort via
+/// `AirPodsBatteryReader` and omitted from the content when unavailable.
+final class AirPodsSource: LiveActivitySource {
+    let id = "airpods"
+    let priority = NotchLiveActivityPriority.airpods
+
+    private let subject = CurrentValueSubject<LiveActivityContent?, Never>(nil)
+    private var connectNotification: IOBluetoothUserNotification?
+    private var disconnectNotification: IOBluetoothUserNotification?
+
+    var contentPublisher: AnyPublisher<LiveActivityContent?, Never> {
+        subject.eraseToAnyPublisher()
+    }
+
+    init() {
+        connectNotification = IOBluetoothDevice.register(
+            forConnectNotifications: self,
+            selector: #selector(deviceConnected(_:device:))
+        )
+    }
+
+    deinit {
+        connectNotification?.unregister()
+        disconnectNotification?.unregister()
+    }
+
+    @objc private func deviceConnected(_ notification: IOBluetoothUserNotification, device: IOBluetoothDevice) {
+        let name = device.name ?? ""
+        let vendorID = (device.value(forKey: "vendorID") as? NSNumber)?.uint16Value
+        let productID = (device.value(forKey: "productID") as? NSNumber)?.uint16Value
+
+        guard let kind = AirPodsKind.classify(vendorID: vendorID, productID: productID, name: name) else {
+            return
+        }
+
+        let percent = AirPodsBatteryReader.percent(for: device)
+        subject.send(AirPodsActivityContent(kind: kind, percent: percent))
+
+        disconnectNotification = device.register(
+            forDisconnectNotification: self,
+            selector: #selector(deviceDisconnected(_:device:))
+        )
+    }
+
+    @objc private func deviceDisconnected(_ notification: IOBluetoothUserNotification, device: IOBluetoothDevice) {
+        subject.send(nil)
+        disconnectNotification?.unregister()
+        disconnectNotification = nil
+    }
+}

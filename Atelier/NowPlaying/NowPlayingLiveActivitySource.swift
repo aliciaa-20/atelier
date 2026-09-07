@@ -6,6 +6,7 @@ import Foundation
 /// its own file.
 enum NotchLiveActivityPriority {
     static let nowPlaying = 10
+    static let airpods = 6
     static let battery = 5
 }
 
