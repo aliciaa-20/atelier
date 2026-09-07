@@ -101,6 +101,36 @@ struct NotchRootView: View {
                     }
                 }
             }
+            .modifier(
+                AtelierSettings.gesturesEnabled
+                    ? NotchGestureModifier(
+                        capabilities: NotchGestureCapabilities(
+                            canOpen: viewModel.state == .collapsed || viewModel.state == .pill,
+                            canClose: viewModel.state == .expanded || viewModel.state == .peeking,
+                            canSkip: liveActivity.topContent?.isExpandable == true
+                        ),
+                        onOpen: {
+                            withAnimation(NotchAnimations.open) {
+                                viewModel.handle(.hoverStarted)
+                            }
+                        },
+                        onClose: {
+                            withAnimation(NotchAnimations.close) {
+                                viewModel.handle(.hoverEnded(isPlaying: liveActivity.hasContent))
+                            }
+                        },
+                        onSkipForward: {
+                            Task { await nowPlaying.next() }
+                        },
+                        onSkipBackward: {
+                            Task { await nowPlaying.previous() }
+                        }
+                    )
+                    : NotchGestureModifier(
+                        capabilities: NotchGestureCapabilities(canOpen: false, canClose: false, canSkip: false),
+                        onOpen: {}, onClose: {}, onSkipForward: {}, onSkipBackward: {}
+                    )
+            )
             // `allowsHitTesting(false)` must sit on the Spacer alone, not on
             // this whole VStack — an ancestor's `false` overrides a
             // descendant's `true`, so applying it any higher up would (and
