@@ -19,7 +19,9 @@ final class NotchController {
 
     /// The pill hugs the notch's own height but extends past its width so
     /// it reads as a deliberate sliver rather than a wider stock notch.
-    private static let pillExtraWidth: CGFloat = 40
+    /// Tuned on-device across several passes -- see `PillPlayerView`'s
+    /// artwork size and left/right gap for the matching content values.
+    private static let pillExtraWidth: CGFloat = 64
 
     /// Height of `ExpandedPlayerView`'s own content: artwork+text row (50)
     /// + spacing (8) + scrubber incl. time labels (22) + spacing (8) +
@@ -48,8 +50,9 @@ final class NotchController {
             viewModel = NotchViewModel(collapsedSize: .zero, expandedSize: .zero, pillSize: .zero, peekSize: .zero)
             liveActivityCoordinator = LiveActivityCoordinator(sources: [
                 NowPlayingLiveActivitySource(coordinator: nowPlayingCoordinator, notchHeight: 0),
-                BatterySource(notchHeight: 0),
-                AirPodsSource(notchHeight: 0)
+                BatterySource(notchHeight: 0)
+                // AirPodsSource intentionally not registered -- see the
+                // comment at the other call site below.
             ])
             panel.contentView = ClickThroughHostingView(
                 rootView: NotchRootView(
@@ -63,10 +66,22 @@ final class NotchController {
 
         let metrics = ScreenMetrics(screen: screen)
         let collapsedRect = NotchGeometry.notchRect(for: metrics)
+        // AirPodsSource is not registered here on purpose (temporarily):
+        // IOBluetoothDevice.register(forConnectNotifications:) crashes
+        // this process 100% of the time on-device (EXC_BREAKPOINT deep
+        // inside Apple's own CoreBluetooth bridge --
+        // -[CBPeripheral initWithCentralManager:info:], reached via
+        // IOBluetoothRegisterForNotifications enumerating already-paired
+        // devices). Confirmed independent of call timing (deferring via
+        // DispatchQueue.main.async made no difference) and independent of
+        // a missing NSBluetoothAlwaysUsageDescription (added to
+        // Info.plist, made no difference either) -- this is a real bug in
+        // Apple's framework on this machine's current macOS build, not
+        // something fixable from Swift. Re-enable once a workaround or an
+        // OS update resolves it; see docs/ROADMAP.md's Phase 6 notes.
         liveActivityCoordinator = LiveActivityCoordinator(sources: [
             NowPlayingLiveActivitySource(coordinator: nowPlayingCoordinator, notchHeight: collapsedRect.height),
-            BatterySource(notchHeight: collapsedRect.height),
-            AirPodsSource(notchHeight: collapsedRect.height)
+            BatterySource(notchHeight: collapsedRect.height)
         ])
         let expandedSize = CGSize(
             width: Self.expandedWidth,

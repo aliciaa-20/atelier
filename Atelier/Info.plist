@@ -24,6 +24,8 @@
 	<true/>
 	<key>NSAppleEventsUsageDescription</key>
 	<string>Atelier needs to control Music and Spotify to show what is playing and to let you play, pause, and skip tracks from the notch.</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Atelier watches for your AirPods connecting so it can show a quick peek with the model and battery level in the notch.</string>
 	<key>NSHumanReadableCopyright</key>
 	<string></string>
 </dict>

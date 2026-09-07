@@ -30,10 +30,25 @@ final class AirPodsSource: LiveActivitySource {
 
     init(notchHeight: CGFloat) {
         self.notchHeight = notchHeight
-        connectNotification = IOBluetoothDevice.register(
-            forConnectNotifications: self,
-            selector: #selector(deviceConnected(_:device:))
-        )
+
+        // Registering synchronously during app launch crashed on-device
+        // (EXC_BREAKPOINT deep inside CoreBluetooth's
+        // -[CBPairingAgent initWithParentManager:], reached via
+        // IOBluetoothRegisterForNotifications enumerating already-
+        // connected devices) -- a race with the Bluetooth daemon
+        // connection not yet being ready this early in process startup.
+        // Deferring one run-loop tick lets that connection settle first;
+        // this is a startup-ordering issue, not a threading contract
+        // this class controls, so `DispatchQueue.main.async` (not a
+        // fixed delay) is the smallest fix that still registers before
+        // any real user interaction could occur.
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.connectNotification = IOBluetoothDevice.register(
+                forConnectNotifications: self,
+                selector: #selector(self.deviceConnected(_:device:))
+            )
+        }
     }
 
     deinit {
