@@ -37,8 +37,13 @@ struct NotchRootView: View {
     /// card).
     private var cornerRadii: (top: CGFloat, bottom: CGFloat) {
         switch viewModel.state {
-        case .collapsed, .pill:
+        case .collapsed:
+            // Must stay pixel-matched to the real notch (Invariant 7) --
+            // kept separate from `.pill` below so a pill-only radius
+            // tweak can't accidentally touch this.
             return (top: 6, bottom: 14)
+        case .pill:
+            return (top: 6, bottom: 11)
         case .expanded:
             return (top: 14, bottom: 20)
         case .peeking:

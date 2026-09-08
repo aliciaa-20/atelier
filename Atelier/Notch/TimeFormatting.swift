@@ -20,4 +20,16 @@ enum TimeFormatting {
         let minutes = totalMinutes % 60
         return hours > 0 ? "\(hours)h \(minutes)m" : "\(minutes)m"
     }
+
+    /// Same as `hoursAndMinutes`, without the space -- for
+    /// `BatteryActivityContent`'s pill, which has far less room than the
+    /// peek (only the pillView is ever actually shown, per Battery's
+    /// deliberate `peeksOnChange == false`).
+    static func hoursAndMinutesCompact(_ seconds: TimeInterval?) -> String? {
+        guard let seconds, seconds >= 0 else { return nil }
+        let totalMinutes = Int(seconds / 60)
+        let hours = totalMinutes / 60
+        let minutes = totalMinutes % 60
+        return hours > 0 ? "\(hours)h\(minutes)m" : "\(minutes)m"
+    }
 }
