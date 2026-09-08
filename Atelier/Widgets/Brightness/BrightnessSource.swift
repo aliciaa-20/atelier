@@ -18,7 +18,12 @@ import Foundation
 /// rather than the feature silently doing nothing.
 final class BrightnessSource: LiveActivitySource {
     let id = "brightness"
-    let priority = NotchLiveActivityPriority.brightness
+    private let hudOrder: SystemHUDOrder
+
+    /// Computed, not stored -- see `VolumeSource.priority`'s doc comment.
+    var priority: Int {
+        hudOrder.mostRecentID == id ? NotchLiveActivityPriority.systemHUDActive : NotchLiveActivityPriority.systemHUDInactive
+    }
 
     private static let step: Float = 1.0 / 16.0
     /// Same reasoning as `VolumeSource.decayDuration` -- must match
@@ -51,8 +56,9 @@ final class BrightnessSource: LiveActivitySource {
         subject.eraseToAnyPublisher()
     }
 
-    init(notchHeight: CGFloat) {
+    init(notchHeight: CGFloat, hudOrder: SystemHUDOrder) {
         self.notchHeight = notchHeight
+        self.hudOrder = hudOrder
     }
 
     /// Nudges brightness by one step. Returns whether the change was
@@ -72,8 +78,22 @@ final class BrightnessSource: LiveActivitySource {
         return true
     }
 
+    /// Sets brightness to an absolute level, for the peek's drag-to-scrub
+    /// bar -- same reasoning as `VolumeSource.scrub(toPercent:)`.
+    func scrub(toPercent percent: Int) {
+        guard let setBrightness = Self.setBrightness else { return }
+        let clamped = min(max(percent, 0), 100)
+        guard setBrightness(CGMainDisplayID(), Float(clamped) / 100) == 0 else { return }
+        publish(percent: clamped)
+    }
+
     private func publish(percent: Int) {
-        subject.send(BrightnessActivityContent(percent: percent, notchHeight: notchHeight))
+        hudOrder.touch(id)
+        subject.send(BrightnessActivityContent(
+            percent: percent,
+            notchHeight: notchHeight,
+            onScrub: { [weak self] percent in self?.scrub(toPercent: percent) }
+        ))
         decayTask?.cancel()
         decayTask = Task { [weak self] in
             try? await Task.sleep(for: Self.decayDuration)
