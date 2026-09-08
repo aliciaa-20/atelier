@@ -1,6 +1,6 @@
 ---
 name: pre-push-docs-sync
-description: Use before any `git push` in this repo — syncs docs/ROADMAP.md and CLAUDE.md with what actually shipped, scans for leftover debug code, confirms tests are green, and posts a status summary in chat before the push happens.
+description: Use before any `git push` in this repo — syncs docs/ROADMAP.md, CLAUDE.md, and README.md (plus any other docs a shipped change touches, e.g. FEATURES.md or a decisions/ ADR) with what actually shipped, scans for leftover debug code, confirms tests are green, and posts a status summary in chat before the push happens.
 ---
 
 # Pre-Push Docs Sync
@@ -51,11 +51,28 @@ Run through these in order:
    Architecture table or invariants list if they're the kind of thing a
    future session would need to know without re-deriving it.
 
-6. **Check for un-recorded architectural decisions.** If this session made
+6. **Check whether `README.md` needs updating.** It's the first thing
+   anyone (including future-you) sees, and it drifts just as easily as
+   `docs/ROADMAP.md` — a stale "Status" line (this repo shipped a whole
+   push once with README still reading "Phase 0 — scaffolding" long after
+   Phase 8 landed) is worse than a missing one, since it actively
+   misinforms. Check in particular: the Status/phase summary, test count,
+   any Permissions section (a new TCC grant this push added, like
+   Accessibility for the media-key tap, belongs here), and Requirements if
+   the deployment target or toolchain changed.
+
+7. **Check other docs a shipped change actually touches.** Not every push
+   needs this, but don't skip checking: `docs/FEATURES.md` if a feature
+   from its survey shipped or changed scope, and any file under
+   `docs/decisions/` if step 8 below is about to add a new ADR (link it
+   from `CLAUDE.md`'s reference-apps list or elsewhere if that's where
+   ADRs get indexed in this repo).
+
+8. **Check for un-recorded architectural decisions.** If this session made
    a real "we tried X, it didn't work, we did Y instead" call — run
    `recording-architecture-decisions` before pushing, not after.
 
-7. **Post a chat summary before pushing** — not after. Cover:
+9. **Post a chat summary before pushing** — not after. Cover:
    - what shipped in this push, in plain language (not a commit-log dump)
    - which phase(s) this moves the roadmap forward on, if any
    - what's still open / explicitly deferred ("bottom padding could be
@@ -63,9 +80,9 @@ Run through these in order:
      not glossing over)
    - any doc files this skill actually changed
 
-8. **Then push.** If the summary surfaces something that should block the
-   push (failing tests, an unresolved regression), say so and stop instead
-   of pushing anyway.
+10. **Then push.** If the summary surfaces something that should block the
+    push (failing tests, an unresolved regression), say so and stop instead
+    of pushing anyway.
 
 ## What NOT to do
 
@@ -74,10 +91,12 @@ Run through these in order:
   its actual checklist items are done.
 - Don't bundle the docs-sync commit with unrelated code changes — a small
   `docs: ...` commit on top is fine and keeps the history legible.
-- Don't skip step 7 because the changes feel "minor" — a run of small
-  polish commits is exactly the case this skill exists for; it's the
-  large, obviously-a-milestone commits that already get summarized without
-  prompting.
+- Don't skip step 9 (the chat summary) because the changes feel "minor" —
+  a run of small polish commits is exactly the case this skill exists for;
+  it's the large, obviously-a-milestone commits that already get
+  summarized without prompting.
+- Don't skip checking README.md just because it "doesn't change often" —
+  that's exactly why it drifts furthest when it does need a change.
 
 ## Quick Reference
 
@@ -88,4 +107,6 @@ Run through these in order:
 | Tests | `xcodebuild test -scheme Atelier -destination 'platform=macOS'` |
 | Roadmap | `docs/ROADMAP.md` — see `phase-completion-checklist` |
 | Architecture/invariants | `CLAUDE.md` |
-| Non-obvious decisions | `recording-architecture-decisions` skill |
+| First impression / status / permissions | `README.md` |
+| Feature survey scope | `docs/FEATURES.md` (if a surveyed feature shipped/changed) |
+| Non-obvious decisions | `recording-architecture-decisions` skill, `docs/decisions/*.md` |

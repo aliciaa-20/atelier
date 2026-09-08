@@ -341,7 +341,8 @@ XPC-helper subsystem and is deferred to a later phase.
       permission itself proved flaky across ad-hoc-signed rebuilds during
       this session — root-caused to code-signature churn, not the
       permission logic itself, and fixed by switching to stable Personal
-      Team signing (see the signing commit).
+      Team signing — see
+      [ADR 0007](decisions/0007-personal-team-signing.md).
       **Not exercised, still open:** revoking Accessibility access while
       the app is running (does interception stop cleanly).
       **Follow-up polish pass, also confirmed on real hardware:** a
@@ -362,7 +363,9 @@ XPC-helper subsystem and is deferred to a later phase.
       `BrightnessSource`'s new recency-based priority (`SystemHUDOrder`,
       whichever was touched more recently outranks the other) needed
       `LiveActivityCoordinator` to refresh every active source's priority
-      on every event, not just the firing source's own. Also fixed:
+      on every event, not just the firing source's own — see
+      [ADR 0008](decisions/0008-recency-based-system-hud-priority.md).
+      Also fixed:
       `PillPlayerView`'s waveform flank reserving a slightly different
       width (18.5pt) than the artwork flank (17.5pt) it's meant to
       mirror.
@@ -384,7 +387,8 @@ XPC-helper subsystem and is deferred to a later phase.
       IOKit notification instead of one fixed-delay re-poll, to reliably
       catch however long that flag actually takes to settle. Pill corner
       radius also split from `.collapsed`'s (which must stay pixel-matched
-      to the real notch) into its own value, now 6/11.
+      to the real notch) into its own value, now 6/11 — see
+      [ADR 0009](decisions/0009-pill-corner-radius-split-from-collapsed.md).
 
 See [FEATURES.md §3](FEATURES.md#3-system-hud-replacement).
 

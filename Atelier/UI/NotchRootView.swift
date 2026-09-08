@@ -40,7 +40,7 @@ struct NotchRootView: View {
         case .collapsed:
             // Must stay pixel-matched to the real notch (Invariant 7) --
             // kept separate from `.pill` below so a pill-only radius
-            // tweak can't accidentally touch this.
+            // tweak can't accidentally touch this. See ADR 0009.
             return (top: 6, bottom: 14)
         case .pill:
             return (top: 6, bottom: 11)
