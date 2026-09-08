@@ -34,7 +34,7 @@ same `open`/`close` curves as hovering), hovering during a non-expandable
 peek force-opening the now-playing panel (fixed by gating on
 `isExpandable`), and the project's ad-hoc code signing losing track of
 Accessibility grants across rebuilds (switched to the free Personal Team,
-pulling forward part of Phase 16). 82 tests passing (up from 70).
+pulling forward part of Phase 16). 85 tests passing (up from 70).
 **UI sizing/spacing polish for the volume/brightness peek is explicitly
 deferred** — functionally confirmed working, visual polish held for later
 per direct request.
@@ -343,9 +343,7 @@ XPC-helper subsystem and is deferred to a later phase.
       permission logic itself, and fixed by switching to stable Personal
       Team signing (see the signing commit).
       **Not exercised, still open:** revoking Accessibility access while
-      the app is running (does interception stop cleanly), and the
-      Battery peek's new time-remaining/time-to-full text on a real
-      charge/discharge cycle.
+      the app is running (does interception stop cleanly).
       **Follow-up polish pass, also confirmed on real hardware:** a
       compact peek size (`compactPeekSize`, 210×notchHeight+26) for
       Volume/Brightness specifically, with a sharp 6pt top corner radius
@@ -368,6 +366,25 @@ XPC-helper subsystem and is deferred to a later phase.
       `PillPlayerView`'s waveform flank reserving a slightly different
       width (18.5pt) than the artwork flank (17.5pt) it's meant to
       mirror.
+      **Second follow-up pass, Battery pill specifically:** the
+      time-remaining/time-to-full text (previously unreachable dead code
+      -- only in `peekView`, which Battery's `peeksOnChange == false`
+      means never renders) now shows directly in the pill, text-only on
+      both flanks (percent on the right, time on the left; the bolt icon
+      was dropped -- icon+percent together needed ~35pt against each
+      flank's ~18pt safe budget before the physical notch's dead zone
+      swallows content). Both flanks now cap at `maxWidth: 18` so long
+      strings (e.g. "12h34m") shrink via `minimumScaleFactor` instead of
+      extending into that dead zone -- confirmed on-device as a real,
+      asymmetric bug (only the leading-anchored text grows toward the
+      notch as it widens; the trailing-anchored text grows away from it).
+      Also: charging-state detection was only catching macOS's own
+      "Is Charging" flag after a replug, not on the first plug-in --
+      `BatterySource` now does staggered re-polls (1s/3s/6s) after each
+      IOKit notification instead of one fixed-delay re-poll, to reliably
+      catch however long that flag actually takes to settle. Pill corner
+      radius also split from `.collapsed`'s (which must stay pixel-matched
+      to the real notch) into its own value, now 6/11.
 
 See [FEATURES.md §3](FEATURES.md#3-system-hud-replacement).
 
