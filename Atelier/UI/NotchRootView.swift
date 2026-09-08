@@ -27,15 +27,44 @@ struct NotchRootView: View {
     /// reusing `.expanded`'s 14/20 — at the peek pill's small, compact
     /// size, mismatched radii read as an inconsistent shape rather than
     /// one cohesive rounded card (design feedback after seeing it
-    /// on-device).
+    /// on-device). The compact Volume/Brightness peek is an exception:
+    /// its top radius matches the stock notch's own sharp 6pt (same as
+    /// `.collapsed`/`.pill`) instead of the softer 14pt "card" radius --
+    /// on-device, the softer radius shortened the vertical run before the
+    /// curve started, visibly misaligning it against the real notch's own
+    /// sharper corner right above it (this peek reads as still attached
+    /// to the notch, unlike the wider text peek which reads as its own
+    /// card).
     private var cornerRadii: (top: CGFloat, bottom: CGFloat) {
         switch viewModel.state {
         case .collapsed, .pill:
-            (top: 6, bottom: 14)
+            return (top: 6, bottom: 14)
         case .expanded:
-            (top: 14, bottom: 20)
+            return (top: 14, bottom: 20)
         case .peeking:
-            (top: 14, bottom: 14)
+            let content = liveActivity.topContent ?? lastPeekContent
+            return content?.isExpandable == false ? (top: 6, bottom: 14) : (top: 14, bottom: 14)
+        }
+    }
+
+    /// `viewModel.currentSize` alone can't distinguish a compact peek
+    /// (Volume, Brightness -- no title/artist text) from a regular one
+    /// (track change, Battery) -- it only knows `state`, not which live
+    /// activity content is actually showing. Same `topContent ??
+    /// lastPeekContent` fallback as the `.peeking` render branch below, so
+    /// the frame size and the content it's sizing around never mismatch
+    /// mid-decay. The `.pill` state, unlike peeking, uses one width
+    /// (`pillSize`, matching the music pill) for every source -- an
+    /// earlier pass gave Volume/Brightness their own narrower notch-width
+    /// pill, but on-device that read as too cramped; matching the pill
+    /// everything else already uses reads more consistent.
+    private var frameSize: CGSize {
+        switch viewModel.state {
+        case .peeking:
+            let content = liveActivity.topContent ?? lastPeekContent
+            return content?.isExpandable == false ? viewModel.compactPeekSize : viewModel.peekSize
+        case .pill, .collapsed, .expanded:
+            return viewModel.currentSize
         }
     }
 
@@ -82,29 +111,34 @@ struct NotchRootView: View {
                     }
                 }
             }
-            .frame(width: viewModel.currentSize.width, height: viewModel.currentSize.height)
+            .frame(width: frameSize.width, height: frameSize.height)
             .clipShape(NotchShape(topCornerRadius: cornerRadii.top, bottomCornerRadius: cornerRadii.bottom))
             .scaleEffect(settleScale, anchor: .top)
             .contentShape(Rectangle())
             .onHover { hovering in
+                // A non-expandable live activity on top (Volume,
+                // Brightness, Battery) has no expanded view of its own --
+                // `.hoverStarted` would still force open
+                // `ExpandedPlayerView`, showing now-playing info unrelated
+                // to what's actually peeking (the same gap Phase 6
+                // accepted and deferred, now surfaced for real by Phase
+                // 8's peeks). An earlier fix force-closed to the pill on
+                // hover instead, but that broke the volume/brightness
+                // scrub bar: grabbing it necessarily starts with the mouse
+                // entering this same region, so an immediate forced
+                // retraction fired before a drag could ever start.
+                // Ignoring hover entirely while non-expandable content is
+                // up is the actual fix -- its own peek decay timer (reset
+                // by every scrub update, see `VolumeSource.publish`)
+                // already governs when it closes, with no separate
+                // hover-driven transition needed. `nil` topContent
+                // (nothing peeking right now) keeps the original
+                // hover-to-open behavior for the plain notch/pill.
+                guard liveActivity.topContent?.isExpandable ?? true else { return }
+
                 if hovering {
-                    // A non-expandable live activity on top (Volume,
-                    // Brightness, Battery) has no expanded view of its
-                    // own -- `.hoverStarted` would still force open
-                    // `ExpandedPlayerView`, showing now-playing info
-                    // unrelated to what's actually peeking (the same gap
-                    // Phase 6 accepted and deferred, now surfaced for
-                    // real by Phase 8's peeks). `nil` topContent (nothing
-                    // peeking right now) keeps the original hover-to-open
-                    // behavior for the plain notch/pill.
-                    if liveActivity.topContent?.isExpandable == false {
-                        withAnimation(NotchAnimations.close) {
-                            viewModel.handle(.peekTimerElapsed(isPlaying: liveActivity.hasContent))
-                        }
-                    } else {
-                        withAnimation(NotchAnimations.open) {
-                            viewModel.handle(.hoverStarted)
-                        }
+                    withAnimation(NotchAnimations.open) {
+                        viewModel.handle(.hoverStarted)
                     }
                 } else {
                     // Slower and more damped than the open — closing snapped

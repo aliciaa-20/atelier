@@ -13,6 +13,11 @@ final class NotchViewModel: ObservableObject {
     let expandedSize: CGSize
     let pillSize: CGSize
     let peekSize: CGSize
+    /// A smaller `.peeking` footprint for content with no title/artist
+    /// text (Volume, Brightness) -- `NotchRootView` picks between this and
+    /// `peekSize` based on what's actually peeking, not `NotchViewModel`
+    /// itself, which stays state-only and unaware of live activity content.
+    let compactPeekSize: CGSize
 
     /// Bumped each time `NotchController` observes the user landing on a
     /// different Space. There's no public API to detect a three-finger swipe
@@ -23,11 +28,12 @@ final class NotchViewModel: ObservableObject {
     /// moment you arrive, so the fixed position reads as deliberate.
     @Published private(set) var spaceChangeTick: Int = 0
 
-    init(collapsedSize: CGSize, expandedSize: CGSize, pillSize: CGSize, peekSize: CGSize) {
+    init(collapsedSize: CGSize, expandedSize: CGSize, pillSize: CGSize, peekSize: CGSize, compactPeekSize: CGSize) {
         self.collapsedSize = collapsedSize
         self.expandedSize = expandedSize
         self.pillSize = pillSize
         self.peekSize = peekSize
+        self.compactPeekSize = compactPeekSize
     }
 
     func handle(_ event: NotchEvent) {

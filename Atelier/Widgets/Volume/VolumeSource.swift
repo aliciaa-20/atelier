@@ -11,7 +11,14 @@ import Foundation
 /// per the design spec.
 final class VolumeSource: LiveActivitySource {
     let id = "volume"
-    let priority = NotchLiveActivityPriority.volume
+    private let hudOrder: SystemHUDOrder
+
+    /// Computed, not stored -- outranks `BrightnessSource` exactly while
+    /// volume was the more recently touched of the two. See
+    /// `SystemHUDOrder`'s doc comment.
+    var priority: Int {
+        hudOrder.mostRecentID == id ? NotchLiveActivityPriority.systemHUDActive : NotchLiveActivityPriority.systemHUDInactive
+    }
 
     /// Matches the ~1/16 step macOS itself applies per key press.
     private static let step: Float32 = 0.0625
@@ -36,8 +43,9 @@ final class VolumeSource: LiveActivitySource {
         subject.eraseToAnyPublisher()
     }
 
-    init(notchHeight: CGFloat) {
+    init(notchHeight: CGFloat, hudOrder: SystemHUDOrder) {
         self.notchHeight = notchHeight
+        self.hudOrder = hudOrder
     }
 
     /// Nudges volume by one step in the given direction and publishes the
@@ -73,8 +81,31 @@ final class VolumeSource: LiveActivitySource {
         return true
     }
 
+    /// Sets volume to an absolute level, for the peek's drag-to-scrub bar
+    /// -- unlike `step(by:)`'s relative nudge, matching the key press it
+    /// mirrors. Called live on every drag update; `publish()`'s own decay
+    /// reschedule means dragging naturally keeps the peek open for as long
+    /// as the user is interacting, with no separate pause/resume needed.
+    func scrub(toPercent percent: Int) {
+        guard let deviceID = Self.defaultOutputDevice() else { return }
+        let clamped = min(max(percent, 0), 100)
+        guard Self.setVolume(Float32(clamped) / 100, for: deviceID) else { return }
+        // Dragging above 0 also implicitly unmutes, matching step(by:)'s
+        // own key-press behavior.
+        if clamped > 0 {
+            _ = Self.setMuted(false, for: deviceID)
+        }
+        publish(percent: clamped, isMuted: Self.isMuted(for: deviceID) ?? false)
+    }
+
     private func publish(percent: Int, isMuted: Bool) {
-        subject.send(VolumeActivityContent(percent: percent, isMuted: isMuted, notchHeight: notchHeight))
+        hudOrder.touch(id)
+        subject.send(VolumeActivityContent(
+            percent: percent,
+            isMuted: isMuted,
+            notchHeight: notchHeight,
+            onScrub: { [weak self] percent in self?.scrub(toPercent: percent) }
+        ))
         decayTask?.cancel()
         decayTask = Task { [weak self] in
             try? await Task.sleep(for: Self.decayDuration)

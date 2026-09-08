@@ -5,6 +5,9 @@ struct BrightnessActivityContent: LiveActivityContent {
     let percent: Int
     /// Same reasoning as `PeekPlayerView.notchHeight`.
     let notchHeight: CGFloat
+    /// Applies an absolute level live as the peek's bar is dragged -- see
+    /// `BrightnessSource.scrub(toPercent:)`.
+    let onScrub: (Int) -> Void
 
     /// New id per instance -- see `VolumeActivityContent.id` for why.
     let id = UUID().uuidString
@@ -13,53 +16,43 @@ struct BrightnessActivityContent: LiveActivityContent {
         percent < 34 ? "sun.min.fill" : "sun.max.fill"
     }
 
+    /// See `VolumeActivityContent.pillView`'s doc comment -- same
+    /// notch-width-compact, centered, tightly-grouped treatment.
     func pillView() -> AnyView {
         AnyView(
-            HStack(spacing: 0) {
+            HStack(spacing: 4) {
+                Image(systemName: symbolName)
+                    .foregroundStyle(.white)
+                    .font(.system(size: 9))
                 Text("\(percent)%")
-                    .font(.system(size: 9.5, weight: .medium))
+                    .font(.system(size: 9, weight: .medium))
                     .monospacedDigit()
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
-                    .frame(maxWidth: 28, alignment: .leading)
                     .foregroundStyle(.white)
-
-                Spacer(minLength: 0)
-
-                Image(systemName: symbolName)
-                    .foregroundStyle(.yellow)
-                    .font(.system(size: 10))
             }
-            .padding(.leading, 6)
-            .padding(.trailing, 16)
+            .frame(maxWidth: .infinity)
         )
     }
 
     /// Matches the real macOS brightness OSD -- see
     /// `VolumeActivityContent.peekView`'s doc comment for why this is a
-    /// bar, not this app's usual text+percent peek layout.
+    /// bar, not this app's usual text+percent peek layout. Draggable --
+    /// see `ScrubBarView`.
     func peekView() -> AnyView {
         AnyView(
             HStack(spacing: 10) {
                 Image(systemName: symbolName)
                     .foregroundStyle(.white)
-                    .font(.system(size: 15))
-                    .frame(width: 18)
+                    .font(.system(size: 13))
+                    .frame(width: 16)
 
-                GeometryReader { geometry in
-                    ZStack(alignment: .leading) {
-                        Capsule()
-                            .fill(Color.white.opacity(0.25))
-                        Capsule()
-                            .fill(Color.white)
-                            .frame(width: geometry.size.width * CGFloat(percent) / 100)
-                    }
-                }
-                .frame(height: 5)
+                ScrubBarView(fillFraction: CGFloat(percent) / 100, tint: .white, onScrub: onScrub)
             }
-            .padding(.horizontal, 24)
-            .padding(.bottom, 9)
-            .padding(.top, notchHeight + 4)
+            .padding(.leading, 25)
+            .padding(.trailing, 24)
+            .padding(.bottom, 6)
+            .padding(.top, notchHeight + 2)
         )
     }
 }

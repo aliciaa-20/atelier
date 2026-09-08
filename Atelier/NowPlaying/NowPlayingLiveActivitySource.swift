@@ -5,8 +5,15 @@ import Foundation
 /// source's ranking is a one-line addition, not a magic number buried in
 /// its own file.
 enum NotchLiveActivityPriority {
-    static let volume = 20
-    static let brightness = 19
+    /// Volume and Brightness share these two values rather than one fixed
+    /// slot each -- whichever was touched most recently reports
+    /// `.systemHUDActive`, the other `.systemHUDInactive`, via
+    /// `SystemHUDOrder`. Real macOS replaces whichever OSD is showing the
+    /// instant the *other* key is pressed, not after the first one
+    /// decays; a fixed volume-always-above-brightness ranking couldn't
+    /// express that. See `SystemHUDOrder`'s own doc comment.
+    static let systemHUDActive = 20
+    static let systemHUDInactive = 19
     static let nowPlaying = 10
     static let airpods = 6
     static let battery = 5
