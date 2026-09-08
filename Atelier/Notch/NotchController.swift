@@ -12,6 +12,14 @@ final class NotchController {
     private let viewModel: NotchViewModel
     private let nowPlayingCoordinator = NowPlayingCoordinator()
     private let liveActivityCoordinator: LiveActivityCoordinator
+    /// Owned here (not just by `liveActivityCoordinator`'s source list) so
+    /// `mediaKeyInterceptor` below has a stable instance to call
+    /// `.step(by:)`/`.toggleMute()` on.
+    private let volumeSource: VolumeSource
+    private let brightnessSource: BrightnessSource
+    /// Installs its `CGEventTap` on creation and tears it down on deinit --
+    /// held for exactly that lifetime, same as `panel`/`viewModel`.
+    private let mediaKeyInterceptor: MediaKeyInterceptor
     private var notchStateCancellable: AnyCancellable?
     private var isPlayingCancellable: AnyCancellable?
     private var trackChangeCancellable: AnyCancellable?
@@ -43,14 +51,25 @@ final class NotchController {
     /// waveform row (34, governed by the two-line text block: 16+2+16)
     /// + top/bottom padding (4+9).
     private static let peekContentHeight: CGFloat = 47
-    private static let peekDuration: Duration = .seconds(2.5)
+    // Not private: `VolumeSource`/`BrightnessSource` match their own
+    // self-clearing decay to this exact duration -- see their own
+    // `decayDuration` doc comments for why a shorter, independent timer
+    // caused a visible mid-peek glitch.
+    static let peekDuration: Duration = .seconds(2.5)
 
     init() {
         guard let screen = NSScreen.notchedOrMain else {
             viewModel = NotchViewModel(collapsedSize: .zero, expandedSize: .zero, pillSize: .zero, peekSize: .zero)
+            let volumeSource = VolumeSource(notchHeight: 0)
+            let brightnessSource = BrightnessSource(notchHeight: 0)
+            self.volumeSource = volumeSource
+            self.brightnessSource = brightnessSource
+            mediaKeyInterceptor = MediaKeyInterceptor(volumeSource: volumeSource, brightnessSource: brightnessSource)
             liveActivityCoordinator = LiveActivityCoordinator(sources: [
                 NowPlayingLiveActivitySource(coordinator: nowPlayingCoordinator, notchHeight: 0),
-                BatterySource(notchHeight: 0)
+                BatterySource(notchHeight: 0),
+                volumeSource,
+                brightnessSource
                 // AirPodsSource intentionally not registered -- see the
                 // comment at the other call site below.
             ])
@@ -79,9 +98,16 @@ final class NotchController {
         // Apple's framework on this machine's current macOS build, not
         // something fixable from Swift. Re-enable once a workaround or an
         // OS update resolves it; see docs/ROADMAP.md's Phase 6 notes.
+        let volumeSource = VolumeSource(notchHeight: collapsedRect.height)
+        let brightnessSource = BrightnessSource(notchHeight: collapsedRect.height)
+        self.volumeSource = volumeSource
+        self.brightnessSource = brightnessSource
+        mediaKeyInterceptor = MediaKeyInterceptor(volumeSource: volumeSource, brightnessSource: brightnessSource)
         liveActivityCoordinator = LiveActivityCoordinator(sources: [
             NowPlayingLiveActivitySource(coordinator: nowPlayingCoordinator, notchHeight: collapsedRect.height),
-            BatterySource(notchHeight: collapsedRect.height)
+            BatterySource(notchHeight: collapsedRect.height),
+            volumeSource,
+            brightnessSource
         ])
         let expandedSize = CGSize(
             width: Self.expandedWidth,
@@ -212,7 +238,13 @@ final class NotchController {
 
     private func triggerPeek(with event: NotchEvent) {
         guard AtelierSettings.peekOnTrackChangeEnabled else { return }
-        withAnimation(NotchAnimations.peekOpen) {
+        // Reuses the exact same curves as hovering (`NotchRootView`'s
+        // `onHover`), not separate peek-only constants -- a peek is the
+        // same open/close motion as hover, just triggered a different way.
+        // Confirmed on-device: dedicated `peekOpen`/`peekClose` values
+        // (0.8/0.92 damping vs. `open`/`close`'s 0.65/0.92) read as a
+        // visibly less smooth, inconsistent close compared to hovering.
+        withAnimation(NotchAnimations.open) {
             viewModel.handle(event)
         }
 
@@ -223,11 +255,7 @@ final class NotchController {
             try? await Task.sleep(for: Self.peekDuration)
             guard !Task.isCancelled, let self else { return }
             let hasContent = liveActivityCoordinator.hasContent
-            // Slower and more damped than the open, matching hoverEnded's
-            // treatment in NotchRootView — the peek retracting at the same
-            // snappy speed it opened with read as abrupt, the same problem
-            // already fixed once for hover-close.
-            withAnimation(NotchAnimations.peekClose) {
+            withAnimation(NotchAnimations.close) {
                 viewModel.handle(.peekTimerElapsed(isPlaying: hasContent))
             }
         }

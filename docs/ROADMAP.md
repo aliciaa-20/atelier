@@ -23,8 +23,15 @@ on-device — swipe gestures (open/close, skip forward/backward) and a tuned
 "jelly" spring animation are both wired, gated behind
 `AtelierSettings.gesturesEnabled`, and were tried on real hardware (see
 Phase 7's entry below). 70 tests passing (up from 29 at the end of Phase 5).
-**Next up: Phase 8 — System HUD replacement**, the next item in the
-reference-app-informed feature survey (see [FEATURES.md](FEATURES.md)).
+**Phase 8 — System HUD replacement is implemented but not yet on-device
+verified**: volume/brightness HUD replacement via a `CGEventTap`
+(`MediaKeyInterceptor`), Battery's pill/peek extended with a time-remaining/
+time-to-full label, and an Accessibility-permission grant path in the menu
+bar. Builds clean and 82 tests pass (up from 70), but the phase's actual
+`CGEventTap`/Accessibility-permission/real-hardware-key behavior — including
+whether the stock macOS HUD is genuinely suppressed — needs to be exercised
+on the real MacBook before this phase can be marked done; see its entry
+below for exactly what to check.
 Still undecided: whether/how to pursue a fix for the AirPods crash.
 
 ---
@@ -266,11 +273,63 @@ See [FEATURES.md §2](FEATURES.md#2-interaction--feel).
 *Ships: volume/brightness, battery, keyboard backlight, and power-state
 HUD replacements.*
 
-- [ ] Volume/brightness HUD replacement.
-- [ ] Battery/charging indicator.
-- [ ] Keyboard backlight HUD.
-- [ ] Power state / time remaining.
-- [ ] Suppress stock macOS HUDs while ours is shown.
+Per the design spec ([2026-09-07-phase8-system-hud-design.md](superpowers/specs/2026-09-07-phase8-system-hud-design.md),
+confirmed with the user before implementation), this phase scopes to
+volume + brightness only — keyboard backlight needs a whole new privileged
+XPC-helper subsystem and is deferred to a later phase.
+
+- [x] Volume/brightness HUD replacement — `MediaKeyInterceptor` installs a
+      `CGEventTap` on `kCGEventSystemDefined`, structurally adapted from
+      monuk7735/mew-notch's `MediaKeyManager` (credited in a source
+      comment) per `check-reference-apps-first`. Volume/mute apply via
+      public CoreAudio (`VolumeSource`); brightness applies via the
+      private `DisplayServices` symbols, resolved at runtime via
+      `dlopen`/`dlsym` (`BrightnessSource`) — see
+      [ADR 0006](decisions/0006-displayservices-private-api-for-brightness.md)
+      for the risk writeup and the fail-open fallback. Both are new
+      `LiveActivitySource`s (`NotchLiveActivityPriority.volume = 20`,
+      `.brightness = 19`, above now-playing) that publish a transient HUD
+      and decay after ~1.3s.
+- [x] Battery/charging indicator — extended, not new: `BatterySource` now
+      also reads `kIOPSTimeToEmptyKey`/`kIOPSTimeToFullChargeKey` from the
+      same power-source dictionary it already polls, and
+      `BatteryActivityContent`'s peek label gains a "· 2h 14m"-style
+      suffix (`TimeFormatting.hoursAndMinutes`, unit-tested; Apple's `-1`
+      "still calculating" sentinel renders as no suffix rather than a
+      nonsense duration).
+- [ ] Keyboard backlight HUD — **deferred**, per the design spec's
+      non-goals: needs a privileged XPC helper tool (à la
+      TheBoredTeam/boring.notch's `BoringNotchXPCHelperProtocol`), a much
+      bigger commitment than this phase's event-tap mechanism.
+- [x] Power state / time remaining — see the Battery bullet above.
+- [x] Suppress stock macOS HUDs while ours is shown — falls out of the
+      `CGEventTap` callback returning `nil` for a successfully-applied
+      change; no separate mechanism needed. Fails open (lets the real key
+      event through, so the stock HUD reappears) if the change couldn't
+      actually be applied — see `MediaKeyMapping.shouldSuppressEvent`.
+- [x] Accessibility-permission grant path — `AccessibilityPermission`
+      (`AXIsProcessTrusted()` + a System Settings deep-link) backs a
+      conditional "Grant Accessibility Access..." menu-bar item, checked
+      live each time the menu opens, matching the existing toggles'
+      pattern. `MediaKeyInterceptor` no-ops entirely if permission isn't
+      granted, and re-enables its tap if macOS disables it
+      (`.tapDisabledByTimeout`/`.tapDisabledByUserInput`) rather than
+      leaving media keys silently uncaptured for the rest of the session.
+- [x] **Test suite:** 82 tests passing (up from 70 at Phase 7's end) —
+      `MediaKeyMapping`'s key-code mapping and fail-open decision, plus
+      `TimeFormatting.hoursAndMinutes`'s formatting and "-1"/`nil`
+      sentinel handling.
+- [ ] **Manual verification — not yet done, needed before this phase is
+      marked complete:** a real `CGEventTap` requires a real Accessibility
+      grant and real hardware keys; none of that is exercisable from a
+      unit test. On the real MacBook: grant Accessibility access via the
+      new menu item, then confirm (a) the stock volume/mute/brightness
+      HUDs no longer appear and ours does instead, (b) the actual
+      volume/brightness/mute level changes correctly, (c) revoking
+      Accessibility access while running stops interception cleanly
+      rather than crashing or spinning, and (d) the Battery peek's new
+      time-remaining/time-to-full text reads correctly while
+      charging/discharging.
 
 See [FEATURES.md §3](FEATURES.md#3-system-hud-replacement).
 

@@ -36,6 +36,7 @@ Four layers with deliberate seams. The two pure ones carry the test suite.
 | Pure logic | `Notch/NotchGeometry.swift`, `Notch/NotchState.swift` | **unit tested**, no AppKit imports |
 | UI | `UI/*.swift` | SwiftUI, driven by `NotchState` |
 | Data | `NowPlaying/*.swift` | `NowPlayingSource` protocol + per-app implementations |
+| System | `System/*.swift` | `MediaKeyInterceptor` (`CGEventTap`), `AccessibilityPermission` — manual-verification only, like `NowPlayingSource`'s AppleScript pieces |
 
 **v1 supports Spotify only.** The `NowPlayingSource` protocol still exists and is
 still the seam — but only `SpotifySource` conforms to it for now. Apple Music is a
