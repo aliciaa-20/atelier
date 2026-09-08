@@ -14,15 +14,19 @@ import SwiftUI
 /// symmetric overshoot on `close`/`peekClose` would read as the panel
 /// bouncing back open, which looks like a bug — so those stay damped.
 ///
-/// The `dampingFraction: 0.65` on `open` is a starting point for on-device
-/// visual tuning; it requires human observation of the running app to
-/// determine whether the overshoot reads as elastic/natural or needs
-/// adjustment. `peekOpen` is untouched pending the result of tuning `open`.
+/// The `dampingFraction: 0.65` on `open` was a starting point for on-device
+/// visual tuning, since confirmed (Phase 7) to read as a genuine elastic
+/// overshoot -- `peekOpen`/`peekClose` used to carry separate, slightly
+/// different-feeling values (0.8/0.92 damping) pending that result. Now
+/// that `open`'s tuning is confirmed, peeking reuses `open`/`close`
+/// directly rather than parallel constants that could quietly drift apart
+/// again -- a hover-open/close and a peek-open/close should read as the
+/// exact same motion, just triggered a different way (confirmed on-device:
+/// the separate peek curves read as a visibly different, less smooth
+/// close than hovering).
 enum NotchAnimations {
     static let open: Animation = .spring(response: 0.35, dampingFraction: 0.65)
     static let close: Animation = .spring(response: 0.55, dampingFraction: 0.92)
-    static let peekOpen: Animation = .spring(response: 0.35, dampingFraction: 0.8)
-    static let peekClose: Animation = .spring(response: 0.55, dampingFraction: 0.92)
     static let settleTuck: Animation = .easeOut(duration: 0.12)
     static let settleSpringBack: Animation = .spring(response: 0.35, dampingFraction: 0.5)
 }
