@@ -71,6 +71,17 @@ final class BatterySource: LiveActivitySource {
             return
         }
         lastPublishWasContent = true
-        subject.send(BatteryActivityContent(state: state, notchHeight: notchHeight))
+
+        // `kIOPSTimeToEmptyKey`/`kIOPSTimeToFullChargeKey` are documented
+        // (IOPowerSources.h) as whole minutes, with `-1` meaning "still
+        // calculating" -- converted to seconds here so
+        // `BatteryActivityContent`/`TimeFormatting` share the same unit
+        // the rest of the app already uses for durations.
+        let minutesKey = isCharging ? kIOPSTimeToFullChargeKey : kIOPSTimeToEmptyKey
+        let timeRemaining = (description[minutesKey] as? Int).flatMap { minutes -> TimeInterval? in
+            minutes >= 0 ? TimeInterval(minutes * 60) : nil
+        }
+
+        subject.send(BatteryActivityContent(state: state, notchHeight: notchHeight, timeRemaining: timeRemaining))
     }
 }

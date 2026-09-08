@@ -42,6 +42,18 @@ struct AtelierApp: App {
                 set: { UserDefaults.standard.set($0, forKey: AtelierSettings.gesturesEnabledKey) }
             ))
 
+            // Checked live on every menu open, not cached -- matches how
+            // the toggles above already read `AtelierSettings` live.
+            // `MediaKeyInterceptor` needs this permission for its
+            // `CGEventTap`; this is the "visible grant-access path when
+            // TCC is denied" the roadmap calls for generally (Phase 16),
+            // arriving here out of necessity per the Phase 8 design spec.
+            if !AccessibilityPermission.isGranted {
+                Button("Grant Accessibility Access...") {
+                    AccessibilityPermission.openSystemSettings()
+                }
+            }
+
             Divider()
 
             Button("Quit Atelier") {

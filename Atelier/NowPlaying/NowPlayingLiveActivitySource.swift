@@ -5,6 +5,8 @@ import Foundation
 /// source's ranking is a one-line addition, not a magic number buried in
 /// its own file.
 enum NotchLiveActivityPriority {
+    static let volume = 20
+    static let brightness = 19
     static let nowPlaying = 10
     static let airpods = 6
     static let battery = 5
