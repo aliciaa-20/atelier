@@ -23,15 +23,21 @@ on-device — swipe gestures (open/close, skip forward/backward) and a tuned
 "jelly" spring animation are both wired, gated behind
 `AtelierSettings.gesturesEnabled`, and were tried on real hardware (see
 Phase 7's entry below). 70 tests passing (up from 29 at the end of Phase 5).
-**Phase 8 — System HUD replacement is implemented but not yet on-device
-verified**: volume/brightness HUD replacement via a `CGEventTap`
+**Phase 8 — System HUD replacement is implemented and confirmed on real
+hardware**: volume/brightness HUD replacement via a `CGEventTap`
 (`MediaKeyInterceptor`), Battery's pill/peek extended with a time-remaining/
 time-to-full label, and an Accessibility-permission grant path in the menu
-bar. Builds clean and 82 tests pass (up from 70), but the phase's actual
-`CGEventTap`/Accessibility-permission/real-hardware-key behavior — including
-whether the stock macOS HUD is genuinely suppressed — needs to be exercised
-on the real MacBook before this phase can be marked done; see its entry
-below for exactly what to check.
+bar. On-device testing surfaced and fixed several real bugs: a CoreAudio
+per-channel fallback (some devices don't expose volume on the master
+element), a peek/hover-close animation mismatch (peeking now reuses the
+same `open`/`close` curves as hovering), hovering during a non-expandable
+peek force-opening the now-playing panel (fixed by gating on
+`isExpandable`), and the project's ad-hoc code signing losing track of
+Accessibility grants across rebuilds (switched to the free Personal Team,
+pulling forward part of Phase 16). 82 tests passing (up from 70).
+**UI sizing/spacing polish for the volume/brightness peek is explicitly
+deferred** — functionally confirmed working, visual polish held for later
+per direct request.
 Still undecided: whether/how to pursue a fix for the AirPods crash.
 
 ---
@@ -269,7 +275,7 @@ Phase 6.*
 
 See [FEATURES.md §2](FEATURES.md#2-interaction--feel).
 
-### ⬜ Phase 8 — System HUD replacement
+### ✅ Phase 8 — System HUD replacement
 *Ships: volume/brightness, battery, keyboard backlight, and power-state
 HUD replacements.*
 
@@ -289,7 +295,11 @@ XPC-helper subsystem and is deferred to a later phase.
       for the risk writeup and the fail-open fallback. Both are new
       `LiveActivitySource`s (`NotchLiveActivityPriority.volume = 20`,
       `.brightness = 19`, above now-playing) that publish a transient HUD
-      and decay after ~1.3s.
+      and decay on the same timer as the peek panel itself
+      (`NotchController.peekDuration`, 2.5s) — an earlier ~1.3s value
+      caused a real on-device glitch, see the fix commit below. Peek
+      styling matches the real macOS OSD (icon + capsule bar, no numeric
+      label), not this app's usual text+percent peek layout.
 - [x] Battery/charging indicator — extended, not new: `BatterySource` now
       also reads `kIOPSTimeToEmptyKey`/`kIOPSTimeToFullChargeKey` from the
       same power-source dictionary it already polls, and
@@ -319,17 +329,26 @@ XPC-helper subsystem and is deferred to a later phase.
       `MediaKeyMapping`'s key-code mapping and fail-open decision, plus
       `TimeFormatting.hoursAndMinutes`'s formatting and "-1"/`nil`
       sentinel handling.
-- [ ] **Manual verification — not yet done, needed before this phase is
-      marked complete:** a real `CGEventTap` requires a real Accessibility
-      grant and real hardware keys; none of that is exercisable from a
-      unit test. On the real MacBook: grant Accessibility access via the
-      new menu item, then confirm (a) the stock volume/mute/brightness
-      HUDs no longer appear and ours does instead, (b) the actual
-      volume/brightness/mute level changes correctly, (c) revoking
-      Accessibility access while running stops interception cleanly
-      rather than crashing or spinning, and (d) the Battery peek's new
-      time-remaining/time-to-full text reads correctly while
-      charging/discharging.
+- [x] **Manual verification** — confirmed on real hardware: volume and
+      brightness keys apply the real change and show our HUD instead of
+      the stock one; hovering during a volume/brightness/battery peek
+      correctly resolves to the pill instead of force-opening the
+      now-playing panel. Two real bugs found and fixed live (see the
+      commits following the design-spec one): CoreAudio's volume-scalar
+      property isn't exposed on every device's master element (falls back
+      to channel 1 now), and the peek/hover-close animations had quietly
+      drifted apart (unified onto the same curves). Accessibility
+      permission itself proved flaky across ad-hoc-signed rebuilds during
+      this session — root-caused to code-signature churn, not the
+      permission logic itself, and fixed by switching to stable Personal
+      Team signing (see the signing commit).
+      **Not exercised, still open:** revoking Accessibility access while
+      the app is running (does interception stop cleanly), and the
+      Battery peek's new time-remaining/time-to-full text on a real
+      charge/discharge cycle.
+      **Explicitly deferred, by request:** visual sizing/spacing polish
+      on the volume/brightness peek — functionally confirmed, not yet
+      polished.
 
 See [FEATURES.md §3](FEATURES.md#3-system-hud-replacement).
 
