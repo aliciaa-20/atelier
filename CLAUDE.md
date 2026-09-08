@@ -104,6 +104,27 @@ usually do X," look at their actual source before hand-deriving it:
   [coaxel2/NotchIA](https://github.com/coaxel2/NotchIA) (media player +
   shelf + focus + clipboard, on-device Apple Intelligence).
 
+Further sources for specific future features (backlog items, not v1),
+credited via [Ebullioscopic/Atoll's own README](https://github.com/Ebullioscopic/Atoll/blob/dev/ReadMe.md#acknowledgments):
+- [**Alcove**](https://tryalcove.com) — Minimalistic Mode interface design
+  and the conceptual framework for lock-screen widget integration.
+- [**Stats**](https://github.com/exelban/stats) — CPU temperature
+  monitoring via SMC access, frequency sampling through IOReport bindings,
+  per-core CPU utilisation tracking; relevant to Phase 13's system
+  resource monitor.
+- [**Open-Meteo**](https://open-meteo.com) — weather API, for a
+  lock-screen weather widget.
+- [**SkyLightWindow**](https://github.com/Lakr233/SkyLightWindow) —
+  window-rendering technique for lock-screen widgets.
+- [**rtaudio**](https://github.com/ZephyrCodesStuff/rtaudio) — C++ source
+  for a live music visualizer.
+- **Wick** — iOS-like Timer design, for a lock-screen timer widget (no
+  repo link in Atoll's own README either, just credited by first name).
+- [**OpenUsage**](https://github.com/robinebers/openusage) — LLM usage
+  tracking.
+- [**OpenRouter**](https://openrouter.ai) — API for automated model
+  pricing.
+
 This list is also kept in the `check-reference-apps-first` skill
 (`.claude/skills/check-reference-apps-first/SKILL.md`) — update both if you
 add a repo.

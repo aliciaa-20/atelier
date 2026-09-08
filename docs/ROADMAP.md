@@ -346,9 +346,28 @@ XPC-helper subsystem and is deferred to a later phase.
       the app is running (does interception stop cleanly), and the
       Battery peek's new time-remaining/time-to-full text on a real
       charge/discharge cycle.
-      **Explicitly deferred, by request:** visual sizing/spacing polish
-      on the volume/brightness peek — functionally confirmed, not yet
-      polished.
+      **Follow-up polish pass, also confirmed on real hardware:** a
+      compact peek size (`compactPeekSize`, 210×notchHeight+26) for
+      Volume/Brightness specifically, with a sharp 6pt top corner radius
+      matching the stock notch's own (not the softer 14pt "card" radius
+      the wider text peek uses) so it reads as still attached to the
+      notch. The bar is now click-and-drag scrubbable
+      (`ScrubBarView`, live-updates via new `scrub(toPercent:)` methods)
+      -- dragging naturally keeps the peek open via the existing decay-
+      reschedule-per-publish behavior, no separate pause/resume needed.
+      Two more real bugs found and fixed: hovering to grab the bar was
+      immediately retracting the peek (the earlier hover-during-peek fix
+      needed to no-op entirely for non-expandable content, not force a
+      transition), and switching from brightness to volume (but not the
+      reverse) took a beat to register -- `LiveActivityStack` snapshots
+      each source's priority at upsert time, so `VolumeSource`'s/
+      `BrightnessSource`'s new recency-based priority (`SystemHUDOrder`,
+      whichever was touched more recently outranks the other) needed
+      `LiveActivityCoordinator` to refresh every active source's priority
+      on every event, not just the firing source's own. Also fixed:
+      `PillPlayerView`'s waveform flank reserving a slightly different
+      width (18.5pt) than the artwork flank (17.5pt) it's meant to
+      mirror.
 
 See [FEATURES.md §3](FEATURES.md#3-system-hud-replacement).
 

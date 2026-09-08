@@ -80,6 +80,20 @@ Check these, roughly in this order of relevance to Atelier's stack:
 | [Clayton630/QuartzNotch](https://github.com/Clayton630/QuartzNotch) | boring.notch fork taken further — divergent takes on the same mechanics |
 | [coaxel2/NotchIA](https://github.com/coaxel2/NotchIA) | Media player + shelf + focus + clipboard in one notch cockpit, on-device Apple Intelligence integration |
 
+Further sources for specific future features (backlog items, not v1),
+credited via [Ebullioscopic/Atoll's own README](https://github.com/Ebullioscopic/Atoll/blob/dev/ReadMe.md#acknowledgments):
+
+| Source | Relevant for |
+|---|---|
+| [Alcove](https://tryalcove.com) | Minimalistic Mode interface design, lock-screen widget integration concept |
+| [Stats](https://github.com/exelban/stats) | CPU temperature via SMC, IOReport frequency sampling, per-core utilisation (Phase 13) |
+| [Open-Meteo](https://open-meteo.com) | Weather API for a lock-screen weather widget |
+| [SkyLightWindow](https://github.com/Lakr233/SkyLightWindow) | Window-rendering technique for lock-screen widgets |
+| [rtaudio](https://github.com/ZephyrCodesStuff/rtaudio) | C++ source for a live music visualizer |
+| Wick | iOS-like Timer design for a lock-screen timer widget (no repo link in Atoll's README either) |
+| [OpenUsage](https://github.com/robinebers/openusage) | LLM usage tracking |
+| [OpenRouter](https://openrouter.ai) | API for automated model pricing |
+
 This list also lives in the root `CLAUDE.md` — update both if you add a repo.
 
 ## Procedure
