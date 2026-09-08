@@ -51,6 +51,17 @@ final class NotchController {
     /// waveform row (34, governed by the two-line text block: 16+2+16)
     /// + top/bottom padding (4+9).
     private static let peekContentHeight: CGFloat = 47
+    /// Volume/Brightness's peek has no title/artist text (Phase 8) --
+    /// just an icon + scrub bar, so it doesn't need `peekWidth`/
+    /// `peekContentHeight`'s room for two lines of text. Real macOS's own
+    /// OSD is compact for the same reason. Narrower and shorter than the
+    /// shared peek size, not a separate window -- see Invariant 3's own
+    /// note: the panel itself never resizes, only the SwiftUI content
+    /// frame within it does, same mechanism as every other state.
+    private static let compactPeekWidth: CGFloat = 210
+    /// Icon+bar row (~18) + top/bottom padding (2+6), against
+    /// `peekContentHeight`'s 47 (sized for two lines of text instead).
+    private static let compactPeekContentHeight: CGFloat = 26
     // Not private: `VolumeSource`/`BrightnessSource` match their own
     // self-clearing decay to this exact duration -- see their own
     // `decayDuration` doc comments for why a shorter, independent timer
@@ -59,9 +70,10 @@ final class NotchController {
 
     init() {
         guard let screen = NSScreen.notchedOrMain else {
-            viewModel = NotchViewModel(collapsedSize: .zero, expandedSize: .zero, pillSize: .zero, peekSize: .zero)
-            let volumeSource = VolumeSource(notchHeight: 0)
-            let brightnessSource = BrightnessSource(notchHeight: 0)
+            viewModel = NotchViewModel(collapsedSize: .zero, expandedSize: .zero, pillSize: .zero, peekSize: .zero, compactPeekSize: .zero)
+            let hudOrder = SystemHUDOrder()
+            let volumeSource = VolumeSource(notchHeight: 0, hudOrder: hudOrder)
+            let brightnessSource = BrightnessSource(notchHeight: 0, hudOrder: hudOrder)
             self.volumeSource = volumeSource
             self.brightnessSource = brightnessSource
             mediaKeyInterceptor = MediaKeyInterceptor(volumeSource: volumeSource, brightnessSource: brightnessSource)
@@ -98,8 +110,9 @@ final class NotchController {
         // Apple's framework on this machine's current macOS build, not
         // something fixable from Swift. Re-enable once a workaround or an
         // OS update resolves it; see docs/ROADMAP.md's Phase 6 notes.
-        let volumeSource = VolumeSource(notchHeight: collapsedRect.height)
-        let brightnessSource = BrightnessSource(notchHeight: collapsedRect.height)
+        let hudOrder = SystemHUDOrder()
+        let volumeSource = VolumeSource(notchHeight: collapsedRect.height, hudOrder: hudOrder)
+        let brightnessSource = BrightnessSource(notchHeight: collapsedRect.height, hudOrder: hudOrder)
         self.volumeSource = volumeSource
         self.brightnessSource = brightnessSource
         mediaKeyInterceptor = MediaKeyInterceptor(volumeSource: volumeSource, brightnessSource: brightnessSource)
@@ -121,11 +134,16 @@ final class NotchController {
             width: Self.peekWidth,
             height: collapsedRect.height + Self.peekContentHeight
         )
+        let compactPeekSize = CGSize(
+            width: Self.compactPeekWidth,
+            height: collapsedRect.height + Self.compactPeekContentHeight
+        )
         viewModel = NotchViewModel(
             collapsedSize: collapsedRect.size,
             expandedSize: expandedSize,
             pillSize: pillSize,
-            peekSize: peekSize
+            peekSize: peekSize,
+            compactPeekSize: compactPeekSize
         )
 
         let maxRect = CGRect(

@@ -35,9 +35,17 @@ struct PillPlayerView: View {
 
                     Spacer(minLength: 0)
 
-                    // Same footprint as the artwork -- same height, and
-                    // barWidth/barSpacing chosen so the total bar-row
-                    // width is close to artworkSide too.
+                    // `WaveformView` computes its own intrinsic width from
+                    // barCount/barWidth/barSpacing (18.5pt here), which
+                    // isn't exactly `artworkSide` (17.5pt) -- the two
+                    // flanks were reserving very slightly different layout
+                    // widths, on top of the bars' own sparser visual
+                    // density (thin capsules with gaps vs. a solid
+                    // artwork block) reading as narrower still. Forcing an
+                    // explicit, centered `artworkSide`-wide frame here
+                    // makes the two flanks' *reserved* width genuinely
+                    // equal -- confirmed as the real asymmetry, not the
+                    // padding (13pt/13pt already symmetric).
                     WaveformView(
                         isPlaying: info.isPlaying,
                         color: artworkColor.color,
@@ -45,6 +53,7 @@ struct PillPlayerView: View {
                         barSpacing: 1.3,
                         height: artworkSide
                     )
+                    .frame(width: artworkSide)
                 }
             }
         }

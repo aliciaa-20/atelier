@@ -8,6 +8,9 @@ struct VolumeActivityContent: LiveActivityContent {
     let isMuted: Bool
     /// Same reasoning as `PeekPlayerView.notchHeight`.
     let notchHeight: CGFloat
+    /// Applies an absolute level live as the peek's bar is dragged -- see
+    /// `VolumeSource.scrub(toPercent:)`.
+    let onScrub: (Int) -> Void
 
     /// Every key press is a new id -- unlike Battery's stable per-state id,
     /// a real system HUD re-pops its peek on every press even if the
@@ -23,25 +26,27 @@ struct VolumeActivityContent: LiveActivityContent {
         return "speaker.wave.3.fill"
     }
 
+    /// Sized to match the bare notch's own width exactly (Volume/
+    /// Brightness's pill is compact, unlike the wider music pill -- see
+    /// `NotchRootView.frameSize`), so icon+percent are grouped tightly and
+    /// centered rather than pinned to opposite edges the way the wider
+    /// music pill's artwork/waveform layout is -- on the notch's own
+    /// width, edge-pinning read as the content bleeding outward past
+    /// where there's room for it (on-device feedback).
     func pillView() -> AnyView {
         AnyView(
-            HStack(spacing: 0) {
+            HStack(spacing: 4) {
+                Image(systemName: symbolName)
+                    .foregroundStyle(.white)
+                    .font(.system(size: 9))
                 Text(isMuted ? "Muted" : "\(percent)%")
-                    .font(.system(size: 9.5, weight: .medium))
+                    .font(.system(size: 9, weight: .medium))
                     .monospacedDigit()
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
-                    .frame(maxWidth: 34, alignment: .leading)
                     .foregroundStyle(.white)
-
-                Spacer(minLength: 0)
-
-                Image(systemName: symbolName)
-                    .foregroundStyle(.white)
-                    .font(.system(size: 10))
             }
-            .padding(.leading, 6)
-            .padding(.trailing, 16)
+            .frame(maxWidth: .infinity)
         )
     }
 
@@ -49,29 +54,21 @@ struct VolumeActivityContent: LiveActivityContent {
     /// continuous capsule bar, no numeric label -- not the text+percent
     /// layout the rest of this app's peeks use, deliberately, since this
     /// one HUD replaces a system element people already recognize by
-    /// shape.
+    /// shape. Draggable -- see `ScrubBarView`.
     func peekView() -> AnyView {
         AnyView(
             HStack(spacing: 10) {
                 Image(systemName: symbolName)
                     .foregroundStyle(.white)
-                    .font(.system(size: 15))
-                    .frame(width: 18)
+                    .font(.system(size: 13))
+                    .frame(width: 16)
 
-                GeometryReader { geometry in
-                    ZStack(alignment: .leading) {
-                        Capsule()
-                            .fill(Color.white.opacity(0.25))
-                        Capsule()
-                            .fill(Color.white)
-                            .frame(width: geometry.size.width * (isMuted ? 0 : CGFloat(percent) / 100))
-                    }
-                }
-                .frame(height: 5)
+                ScrubBarView(fillFraction: isMuted ? 0 : CGFloat(percent) / 100, tint: .white, onScrub: onScrub)
             }
-            .padding(.horizontal, 24)
-            .padding(.bottom, 9)
-            .padding(.top, notchHeight + 4)
+            .padding(.leading, 25)
+            .padding(.trailing, 24)
+            .padding(.bottom, 6)
+            .padding(.top, notchHeight + 2)
         )
     }
 }

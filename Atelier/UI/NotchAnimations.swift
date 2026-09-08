@@ -26,7 +26,13 @@ import SwiftUI
 /// close than hovering).
 enum NotchAnimations {
     static let open: Animation = .spring(response: 0.35, dampingFraction: 0.65)
-    static let close: Animation = .spring(response: 0.55, dampingFraction: 0.92)
+    /// `response` raised from 0.55 and `dampingFraction` eased from 0.92 --
+    /// on-device feedback specifically after the volume/brightness peek's
+    /// retraction (a bigger, more frequent size swing than the
+    /// occasional hover-close this was originally tuned against) was that
+    /// closing read as too abrupt. A starting point for further tuning,
+    /// not asserted as final.
+    static let close: Animation = .spring(response: 0.65, dampingFraction: 0.88)
     static let settleTuck: Animation = .easeOut(duration: 0.12)
     static let settleSpringBack: Animation = .spring(response: 0.35, dampingFraction: 0.5)
 }

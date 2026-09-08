@@ -35,9 +35,15 @@ final class LiveActivityCoordinator: ObservableObject {
     private var lastContentIDBySource: [String: String] = [:]
     private var interruptClearTask: Task<Void, Never>?
     private var cancellables: Set<AnyCancellable> = []
+    /// Kept for `handle`'s stale-priority refresh below -- most sources'
+    /// `priority` is a fixed `let`, but `VolumeSource`/`BrightnessSource`
+    /// compute theirs from shared `SystemHUDOrder` state, which can change
+    /// without *that* source publishing new content.
+    private var sourcesByID: [String: LiveActivitySource] = [:]
 
     init(sources: [LiveActivitySource]) {
         for source in sources {
+            sourcesByID[source.id] = source
             source.contentPublisher
                 .receive(on: RunLoop.main)
                 .sink { [weak self] content in
@@ -54,6 +60,20 @@ final class LiveActivityCoordinator: ObservableObject {
         } else {
             latestContent.removeValue(forKey: sourceID)
             stack.remove(id: sourceID)
+        }
+
+        // A source's own `priority` can depend on shared external state
+        // (e.g. `SystemHUDOrder`), not just its own content -- without
+        // this, a still-active *other* source's stack entry keeps
+        // whatever priority it had at ITS last publish, which can outlive
+        // the event that should have superseded it. Confirmed on-device:
+        // pressing volume while brightness was active left brightness
+        // winning `LiveActivityStack`'s tie-break on a stale snapshot
+        // until brightness's own next publish, not immediately.
+        for otherID in latestContent.keys where otherID != sourceID {
+            if let otherSource = sourcesByID[otherID] {
+                stack.upsert(id: otherID, priority: otherSource.priority)
+            }
         }
 
         topContent = stack.topID.flatMap { latestContent[$0] }
