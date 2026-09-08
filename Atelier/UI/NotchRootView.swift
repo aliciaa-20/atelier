@@ -88,8 +88,23 @@ struct NotchRootView: View {
             .contentShape(Rectangle())
             .onHover { hovering in
                 if hovering {
-                    withAnimation(NotchAnimations.open) {
-                        viewModel.handle(.hoverStarted)
+                    // A non-expandable live activity on top (Volume,
+                    // Brightness, Battery) has no expanded view of its
+                    // own -- `.hoverStarted` would still force open
+                    // `ExpandedPlayerView`, showing now-playing info
+                    // unrelated to what's actually peeking (the same gap
+                    // Phase 6 accepted and deferred, now surfaced for
+                    // real by Phase 8's peeks). `nil` topContent (nothing
+                    // peeking right now) keeps the original hover-to-open
+                    // behavior for the plain notch/pill.
+                    if liveActivity.topContent?.isExpandable == false {
+                        withAnimation(NotchAnimations.close) {
+                            viewModel.handle(.peekTimerElapsed(isPlaying: liveActivity.hasContent))
+                        }
+                    } else {
+                        withAnimation(NotchAnimations.open) {
+                            viewModel.handle(.hoverStarted)
+                        }
                     }
                 } else {
                     // Slower and more damped than the open — closing snapped
