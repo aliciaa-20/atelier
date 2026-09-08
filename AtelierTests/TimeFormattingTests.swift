@@ -35,4 +35,16 @@ struct TimeFormattingTests {
         // kIOPSTimeToFullChargeKey (-1) means "still calculating".
         #expect(TimeFormatting.hoursAndMinutes(-1) == nil)
     }
+
+    @Test func hoursAndMinutesCompactUnderAnHour() {
+        #expect(TimeFormatting.hoursAndMinutesCompact(14 * 60) == "14m")
+    }
+
+    @Test func hoursAndMinutesCompactOverAnHourHasNoSpace() {
+        #expect(TimeFormatting.hoursAndMinutesCompact(2 * 3600 + 14 * 60) == "2h14m")
+    }
+
+    @Test func hoursAndMinutesCompactNilMeansStillCalculating() {
+        #expect(TimeFormatting.hoursAndMinutesCompact(nil) == nil)
+    }
 }
