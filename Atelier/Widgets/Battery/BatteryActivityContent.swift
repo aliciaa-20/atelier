@@ -64,37 +64,51 @@ struct BatteryActivityContent: LiveActivityContent {
         }
     }
 
+    /// No icon -- bolt+percent together needed ~35pt, well past the
+    /// ~18pt each flank actually has before the physical notch's dead
+    /// zone swallows content (the same budget `PillPlayerView`'s
+    /// artwork/waveform flanks already proved out). Text-only on both
+    /// sides, equal padding, fits the same budget each side.
     func pillView() -> AnyView {
         AnyView(
             HStack(spacing: 0) {
-                // The real, live percent -- always, not just for `.low`.
-                // `minimumScaleFactor` only does anything once the text is
-                // actually width-constrained -- without the `.frame`
-                // below it had nothing to shrink against, so "100%" (the
-                // widest case) rendered at full size and overflowed
-                // anyway. The frame is the real fix; the smaller base
-                // size and scale factor are the safety margin under it.
-                Text("\(percent)%")
-                    .font(.system(size: 9.5, weight: .medium))
-                    .monospacedDigit()
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.6)
-                    .frame(maxWidth: 22, alignment: .leading)
-                    .foregroundStyle(tint)
+                // Time-remaining/time-to-full on the left flank -- the
+                // only place this data is ever actually visible, since
+                // Battery's `peeksOnChange == false` means `peekView`
+                // (which also carries it, via `label`) never renders.
+                // Blank rather than a placeholder while macOS is still
+                // calculating it (`nil`) or the battery is full.
+                if let compactTime = TimeFormatting.hoursAndMinutesCompact(timeRemaining) {
+                    // Unlike the percent text below (anchored to the safe
+                    // trailing edge, so it only ever grows away from the
+                    // notch), this one is anchored to the safe *leading*
+                    // edge -- unconstrained, it grows toward the notch as
+                    // the string widens (e.g. "12h34m" vs "51m"). The
+                    // fixed max width forces it to shrink via
+                    // minimumScaleFactor instead of overlapping the dead
+                    // zone -- confirmed on-device as the actual asymmetry
+                    // ("m" clipped on the left, right side fine).
+                    Text(compactTime)
+                        .font(.system(size: 12, weight: .medium))
+                        .monospacedDigit()
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.6)
+                        .frame(maxWidth: 18, alignment: .leading)
+                        .foregroundStyle(tint.opacity(0.75))
+                }
 
                 Spacer(minLength: 0)
 
-                // Smaller and with more trailing clearance than the pill's
-                // flat-edge padding alone -- NotchShape's bottom corner
-                // curves inward more than the padding accounted for, so a
-                // 12pt icon at 13pt padding was bleeding past the visible
-                // black area right at the corner.
-                Image(systemName: symbolName)
+                Text("\(percent)%")
+                    .font(.system(size: 12, weight: .medium))
+                    .monospacedDigit()
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
+                    .frame(maxWidth: 18, alignment: .trailing)
                     .foregroundStyle(tint)
-                    .font(.system(size: 10))
             }
-            .padding(.leading, 6)
-            .padding(.trailing, 16)
+            .padding(.leading, 12)
+            .padding(.trailing, 12)
         )
     }
 

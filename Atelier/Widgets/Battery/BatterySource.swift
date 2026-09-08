@@ -26,6 +26,21 @@ final class BatterySource: LiveActivitySource {
     /// every notification -- see Fix 5 in the final review pass.
     private var lastPublishWasContent = false
     private let notchHeight: CGFloat
+    private var settleTask: Task<Void, Never>?
+    /// macOS's own power-source data (`kIOPSIsChargingKey`) is known to
+    /// lag behind the actual physical plug/unplug event by an amount that
+    /// isn't consistent -- the push notification fires immediately, but
+    /// `poll()` can read a stale "not charging" at that exact instant,
+    /// and nothing re-checks it afterward unless some other change fires
+    /// a second notification. On-device this showed up as "doesn't show
+    /// up instantaneous, only after replugging" -- a genuine second
+    /// notification (the replug) happened to land after the data had
+    /// already settled, masking the first attempt's stale read. A single
+    /// fixed re-poll delay (first tried at 2s) wasn't reliably long
+    /// enough; staggered re-polls widen the window without a continuous
+    /// poll loop -- each one cancels and no-ops once the state has
+    /// actually changed from the initial read.
+    private static let settleDelays: [Duration] = [.seconds(1), .seconds(3), .seconds(6)]
 
     var contentPublisher: AnyPublisher<LiveActivityContent?, Never> {
         subject.eraseToAnyPublisher()
@@ -38,7 +53,7 @@ final class BatterySource: LiveActivitySource {
         let context = Unmanaged.passUnretained(self).toOpaque()
         guard let source = IOPSNotificationCreateRunLoopSource({ context in
             guard let context else { return }
-            Unmanaged<BatterySource>.fromOpaque(context).takeUnretainedValue().poll()
+            Unmanaged<BatterySource>.fromOpaque(context).takeUnretainedValue().handleNotification()
         }, context)?.takeRetainedValue() else { return }
 
         runLoopSource = source
@@ -46,8 +61,26 @@ final class BatterySource: LiveActivitySource {
     }
 
     deinit {
+        settleTask?.cancel()
         if let runLoopSource {
             CFRunLoopRemoveSource(CFRunLoopGetMain(), runLoopSource, .defaultMode)
+        }
+    }
+
+    /// Polls immediately, then schedules a few staggered delayed re-polls
+    /// to catch a stale initial read -- see `settleDelays`'s doc comment.
+    /// Only called from the notification callback, not from `init`'s own
+    /// startup poll -- and `poll()` itself never re-schedules, so this
+    /// can't chain into an unbounded polling loop.
+    private func handleNotification() {
+        poll()
+        settleTask?.cancel()
+        settleTask = Task { [weak self] in
+            for delay in Self.settleDelays {
+                try? await Task.sleep(for: delay)
+                guard !Task.isCancelled else { return }
+                self?.poll()
+            }
         }
     }
 
