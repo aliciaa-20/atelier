@@ -13,7 +13,7 @@ import Foundation
 /// `LiveActivityStackTests.equalPriorityBreaksTieByIDOrdering`), which is
 /// the opposite of what's needed here. Baking recency directly into which
 /// literal priority integer each source reports keeps that general
-/// invariant intact.
+/// invariant intact. See ADR 0008 for the full investigation.
 final class SystemHUDOrder {
     private(set) var mostRecentID: String?
 
