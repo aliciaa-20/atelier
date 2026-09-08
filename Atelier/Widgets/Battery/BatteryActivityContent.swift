@@ -5,6 +5,11 @@ struct BatteryActivityContent: LiveActivityContent {
     /// Same reasoning as `PeekPlayerView.notchHeight`: the physical notch
     /// cutout has no display pixels, so peek content starts below it.
     let notchHeight: CGFloat
+    /// Time-to-empty (discharging) or time-to-full (charging), in seconds.
+    /// `nil` when macOS is still calculating it (`kIOPSTimeToEmptyKey`/
+    /// `kIOPSTimeToFullChargeKey`'s own `-1` sentinel) or the state is
+    /// `.full`. Not part of `id` -- see `id`'s own doc comment.
+    var timeRemaining: TimeInterval? = nil
 
     /// Percent-free on purpose -- identity is about *which state*, not the
     /// live number (which updates every poll via `percent` below without
@@ -51,10 +56,11 @@ struct BatteryActivityContent: LiveActivityContent {
     }
 
     private var label: String {
+        let suffix = TimeFormatting.hoursAndMinutes(timeRemaining).map { "  ·  \($0)" } ?? ""
         switch state {
-        case .charging: "Charging  \(percent)%"
-        case .low: "Battery Low  \(percent)%"
-        case .full: "Full Battery"
+        case .charging: return "Charging  \(percent)%\(suffix)"
+        case .low: return "Battery Low  \(percent)%\(suffix)"
+        case .full: return "Full Battery"
         }
     }
 
