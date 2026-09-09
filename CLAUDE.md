@@ -37,6 +37,7 @@ Four layers with deliberate seams. The two pure ones carry the test suite.
 | UI | `UI/*.swift` | SwiftUI, driven by `NotchState` |
 | Data | `NowPlaying/*.swift` | `NowPlayingSource` protocol + per-app implementations |
 | System | `System/*.swift` | `MediaKeyInterceptor` (`CGEventTap`), `AccessibilityPermission` — manual-verification only, like `NowPlayingSource`'s AppleScript pieces |
+| Widgets | `Widgets/<Name>/*.swift` | `LiveActivitySource` (`Notch/LiveActivitySource.swift`) conformers — Battery, WiFi, Bluetooth, Volume, Brightness. Each is one folder: a pure `*State` enum where the widget has threshold/dedup logic worth unit-testing, a `*Content` (SwiftUI, pill/peek views), and a `*Source` (the actual IOKit/CoreWLAN/IOBluetooth polling or notification wiring — manual-verification only) |
 
 **v1 supports Spotify only.** The `NowPlayingSource` protocol still exists and is
 still the seam — but only `SpotifySource` conforms to it for now. Apple Music is a

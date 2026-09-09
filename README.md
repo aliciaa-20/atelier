@@ -16,7 +16,10 @@ Phases 0–8 shipped: notch overlay, hover expand/collapse, real Spotify
 playback, the full expanded player, the pill/peek/auto-decay state machine,
 an extensible Live Activity architecture (Battery, Volume, Brightness),
 gesture controls with spring physics, and a system HUD replacement for the
-volume/brightness keys. 85 tests passing.
+volume/brightness keys. Phase 10 (System alerts) is partially shipped —
+Wi-Fi and Bluetooth connect/disconnect toasts, AirPods folded into the same
+Bluetooth detection (poll-based; noticeably less responsive than macOS's
+own native banner, a known limitation). 89 tests passing.
 
 See [`docs/ROADMAP.md`](docs/ROADMAP.md) for the phase-by-phase log and
 [the design spec](docs/superpowers/specs/2026-08-31-atelier-notch-design.md)

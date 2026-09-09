@@ -411,7 +411,9 @@ See [FEATURES.md §4](FEATURES.md#4-file-shelf--related-utilities).
 
 - [x] Wi-Fi connectivity toast (`WiFiSource`, `NWPathMonitor`) -- connect/
       disconnect only, no network name (reading the SSID needs Location
-      Services authorization, deliberately not requested).
+      Services authorization, deliberately not requested). See
+      [ADR 0010](decisions/0010-wifi-source-uses-nwpathmonitor-not-corewlan.md)
+      for why CoreWLAN was tried first and replaced.
 - [x] Bluetooth connect/disconnect toast (`BluetoothSource`) -- device name
       for non-AirPods devices; AirPods get the richer name-only peek below.
       Detects via `DistributedNotificationCenter` + a 1s poll fallback
@@ -422,11 +424,13 @@ See [FEATURES.md §4](FEATURES.md#4-file-shelf--related-utilities).
       connected devices via `AirPodsKind` and shows a name-only "Connected"
       peek (no battery -- `batteryPercentCombined` read back unreliable on
       this machine's macOS build, and left/right-based percent estimation
-      was dropped per direct request). **Confirmed still not as fast or
-      reliable as macOS's own native Bluetooth banner** (poll-based
-      detection, not a real notification) -- on-device testing surfaced
-      real misses. Left as-is per direct request ("buggy but enough for
-      now"); a further pass is backlog, not blocking.
+      was dropped per direct request). See
+      [ADR 0011](decisions/0011-bluetooth-source-polls-instead-of-registering.md).
+      **Confirmed still not as fast or reliable as macOS's own native
+      Bluetooth banner** (poll-based detection, not a real notification) --
+      on-device testing surfaced real misses. Left as-is per direct request
+      ("buggy but enough for now"); a further pass is backlog, not
+      blocking.
 - [ ] Focus mode, screen recording, downloads, personal hotspot, VPN state
       alerts.
 
