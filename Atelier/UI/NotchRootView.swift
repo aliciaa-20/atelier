@@ -170,7 +170,16 @@ struct NotchRootView: View {
                     capabilities: NotchGestureCapabilities(
                         canOpen: viewModel.state == .collapsed || viewModel.state == .pill,
                         canClose: viewModel.state == .expanded || viewModel.state == .peeking,
-                        canSkip: liveActivity.topContent?.isExpandable == true
+                        // Not `liveActivity.topContent?.isExpandable` --
+                        // `NowPlayingLiveActivitySource` deliberately
+                        // publishes nil while paused (so the pill
+                        // disappears, matching "a slim pill hugs the
+                        // notch while music plays"), which silently also
+                        // disabled the skip gesture as a side effect.
+                        // `nowPlaying.current` stays populated regardless
+                        // of play state, so skipping (pause, then skip to
+                        // the next track) keeps working.
+                        canSkip: nowPlaying.current != nil
                     ),
                     onOpen: {
                         withAnimation(NotchAnimations.open) {

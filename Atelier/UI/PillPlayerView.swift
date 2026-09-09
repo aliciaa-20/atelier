@@ -20,17 +20,13 @@ struct PillPlayerView: View {
     /// height, and horizontal, via the explicit leading padding below) --
     /// a second on-device tuning pass after 28pt (edge-to-edge, no
     /// breathing room) read as too large.
-    private var artworkSide: CGFloat { min(notchHeight - 10, 17.5) }
+    private var artworkSide: CGFloat { min(notchHeight - 10, 18.5) }
 
     var body: some View {
         Group {
             if let info {
                 HStack(spacing: 0) {
-                    // cornerRadius matches NotchRootView's .pill-state
-                    // topCornerRadius (6) so the artwork's rounding reads
-                    // as concentric with the pill shape itself, not an
-                    // arbitrary independent value.
-                    ArtworkView(url: info.artworkURL, cornerRadius: 6)
+                    ArtworkView(url: info.artworkURL, cornerRadius: 5)
                         .frame(width: artworkSide, height: artworkSide)
 
                     Spacer(minLength: 0)
