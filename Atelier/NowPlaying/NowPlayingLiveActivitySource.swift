@@ -15,8 +15,14 @@ enum NotchLiveActivityPriority {
     static let systemHUDActive = 20
     static let systemHUDInactive = 19
     static let nowPlaying = 10
+    /// Also used by `BluetoothSource` for its non-AirPods toasts -- see
+    /// that type's own doc comment for why it shares this source.
     static let airpods = 6
     static let battery = 5
+    /// A momentary toast (network join-leave), not ambient status -- lower
+    /// than Battery/AirPods since it's brief and rarely competes for the
+    /// stack; only matters if two toasts land at the same instant.
+    static let wifi = 4
 }
 
 /// Wraps the existing `NowPlayingCoordinator` as a `LiveActivitySource`,

@@ -14,10 +14,14 @@ of polling, always shows a live percent, and briefly interrupts the music
 pill (3s) when its own state changes even while music is playing, via a new
 `LiveActivityCoordinator.interruptContent` mechanism — see the on-device
 notes below for the full list of what was tuned.
-**AirPods is disabled, not shipped**: `IOBluetoothDevice.register(forConnectNotifications:)`
-crashes the app 100% of the time on this machine's current macOS build (a bug
-in Apple's own CoreBluetooth bridge, not something fixable from our code —
-see `AirPodsSource.swift`'s doc comment and the commit that disabled it).
+**AirPods, formerly disabled, now ships via Phase 10's `BluetoothSource`**:
+the original `AirPodsSource` used `IOBluetoothDevice.register(forConnectNotifications:)`,
+which crashed the app 100% of the time on this machine's current macOS
+build (a bug in Apple's own CoreBluetooth bridge). It's retired; Phase
+10's poll-based `BluetoothSource` detects the same devices without that
+crash and shows a name-only "Connected" peek. Confirmed on-device as
+noticeably less responsive than macOS's own native Bluetooth banner —
+see Phase 10's own notes below.
 Phase 7 (Interaction feel) is implemented, unit-tested, and confirmed
 on-device — swipe gestures (open/close, skip forward/backward) and a tuned
 "jelly" spring animation are both wired, gated behind
@@ -401,12 +405,30 @@ See [FEATURES.md §3](FEATURES.md#3-system-hud-replacement).
 
 See [FEATURES.md §4](FEATURES.md#4-file-shelf--related-utilities).
 
-### ⬜ Phase 10 — System alerts as Live Activities
+### 🔜 Phase 10 — System alerts as Live Activities
 *Ships: system state alerts built on Phase 6's architecture.*
 **Depends on Phase 6.**
 
-- [ ] Focus mode, screen recording, downloads, personal hotspot, Bluetooth,
-      Wi-Fi, VPN state alerts.
+- [x] Wi-Fi connectivity toast (`WiFiSource`, `NWPathMonitor`) -- connect/
+      disconnect only, no network name (reading the SSID needs Location
+      Services authorization, deliberately not requested).
+- [x] Bluetooth connect/disconnect toast (`BluetoothSource`) -- device name
+      for non-AirPods devices; AirPods get the richer name-only peek below.
+      Detects via `DistributedNotificationCenter` + a 1s poll fallback
+      (the notification alone proved unreliable on-device), not the
+      crash-prone `IOBluetoothDevice.register(forConnectNotifications:)`
+      API -- this also **resolves the AirPods disablement** noted below:
+      `AirPodsSource` is retired, `BluetoothSource` now classifies
+      connected devices via `AirPodsKind` and shows a name-only "Connected"
+      peek (no battery -- `batteryPercentCombined` read back unreliable on
+      this machine's macOS build, and left/right-based percent estimation
+      was dropped per direct request). **Confirmed still not as fast or
+      reliable as macOS's own native Bluetooth banner** (poll-based
+      detection, not a real notification) -- on-device testing surfaced
+      real misses. Left as-is per direct request ("buggy but enough for
+      now"); a further pass is backlog, not blocking.
+- [ ] Focus mode, screen recording, downloads, personal hotspot, VPN state
+      alerts.
 
 See [FEATURES.md §5](FEATURES.md#5-live-activities--system-alerts-extensible-framework).
 
