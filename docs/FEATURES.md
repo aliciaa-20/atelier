@@ -117,11 +117,23 @@ in this whole backlog; sequenced last for that reason.
 
 ---
 
+## 9. Terminal & LLM cost tracking
+
+| Feature | Source(s) |
+|---|---|
+| Built-in terminal | Atoll |
+| LLM usage/cost tracking | Atoll; see also OpenUsage and OpenRouter in `CLAUDE.md`'s reference-apps list |
+
+Re-added to the backlog. `check-reference-apps-first` still applies: OpenUsage
+and OpenRouter are cited there as adaptable sources, not dependencies to pull
+in directly — CLAUDE.md's no-third-party-dependencies rule still governs the
+implementation.
+
+---
+
 ## Not pulled from the survey
 
 - **Clipboard history** — excluded, user already uses Maccy.
-- **Built-in terminal, LLM usage/cost tracking (Atoll)** — third-party
-  dependency-heavy, out of scope per `CLAUDE.md`'s no-dependencies rule.
 - **On-device AI news digest, video/audio downloader (NotchIA)** — out of
   scope, unrelated to Atelier's purpose.
 - **DynamicNotchKit** — not a feature source, a reusable SPM library for

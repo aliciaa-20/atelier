@@ -14,6 +14,9 @@ enum NotchLiveActivityPriority {
     /// express that. See `SystemHUDOrder`'s own doc comment.
     static let systemHUDActive = 20
     static let systemHUDInactive = 19
+    /// Above `nowPlaying` -- a recording indicator is privacy-relevant and
+    /// should outrank/interrupt music, not compete with it on equal footing.
+    static let screenRecording = 15
     static let nowPlaying = 10
     static let airpods = 6
     static let battery = 5
