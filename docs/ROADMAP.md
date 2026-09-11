@@ -5,7 +5,7 @@ something runnable, a green test suite, and a commit. Source of truth for the
 overall plan is [the design spec](superpowers/specs/2026-08-31-atelier-notch-design.md);
 this file tracks progress against it.
 
-**Where we are:** Phases 0–7 code-complete. Phase 6 (Live Activity / widget
+**Where we are:** Phases 0–8 code-complete, Phase 10 in progress. Phase 6 (Live Activity / widget
 architecture) is implemented and confirmed on real hardware: pill/peek/hover/
 decay behavior and the Battery widget were tuned live into their final shape
 — Battery is deliberately pill-only (`peeksOnChange == false` — no auto-peek,
@@ -39,6 +39,9 @@ pulling forward part of Phase 16). 85 tests passing (up from 70).
 deferred** — functionally confirmed working, visual polish held for later
 per direct request.
 Still undecided: whether/how to pursue a fix for the AirPods crash.
+**Phase 10 (System alerts) started**: screen recording is the first alert
+source shipped — see Phase 10's entry below. Working through the remaining
+alerts in order: Focus mode, Wi-Fi/VPN, Bluetooth.
 
 ---
 
@@ -401,12 +404,34 @@ See [FEATURES.md §3](FEATURES.md#3-system-hud-replacement).
 
 See [FEATURES.md §4](FEATURES.md#4-file-shelf--related-utilities).
 
-### ⬜ Phase 10 — System alerts as Live Activities
+### 🔜 Phase 10 — System alerts as Live Activities
 *Ships: system state alerts built on Phase 6's architecture.*
 **Depends on Phase 6.**
 
-- [ ] Focus mode, screen recording, downloads, personal hotspot, Bluetooth,
-      Wi-Fi, VPN state alerts.
+Phase 6's `LiveActivitySource`/`LiveActivityCoordinator` framework already
+existed and needed no changes — this phase is purely adding new conformers,
+one at a time, in this order: screen recording, Focus mode, Wi-Fi/VPN,
+Bluetooth.
+
+- [x] Screen recording — `ScreenRecordingSource` watches the private
+      `CGSIsScreenWatcherPresent()`/`CGSRegisterNotifyProc` pair (event-driven,
+      not polled — same shape as `BatterySource`'s `IOKit.ps` notification),
+      adapted from Ebullioscopic/Atoll's `ScreenRecordingManager` and
+      jackson-storm/dynamicnotch's `SystemScreenRecordingMonitor` per
+      `check-reference-apps-first` — their remote-stop-recording feature
+      (simulated keystroke injection) was not adopted; this is a status
+      indicator, not a controller. `NotchLiveActivityPriority.screenRecording`
+      sits above `.nowPlaying` (privacy-relevant, should outrank music).
+      Pill-only (`peeksOnChange == false`, matching Battery) — an auto-peek
+      on recording start was tried and confirmed on-device as an unwanted
+      interruption, not a wanted alert. Small red dot on the pill's trailing
+      flank.
+- [ ] Focus mode — no public API; likely needs reading a private plist/DB,
+      similar risk profile to the `MediaRemote` dead end (Invariant 6).
+- [ ] Wi-Fi / VPN state.
+- [ ] Bluetooth — same `IOBluetooth` family already crashing `AirPodsSource`;
+      check whether that crash affects this too before starting.
+- [ ] Downloads, personal hotspot state alerts.
 
 See [FEATURES.md §5](FEATURES.md#5-live-activities--system-alerts-extensible-framework).
 

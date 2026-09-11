@@ -80,6 +80,7 @@ final class NotchController {
             liveActivityCoordinator = LiveActivityCoordinator(sources: [
                 NowPlayingLiveActivitySource(coordinator: nowPlayingCoordinator, notchHeight: 0),
                 BatterySource(notchHeight: 0),
+                ScreenRecordingSource(notchHeight: 0),
                 volumeSource,
                 brightnessSource
                 // AirPodsSource intentionally not registered -- see the
@@ -119,6 +120,7 @@ final class NotchController {
         liveActivityCoordinator = LiveActivityCoordinator(sources: [
             NowPlayingLiveActivitySource(coordinator: nowPlayingCoordinator, notchHeight: collapsedRect.height),
             BatterySource(notchHeight: collapsedRect.height),
+            ScreenRecordingSource(notchHeight: collapsedRect.height),
             volumeSource,
             brightnessSource
         ])
