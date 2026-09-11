@@ -426,8 +426,17 @@ Bluetooth.
       on recording start was tried and confirmed on-device as an unwanted
       interruption, not a wanted alert. Small red dot on the pill's trailing
       flank.
-- [ ] Focus mode — no public API; likely needs reading a private plist/DB,
-      similar risk profile to the `MediaRemote` dead end (Invariant 6).
+- [ ] Focus mode — **skipped for now, not just deferred-by-default.** A
+      `check-reference-apps-first` spike into jackson-storm/dynamicnotch's
+      `Features/Focus` module found that on macOS 26, `DistributedNotificationCenter`'s
+      `_NSDoNotDisturbEnabled/DisabledNotification` and the `duetexpertd` log
+      stream are both unreliable (the disable notification often doesn't fire
+      at all; the enable one can lack a usable mode identifier) — the only
+      reliable source dynamicnotch found is `~/Library/DoNotDisturb/DB/Assertions.json`,
+      gated behind **Full Disk Access**, a much broader permission than
+      Accessibility. Presented three options (FDA route / best-effort no-new-permission
+      route / skip); user chose to skip rather than request FDA. Revisit if
+      a cleaner API appears or the user decides FDA is worth it.
 - [ ] Wi-Fi / VPN state.
 - [ ] Bluetooth — same `IOBluetooth` family already crashing `AirPodsSource`;
       check whether that crash affects this too before starting.
