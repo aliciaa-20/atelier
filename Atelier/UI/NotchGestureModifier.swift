@@ -67,7 +67,7 @@ private struct NotchGestureMonitorRepresentable: NSViewRepresentable {
     }
 }
 
-private final class NotchGestureMonitorView: NSView {
+@MainActor private final class NotchGestureMonitorView: NSView {
     private var localMonitor: Any?
     private var globalMonitor: Any?
 
@@ -89,8 +89,9 @@ private final class NotchGestureMonitorView: NSView {
         fatalError("init(coder:) has not been implemented")
     }
 
-    deinit {
-        stopMonitoring()
+    isolated deinit {
+        if let localMonitor { NSEvent.removeMonitor(localMonitor) }
+        if let globalMonitor { NSEvent.removeMonitor(globalMonitor) }
     }
 
     override func viewDidMoveToWindow() {
