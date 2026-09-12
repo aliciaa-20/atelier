@@ -224,8 +224,21 @@ struct NotchRootView: View {
                         for provider in providers {
                             _ = provider.loadFileRepresentation(forTypeIdentifier: "public.item") { url, _ in
                                 guard let url else { return }
+                                // loadFileRepresentation's url is only valid for the duration of
+                                // this handler -- the system may delete the backing file once it
+                                // returns, so copy it to a stable staging location synchronously
+                                // here, before hopping to the MainActor-isolated ShelfStore.
+                                let stagingDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+                                let staging = stagingDir.appendingPathComponent(url.lastPathComponent)
+                                do {
+                                    try FileManager.default.createDirectory(at: stagingDir, withIntermediateDirectories: true)
+                                    try FileManager.default.copyItem(at: url, to: staging)
+                                } catch {
+                                    return
+                                }
                                 Task { @MainActor in
-                                    try? shelfStore.addFile(at: url, originalFilename: url.lastPathComponent)
+                                    try? shelfStore.addFile(at: staging, originalFilename: url.lastPathComponent)
+                                    try? FileManager.default.removeItem(at: stagingDir)
                                 }
                             }
                         }
