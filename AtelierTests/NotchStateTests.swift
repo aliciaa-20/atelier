@@ -172,9 +172,33 @@ extension NotchStateTests {
         #expect(result == .shelf)
     }
 
+    @Test func dropCompletedTakesOverFromExpanded() {
+        let result = NotchStateMachine.reduce(.expanded, on: .dropCompleted)
+
+        #expect(result == .shelf)
+    }
+
+    @Test func dropCompletedTakesOverFromPeeking() {
+        let result = NotchStateMachine.reduce(.peeking, on: .dropCompleted)
+
+        #expect(result == .shelf)
+    }
+
     @Test func hoverEndedClosesShelf() {
         let result = NotchStateMachine.reduce(.shelf, on: .hoverEnded(isPlaying: false))
 
         #expect(result == .collapsed)
+    }
+
+    @Test func hoverStartedStaysInShelf() {
+        let result = NotchStateMachine.reduce(.shelf, on: .hoverStarted)
+
+        #expect(result == .shelf)
+    }
+
+    @Test func hoverStartedStillExpandsFromCollapsed() {
+        let result = NotchStateMachine.reduce(.collapsed, on: .hoverStarted)
+
+        #expect(result == .expanded)
     }
 }

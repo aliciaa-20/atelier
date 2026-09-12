@@ -54,7 +54,7 @@ enum NotchStateMachine {
     static func reduce(_ state: NotchState, on event: NotchEvent) -> NotchState {
         switch event {
         case .hoverStarted:
-            return .expanded
+            return state == .shelf ? .shelf : .expanded
         case .hoverEnded(let isPlaying):
             return isPlaying ? .pill : .collapsed
         case .isPlayingChanged(let isPlaying):
@@ -89,7 +89,7 @@ enum NotchStateMachine {
             guard state == .shelf else { return state }
             return isPlaying ? .pill : .collapsed
         case .dropCompleted:
-            return state
+            return .shelf
         }
     }
 }
