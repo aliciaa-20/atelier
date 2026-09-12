@@ -55,17 +55,6 @@ struct NotchRootView: View {
         }
     }
 
-    /// `ShelfStore` doesn't expose its own root directory (it only reports
-    /// `items`), so `ShelfView` needs it separately to build each item's
-    /// `storageURL`. Computed the same way `ShelfStore` computes its own
-    /// default in `NotchController`, kept in exactly one other place.
-    private var shelfRootDirectory: URL {
-        FileManager.default
-            .urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("Atelier", isDirectory: true)
-            .appendingPathComponent("Shelf", isDirectory: true)
-    }
-
     /// `viewModel.currentSize` alone can't distinguish a compact peek
     /// (Volume, Brightness -- no title/artist text) from a regular one
     /// (track change, Battery) -- it only knows `state`, not which live
@@ -129,7 +118,7 @@ struct NotchRootView: View {
                             .transition(.opacity)
                     }
                 } else if viewModel.state == .shelf {
-                    ShelfView(store: shelfStore, rootDirectory: shelfRootDirectory, notchHeight: viewModel.collapsedSize.height)
+                    ShelfView(store: shelfStore, rootDirectory: shelfStore.rootDirectory, notchHeight: viewModel.collapsedSize.height)
                         .transition(.opacity)
                         .onAppear { shelfStore.sweepExpired() }
                 }
@@ -187,7 +176,7 @@ struct NotchRootView: View {
                 NotchGestureModifier(
                     capabilities: NotchGestureCapabilities(
                         canOpen: viewModel.state == .collapsed || viewModel.state == .pill,
-                        canClose: viewModel.state == .expanded || viewModel.state == .peeking,
+                        canClose: viewModel.state == .expanded || viewModel.state == .peeking || viewModel.state == .shelf,
                         canSkip: liveActivity.topContent?.isExpandable == true
                     ),
                     onOpen: {
@@ -237,6 +226,12 @@ struct NotchRootView: View {
                                     return
                                 }
                                 Task { @MainActor in
+                                    // `addFile` now MOVES `staging` into the shelf's
+                                    // real storage location (avoids a second full-file
+                                    // copy on top of the one just made above), which
+                                    // empties `staging` but leaves its now-empty parent
+                                    // `stagingDir` behind -- clean that up so temp
+                                    // directories don't accumulate.
                                     try? shelfStore.addFile(at: staging, originalFilename: url.lastPathComponent)
                                     try? FileManager.default.removeItem(at: stagingDir)
                                 }

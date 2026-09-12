@@ -165,7 +165,13 @@ private extension NotchDragMonitorView {
         guard let urls = dragPasteboard.readObjects(forClasses: [NSURL.self], options: nil) as? [URL], !urls.isEmpty else {
             return nil
         }
-        return urls.map { NSItemProvider(contentsOf: $0) ?? NSItemProvider() }
+        // compactMap, not map with a `?? NSItemProvider()` fallback: a
+        // fabricated empty provider's `loadFileRepresentation` completes
+        // with no URL, silently swallowing the drop (e.g. a directory, or
+        // any other provider-construction failure) instead of just
+        // dropping that one item.
+        let providers = urls.compactMap { NSItemProvider(contentsOf: $0) }
+        return providers.isEmpty ? nil : providers
     }
 
     func currentScreenRect() -> CGRect? {

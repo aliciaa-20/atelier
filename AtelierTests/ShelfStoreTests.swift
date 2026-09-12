@@ -17,7 +17,7 @@ struct ShelfStoreTests {
         return url
     }
 
-    @Test func addFileCopiesIntoRootAndTracksItem() throws {
+    @Test func addFileMovesIntoRootAndTracksItem() throws {
         let root = makeTempRoot()
         let sourceDir = makeTempRoot()
         let source = makeSourceFile(named: "note.txt", in: sourceDir)
@@ -29,8 +29,10 @@ struct ShelfStoreTests {
         let item = try #require(store.items.first)
         #expect(item.originalFilename == "note.txt")
         #expect(FileManager.default.fileExists(atPath: item.storageURL(root: root).path))
-        // Original untouched.
-        #expect(FileManager.default.fileExists(atPath: source.path))
+        // `addFile` moves `sourceURL` into the shelf rather than copying it --
+        // its only production caller passes a throwaway staging copy it made
+        // itself, so the source is expected to no longer exist afterward.
+        #expect(FileManager.default.fileExists(atPath: source.path) == false)
     }
 
     @Test func removeDeletesFileAndDropsItem() throws {

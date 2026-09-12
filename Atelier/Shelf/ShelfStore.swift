@@ -9,7 +9,7 @@ import Foundation
 final class ShelfStore: ObservableObject {
     @Published private(set) var items: [ShelfItem] = []
 
-    private let rootDirectory: URL
+    let rootDirectory: URL
     private let keepInterval: TimeInterval
     private var manifestURL: URL { rootDirectory.appendingPathComponent("manifest.json") }
 
@@ -20,19 +20,24 @@ final class ShelfStore: ObservableObject {
         items = Self.loadManifest(at: manifestURL)
     }
 
-    /// Copies `sourceURL` into a fresh per-item directory under
-    /// `rootDirectory` and adds it to `items`. The original file is never
-    /// modified or moved. `addedAt` is injected for testing with controlled
-    /// timestamps; production calls use the default `Date()`.
+    /// Moves `sourceURL` into a fresh per-item directory under
+    /// `rootDirectory` and adds it to `items`. This moves rather than
+    /// copies `sourceURL` -- the only production caller (`NotchRootView`'s
+    /// `onDrop`) already made its own private staging copy before calling
+    /// this, so a second full-file copy here was pure waste (and, on a
+    /// large file, a synchronous main-actor-blocking one). Never call this
+    /// with a URL the caller still needs afterward. `addedAt` is injected
+    /// for testing with controlled timestamps; production calls use the
+    /// default `Date()`.
     func addFile(at sourceURL: URL, originalFilename: String, addedAt: Date = Date()) throws {
         let item = ShelfItem(id: UUID(), originalFilename: originalFilename, addedAt: addedAt)
         let destination = item.storageURL(root: rootDirectory)
         let destinationDir = destination.deletingLastPathComponent()
         do {
             try FileManager.default.createDirectory(at: destinationDir, withIntermediateDirectories: true)
-            try FileManager.default.copyItem(at: sourceURL, to: destination)
+            try FileManager.default.moveItem(at: sourceURL, to: destination)
         } catch {
-            // Clean up the directory we just created if copyItem fails.
+            // Clean up the directory we just created if moveItem fails.
             try? FileManager.default.removeItem(at: destinationDir)
             throw error
         }
@@ -44,7 +49,12 @@ final class ShelfStore: ObservableObject {
     func remove(_ id: UUID) {
         guard let item = items.first(where: { $0.id == id }) else { return }
         // Ignore file-system deletion errors — orphan files don't affect correctness.
-        try? FileManager.default.removeItem(at: item.storageURL(root: rootDirectory).deletingLastPathComponent())
+        // Constructed directly from the item's own UUID rather than by
+        // stripping the filename back off `storageURL` -- if
+        // `originalFilename` were ever empty (or "/"), deriving the
+        // directory that way could resolve to `rootDirectory` itself and
+        // delete the whole shelf.
+        try? FileManager.default.removeItem(at: rootDirectory.appendingPathComponent(item.id.uuidString))
         items.removeAll { $0.id == id }
         saveManifest()
     }
@@ -57,7 +67,9 @@ final class ShelfStore: ObservableObject {
         guard !expired.isEmpty else { return }
         for item in expired {
             // Ignore file-system deletion errors — orphan files don't affect correctness.
-            try? FileManager.default.removeItem(at: item.storageURL(root: rootDirectory).deletingLastPathComponent())
+            // See `remove(_:)` for why this is built from the item's UUID
+            // directly rather than derived from `storageURL`.
+            try? FileManager.default.removeItem(at: rootDirectory.appendingPathComponent(item.id.uuidString))
         }
         items.removeAll { item in expired.contains(item) }
         saveManifest()
