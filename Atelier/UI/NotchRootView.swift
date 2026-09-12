@@ -5,6 +5,7 @@ struct NotchRootView: View {
     @ObservedObject var viewModel: NotchViewModel
     @ObservedObject var nowPlaying: NowPlayingCoordinator
     @ObservedObject var liveActivity: LiveActivityCoordinator
+    @ObservedObject var shelfStore: ShelfStore
     @StateObject private var artworkColor = ArtworkColorLoader()
     @State private var settleScale: CGFloat = 1
     @State private var outputDevices: [AudioOutputDevice] = []
@@ -49,10 +50,20 @@ struct NotchRootView: View {
         case .peeking:
             let content = liveActivity.topContent ?? lastPeekContent
             return content?.isExpandable == false ? (top: 6, bottom: 14) : (top: 14, bottom: 14)
-        // Placeholder -- Task 5 gives the shelf its own radii.
         case .shelf:
             return (top: 14, bottom: 20)
         }
+    }
+
+    /// `ShelfStore` doesn't expose its own root directory (it only reports
+    /// `items`), so `ShelfView` needs it separately to build each item's
+    /// `storageURL`. Computed the same way `ShelfStore` computes its own
+    /// default in `NotchController`, kept in exactly one other place.
+    private var shelfRootDirectory: URL {
+        FileManager.default
+            .urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("Atelier", isDirectory: true)
+            .appendingPathComponent("Shelf", isDirectory: true)
     }
 
     /// `viewModel.currentSize` alone can't distinguish a compact peek
@@ -117,6 +128,10 @@ struct NotchRootView: View {
                         content.pillView()
                             .transition(.opacity)
                     }
+                } else if viewModel.state == .shelf {
+                    ShelfView(store: shelfStore, rootDirectory: shelfRootDirectory, notchHeight: viewModel.collapsedSize.height)
+                        .transition(.opacity)
+                        .onAppear { shelfStore.sweepExpired() }
                 }
             }
             .frame(width: frameSize.width, height: frameSize.height)
@@ -190,6 +205,33 @@ struct NotchRootView: View {
                     },
                     onSkipBackward: {
                         Task { await nowPlaying.previous() }
+                    }
+                )
+            )
+            .modifier(
+                NotchDragModifier(
+                    onDragEntered: {
+                        withAnimation(NotchAnimations.open) {
+                            viewModel.handle(.dragEntered)
+                        }
+                    },
+                    onDragExited: {
+                        withAnimation(NotchAnimations.close) {
+                            viewModel.handle(.dragExited(isPlaying: liveActivity.hasContent))
+                        }
+                    },
+                    onDrop: { providers in
+                        for provider in providers {
+                            _ = provider.loadFileRepresentation(forTypeIdentifier: "public.item") { url, _ in
+                                guard let url else { return }
+                                Task { @MainActor in
+                                    try? shelfStore.addFile(at: url, originalFilename: url.lastPathComponent)
+                                }
+                            }
+                        }
+                        withAnimation(NotchAnimations.open) {
+                            viewModel.handle(.dropCompleted)
+                        }
                     }
                 )
             )
