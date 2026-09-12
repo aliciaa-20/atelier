@@ -18,6 +18,10 @@ final class NotchViewModel: ObservableObject {
     /// `peekSize` based on what's actually peeking, not `NotchViewModel`
     /// itself, which stays state-only and unaware of live activity content.
     let compactPeekSize: CGSize
+    /// The file shelf's own footprint -- wide enough for a short horizontal
+    /// row of items, shorter than the full player since there's no
+    /// scrubber/transport row to fit.
+    let shelfSize: CGSize
 
     /// Bumped each time `NotchController` observes the user landing on a
     /// different Space. There's no public API to detect a three-finger swipe
@@ -28,12 +32,13 @@ final class NotchViewModel: ObservableObject {
     /// moment you arrive, so the fixed position reads as deliberate.
     @Published private(set) var spaceChangeTick: Int = 0
 
-    init(collapsedSize: CGSize, expandedSize: CGSize, pillSize: CGSize, peekSize: CGSize, compactPeekSize: CGSize) {
+    init(collapsedSize: CGSize, expandedSize: CGSize, pillSize: CGSize, peekSize: CGSize, compactPeekSize: CGSize, shelfSize: CGSize) {
         self.collapsedSize = collapsedSize
         self.expandedSize = expandedSize
         self.pillSize = pillSize
         self.peekSize = peekSize
         self.compactPeekSize = compactPeekSize
+        self.shelfSize = shelfSize
     }
 
     func handle(_ event: NotchEvent) {
@@ -50,9 +55,7 @@ final class NotchViewModel: ObservableObject {
         case .pill: pillSize
         case .expanded: expandedSize
         case .peeking: peekSize
-        // Placeholder -- Task 5 gives the shelf its own size once
-        // `ShelfView` exists to size around.
-        case .shelf: expandedSize
+        case .shelf: shelfSize
         }
     }
 }

@@ -12,6 +12,7 @@ final class NotchController {
     private let viewModel: NotchViewModel
     private let nowPlayingCoordinator = NowPlayingCoordinator()
     private let liveActivityCoordinator: LiveActivityCoordinator
+    private let shelfStore: ShelfStore
     /// Owned here (not just by `liveActivityCoordinator`'s source list) so
     /// `mediaKeyInterceptor` below has a stable instance to call
     /// `.step(by:)`/`.toggleMute()` on.
@@ -41,6 +42,10 @@ final class NotchController {
     /// physical notch height on top of this.
     private static let playerContentHeight: CGFloat = 128
     private static let expandedWidth: CGFloat = 352
+    /// A single row of ~64pt item cells plus padding -- matches
+    /// `ShelfView`'s own column width. Shorter than `playerContentHeight`
+    /// since there's no scrubber/transport row.
+    private static let shelfContentHeight: CGFloat = 90
     /// Narrower and more compact than the full player — a single
     /// artwork(34)+text(92)+waveform(~18.5) row with 24pt horizontal
     /// padding (buffer over peeking's 14pt corner radius — see
@@ -69,8 +74,15 @@ final class NotchController {
     static let peekDuration: Duration = .seconds(2.5)
 
     init() {
+        let shelfRoot = FileManager.default
+            .urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("Atelier", isDirectory: true)
+            .appendingPathComponent("Shelf", isDirectory: true)
+        shelfStore = ShelfStore(rootDirectory: shelfRoot)
+        shelfStore.sweepExpired()
+
         guard let screen = NSScreen.notchedOrMain else {
-            viewModel = NotchViewModel(collapsedSize: .zero, expandedSize: .zero, pillSize: .zero, peekSize: .zero, compactPeekSize: .zero)
+            viewModel = NotchViewModel(collapsedSize: .zero, expandedSize: .zero, pillSize: .zero, peekSize: .zero, compactPeekSize: .zero, shelfSize: .zero)
             let hudOrder = SystemHUDOrder()
             let volumeSource = VolumeSource(notchHeight: 0, hudOrder: hudOrder)
             let brightnessSource = BrightnessSource(notchHeight: 0, hudOrder: hudOrder)
@@ -90,7 +102,8 @@ final class NotchController {
                 rootView: NotchRootView(
                     viewModel: viewModel,
                     nowPlaying: nowPlayingCoordinator,
-                    liveActivity: liveActivityCoordinator
+                    liveActivity: liveActivityCoordinator,
+                    shelfStore: shelfStore
                 )
             )
             return
@@ -140,12 +153,17 @@ final class NotchController {
             width: Self.compactPeekWidth,
             height: collapsedRect.height + Self.compactPeekContentHeight
         )
+        let shelfSize = CGSize(
+            width: Self.expandedWidth,
+            height: collapsedRect.height + Self.shelfContentHeight
+        )
         viewModel = NotchViewModel(
             collapsedSize: collapsedRect.size,
             expandedSize: expandedSize,
             pillSize: pillSize,
             peekSize: peekSize,
-            compactPeekSize: compactPeekSize
+            compactPeekSize: compactPeekSize,
+            shelfSize: shelfSize
         )
 
         let maxRect = CGRect(
@@ -159,7 +177,8 @@ final class NotchController {
             rootView: NotchRootView(
                 viewModel: viewModel,
                 nowPlaying: nowPlayingCoordinator,
-                liveActivity: liveActivityCoordinator
+                liveActivity: liveActivityCoordinator,
+                shelfStore: shelfStore
             )
         )
         panel.setFrame(maxRect, display: true)
