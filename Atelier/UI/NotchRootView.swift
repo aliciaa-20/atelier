@@ -49,6 +49,9 @@ struct NotchRootView: View {
         case .peeking:
             let content = liveActivity.topContent ?? lastPeekContent
             return content?.isExpandable == false ? (top: 6, bottom: 14) : (top: 14, bottom: 14)
+        // Placeholder -- Task 5 gives the shelf its own radii.
+        case .shelf:
+            return (top: 14, bottom: 20)
         }
     }
 
@@ -68,7 +71,7 @@ struct NotchRootView: View {
         case .peeking:
             let content = liveActivity.topContent ?? lastPeekContent
             return content?.isExpandable == false ? viewModel.compactPeekSize : viewModel.peekSize
-        case .pill, .collapsed, .expanded:
+        case .pill, .collapsed, .expanded, .shelf:
             return viewModel.currentSize
         }
     }

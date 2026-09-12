@@ -50,6 +50,9 @@ final class NotchViewModel: ObservableObject {
         case .pill: pillSize
         case .expanded: expandedSize
         case .peeking: peekSize
+        // Placeholder -- Task 5 gives the shelf its own size once
+        // `ShelfView` exists to size around.
+        case .shelf: expandedSize
         }
     }
 }

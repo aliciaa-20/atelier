@@ -11,6 +11,10 @@ enum NotchState: Equatable {
     /// user starts actually hovering, at which point `.hoverStarted` takes
     /// over and it behaves exactly like a normal expand.
     case peeking
+    /// The file shelf, shown while dragging a file over the notch (or
+    /// after a drop, until the mouse leaves). A separate interaction
+    /// dimension from hover/peek -- entered by dragging, not hovering.
+    case shelf
 }
 
 enum NotchEvent {
@@ -32,6 +36,18 @@ enum NotchEvent {
     /// Fired by a timer started when entering `.peeking`; a no-op unless
     /// still `.peeking` (i.e. the user hasn't started hovering since).
     case peekTimerElapsed(isPlaying: Bool)
+    /// Fired by `NotchDragDetector` when a drag carrying real file content
+    /// enters the notch's screen region.
+    case dragEntered
+    /// Fired by `NotchDragDetector` when a drag exits the region without
+    /// dropping. Carries `isPlaying` for the same reason `hoverEnded` does
+    /// -- resolving the correct resting state without the reducer
+    /// remembering anything across calls.
+    case dragExited(isPlaying: Bool)
+    /// Fired by `NotchDragDetector` when a drag is released inside the
+    /// region. Stays in `.shelf` rather than closing immediately, so the
+    /// newly-dropped item is visible.
+    case dropCompleted
 }
 
 enum NotchStateMachine {
@@ -43,9 +59,9 @@ enum NotchStateMachine {
             return isPlaying ? .pill : .collapsed
         case .isPlayingChanged(let isPlaying):
             switch state {
-            case .expanded, .peeking:
-                // Don't yank the player away mid-hover/peek just because
-                // playback state changed underneath it.
+            case .expanded, .peeking, .shelf:
+                // Don't yank the player/shelf away mid-hover/peek/drag just
+                // because playback state changed underneath it.
                 return state
             case .collapsed, .pill:
                 return isPlaying ? .pill : .collapsed
@@ -56,12 +72,24 @@ enum NotchStateMachine {
             switch state {
             case .collapsed, .pill:
                 return .peeking
-            case .expanded, .peeking:
+            case .expanded, .peeking, .shelf:
                 return state
             }
         case .peekTimerElapsed(let isPlaying):
             guard state == .peeking else { return state }
             return isPlaying ? .pill : .collapsed
+        case .dragEntered:
+            switch state {
+            case .collapsed, .pill:
+                return .shelf
+            case .expanded, .peeking, .shelf:
+                return state
+            }
+        case .dragExited(let isPlaying):
+            guard state == .shelf else { return state }
+            return isPlaying ? .pill : .collapsed
+        case .dropCompleted:
+            return state
         }
     }
 }
