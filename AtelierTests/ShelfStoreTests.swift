@@ -53,11 +53,10 @@ struct ShelfStoreTests {
         let oldSource = makeSourceFile(named: "old.txt", in: sourceDir)
         let freshSource = makeSourceFile(named: "fresh.txt", in: sourceDir)
         let store = ShelfStore(rootDirectory: root, keepInterval: 60)
-        try store.addFile(at: oldSource, originalFilename: "old.txt")
-        Thread.sleep(forTimeInterval: 70)
-        try store.addFile(at: freshSource, originalFilename: "fresh.txt")
+        try store.addFile(at: oldSource, originalFilename: "old.txt", addedAt: Date().addingTimeInterval(-120))
+        try store.addFile(at: freshSource, originalFilename: "fresh.txt", addedAt: Date())
 
-        store.sweepExpired(now: Date().addingTimeInterval(30))
+        store.sweepExpired()
 
         #expect(store.items.map(\.originalFilename) == ["fresh.txt"])
     }
