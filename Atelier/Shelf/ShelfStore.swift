@@ -22,12 +22,20 @@ final class ShelfStore: ObservableObject {
 
     /// Copies `sourceURL` into a fresh per-item directory under
     /// `rootDirectory` and adds it to `items`. The original file is never
-    /// modified or moved.
-    func addFile(at sourceURL: URL, originalFilename: String) throws {
-        let item = ShelfItem(id: UUID(), originalFilename: originalFilename, addedAt: Date())
+    /// modified or moved. `addedAt` is injected for testing with controlled
+    /// timestamps; production calls use the default `Date()`.
+    func addFile(at sourceURL: URL, originalFilename: String, addedAt: Date = Date()) throws {
+        let item = ShelfItem(id: UUID(), originalFilename: originalFilename, addedAt: addedAt)
         let destination = item.storageURL(root: rootDirectory)
-        try FileManager.default.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
-        try FileManager.default.copyItem(at: sourceURL, to: destination)
+        let destinationDir = destination.deletingLastPathComponent()
+        do {
+            try FileManager.default.createDirectory(at: destinationDir, withIntermediateDirectories: true)
+            try FileManager.default.copyItem(at: sourceURL, to: destination)
+        } catch {
+            // Clean up the directory we just created if copyItem fails.
+            try? FileManager.default.removeItem(at: destinationDir)
+            throw error
+        }
 
         items.insert(item, at: 0)
         saveManifest()
@@ -35,6 +43,7 @@ final class ShelfStore: ObservableObject {
 
     func remove(_ id: UUID) {
         guard let item = items.first(where: { $0.id == id }) else { return }
+        // Ignore file-system deletion errors — orphan files don't affect correctness.
         try? FileManager.default.removeItem(at: item.storageURL(root: rootDirectory).deletingLastPathComponent())
         items.removeAll { $0.id == id }
         saveManifest()
@@ -47,6 +56,7 @@ final class ShelfStore: ObservableObject {
         let expired = items.filter { $0.isExpired(now: now, keepInterval: keepInterval) }
         guard !expired.isEmpty else { return }
         for item in expired {
+            // Ignore file-system deletion errors — orphan files don't affect correctness.
             try? FileManager.default.removeItem(at: item.storageURL(root: rootDirectory).deletingLastPathComponent())
         }
         items.removeAll { item in expired.contains(item) }
