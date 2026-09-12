@@ -38,6 +38,7 @@ Four layers with deliberate seams. The two pure ones carry the test suite.
 | Data | `NowPlaying/*.swift` | `NowPlayingSource` protocol + per-app implementations |
 | System | `System/*.swift` | `MediaKeyInterceptor` (`CGEventTap`), `AccessibilityPermission` — manual-verification only, like `NowPlayingSource`'s AppleScript pieces |
 | Widgets | `Widgets/*/*.swift` | `LiveActivitySource` conformers (Battery, Volume, Brightness, AirPods, ScreenRecording) — one folder per widget, manual-verification only like `System/*.swift` |
+| Shelf | `Shelf/*.swift` | `ShelfItem` (pure, unit-tested) + `ShelfStore` (file I/O, JSON manifest, lazy expiry sweep — unit-tested against real temp directories, not mocked) |
 
 **v1 supports Spotify only.** The `NowPlayingSource` protocol still exists and is
 still the seam — but only `SpotifySource` conforms to it for now. Apple Music is a

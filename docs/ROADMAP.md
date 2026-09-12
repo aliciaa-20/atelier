@@ -5,7 +5,10 @@ something runnable, a green test suite, and a commit. Source of truth for the
 overall plan is [the design spec](superpowers/specs/2026-08-31-atelier-notch-design.md);
 this file tracks progress against it.
 
-**Where we are:** Phases 0–8 code-complete, Phase 10 in progress. Phase 6 (Live Activity / widget
+**Where we are:** Phases 0–8 code-complete, Phases 9 and 10 in progress.
+Phase 9's file shelf sub-project is code-complete (all 6 implementation
+tasks reviewed, two real bugs found and fixed) but not yet manually
+verified on-device — see Phase 9's entry below. Phase 6 (Live Activity / widget
 architecture) is implemented and confirmed on real hardware: pill/peek/hover/
 decay behavior and the Battery widget were tuned live into their final shape
 — Battery is deliberately pill-only (`peeksOnChange == false` — no auto-peek,
@@ -395,12 +398,37 @@ XPC-helper subsystem and is deferred to a later phase.
 
 See [FEATURES.md §3](FEATURES.md#3-system-hud-replacement).
 
-### ⬜ Phase 9 — File shelf + AirDrop
+### 🔜 Phase 9 — File shelf + AirDrop
 *Ships: drag & drop file shelf, AirDrop integration, format converter.*
 
-- [ ] File shelf drag & drop.
-- [ ] AirDrop integration.
-- [ ] File format converter.
+Decomposed into three sequential sub-projects (AirDrop and the converter
+both depend on the shelf existing first) — see
+[the design spec](superpowers/specs/2026-09-13-file-shelf-design.md) and
+[the implementation plan](superpowers/plans/2026-09-13-file-shelf.md).
+
+- [ ] **File shelf drag & drop** — code-complete via subagent-driven
+      development (6 tasks, each with its own task-scoped review, plus a
+      final whole-branch review): `NotchState` gained a `.shelf` case and
+      `dragEntered`/`dragExited`/`dropCompleted` events; a new
+      `Notch/NotchDragDetector.swift` (global `NSEvent` monitors +
+      pasteboard `changeCount` tracking, mirroring
+      `NotchGestureModifier`'s AppKit boundary) detects a file drag
+      entering/exiting/dropping on the notch region; dropped files are
+      copied into `~/Library/Application Support/Atelier/Shelf/` and
+      tracked by `Shelf/ShelfStore.swift` (plain `[ShelfItem]` array, no
+      `swift-collections` dependency) with a lazy 24h expiry sweep;
+      `UI/ShelfView.swift` renders the grid with drag-out support. Two
+      real bugs found and fixed during review: a test in `ShelfStore`'s
+      suite used a real 70-second sleep to differentiate item ages
+      (fixed with an injected `addedAt` parameter instead), and the drop
+      handler deferred a file copy past `NSItemProvider
+      .loadFileRepresentation`'s documented synchronous-validity window
+      (fixed by copying to a staging location before hopping actors).
+      **Not yet manually verified on-device** — checkbox stays unchecked
+      until drag-enter/exit, drop, remove, drag-out, and relaunch
+      persistence are actually exercised on real hardware.
+- [ ] AirDrop integration — sub-project 2, not started.
+- [ ] File format converter — sub-project 3, not started.
 
 See [FEATURES.md §4](FEATURES.md#4-file-shelf--related-utilities).
 
