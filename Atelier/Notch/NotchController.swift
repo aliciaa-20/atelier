@@ -18,6 +18,7 @@ final class NotchController {
     /// `.step(by:)`/`.toggleMute()` on.
     private let volumeSource: VolumeSource
     private let brightnessSource: BrightnessSource
+    private let batterySource: BatterySource
     /// Installs its `CGEventTap` on creation and tears it down on deinit --
     /// held for exactly that lifetime, same as `panel`/`viewModel`.
     private let mediaKeyInterceptor: MediaKeyInterceptor
@@ -86,12 +87,14 @@ final class NotchController {
             let hudOrder = SystemHUDOrder()
             let volumeSource = VolumeSource(notchHeight: 0, hudOrder: hudOrder)
             let brightnessSource = BrightnessSource(notchHeight: 0, hudOrder: hudOrder)
+            let batterySource = BatterySource(notchHeight: 0)
             self.volumeSource = volumeSource
             self.brightnessSource = brightnessSource
+            self.batterySource = batterySource
             mediaKeyInterceptor = MediaKeyInterceptor(volumeSource: volumeSource, brightnessSource: brightnessSource)
             liveActivityCoordinator = LiveActivityCoordinator(sources: [
                 NowPlayingLiveActivitySource(coordinator: nowPlayingCoordinator, notchHeight: 0),
-                BatterySource(notchHeight: 0),
+                batterySource,
                 ScreenRecordingSource(notchHeight: 0),
                 volumeSource,
                 brightnessSource
@@ -103,7 +106,8 @@ final class NotchController {
                     viewModel: viewModel,
                     nowPlaying: nowPlayingCoordinator,
                     liveActivity: liveActivityCoordinator,
-                    shelfStore: shelfStore
+                    shelfStore: shelfStore,
+                    batterySource: batterySource
                 )
             )
             return
@@ -127,12 +131,14 @@ final class NotchController {
         let hudOrder = SystemHUDOrder()
         let volumeSource = VolumeSource(notchHeight: collapsedRect.height, hudOrder: hudOrder)
         let brightnessSource = BrightnessSource(notchHeight: collapsedRect.height, hudOrder: hudOrder)
+        let batterySource = BatterySource(notchHeight: collapsedRect.height)
         self.volumeSource = volumeSource
         self.brightnessSource = brightnessSource
+        self.batterySource = batterySource
         mediaKeyInterceptor = MediaKeyInterceptor(volumeSource: volumeSource, brightnessSource: brightnessSource)
         liveActivityCoordinator = LiveActivityCoordinator(sources: [
             NowPlayingLiveActivitySource(coordinator: nowPlayingCoordinator, notchHeight: collapsedRect.height),
-            BatterySource(notchHeight: collapsedRect.height),
+            batterySource,
             ScreenRecordingSource(notchHeight: collapsedRect.height),
             volumeSource,
             brightnessSource
@@ -178,7 +184,8 @@ final class NotchController {
                 viewModel: viewModel,
                 nowPlaying: nowPlayingCoordinator,
                 liveActivity: liveActivityCoordinator,
-                shelfStore: shelfStore
+                shelfStore: shelfStore,
+                batterySource: batterySource
             )
         )
         panel.setFrame(maxRect, display: true)
