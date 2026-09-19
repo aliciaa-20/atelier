@@ -18,7 +18,7 @@ import os
 final class SkyLightSpaceOperator {
     static let shared = SkyLightSpaceOperator()
 
-    private static let log = Logger(subsystem: "com.atelier.app", category: "SkyLightSpaceOperator")
+    private static let log = Logger(subsystem: "com.aliciapereira.Atelier", category: "SkyLightSpaceOperator")
 
     /// The level Notification Center itself uses to draw over the lock
     /// screen -- see Lakr233/SkyLightWindow's own `SKL_CGSSpaceLevel`
@@ -38,7 +38,7 @@ final class SkyLightSpaceOperator {
 
     private init() {
         typealias F_SLSMainConnectionID = @convention(c) () -> Int32
-        typealias F_SLSSpaceCreate = @convention(c) (Int32, Int32, Int32) -> Int32
+        typealias F_SLSSpaceCreate = @convention(c) (Int32, Int32, UnsafeRawPointer?) -> Int32
         typealias F_SLSSpaceSetAbsoluteLevel = @convention(c) (Int32, Int32, Int32) -> Int32
         typealias F_SLSShowSpaces = @convention(c) (Int32, CFArray) -> Int32
 
@@ -64,7 +64,17 @@ final class SkyLightSpaceOperator {
         let showSpaces = unsafeBitCast(showSpacesSym, to: F_SLSShowSpaces.self)
 
         let resolvedConnection = mainConnectionID()
-        let resolvedSpace = spaceCreate(resolvedConnection, 1, 0)
+        let resolvedSpace = spaceCreate(resolvedConnection, 1, nil)
+
+        guard resolvedSpace != 0 else {
+            Self.log.error("SLSSpaceCreate returned an invalid space -- lock-screen widget disabled")
+            connection = 0
+            space = 0
+            addWindows = { _, _, _, _ in 0 }
+            isAvailable = false
+            return
+        }
+
         connection = resolvedConnection
         space = resolvedSpace
         addWindows = unsafeBitCast(addWindowsSym, to: F_SLSSpaceAddWindowsAndRemoveFromSpaces.self)
