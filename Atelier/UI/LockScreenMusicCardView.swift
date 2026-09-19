@@ -18,6 +18,15 @@ import SwiftUI
 /// what read as "not smooth". Keeping one tree and only animating its
 /// sizes/spacing/opacity is what makes Atoll's hover morph, and iOS's own
 /// Lock Screen widget expansion, read as one continuous motion.
+///
+/// The card's background is a blurred, darkened copy of the track's own
+/// artwork, not a flat tint or the system `.glassEffect()` -- that's what
+/// iOS's own Lock Screen Now Playing widget and Control Center do, and
+/// it's why they never look like a generic dark rounded rectangle: the
+/// "glass" is built from the content, not a translucency effect sitting
+/// on top of the wallpaper. Stacking the system glass material on top of a
+/// custom blur would also be glass-on-glass, which Liquid Glass's own
+/// design rules call out as incorrect.
 struct LockScreenMusicCardView: View {
     @ObservedObject var nowPlaying: NowPlayingCoordinator
     let onPlayPause: () -> Void
@@ -57,57 +66,111 @@ struct LockScreenMusicCardView: View {
     }
 
     private func content(for info: NowPlayingInfo) -> some View {
-        VStack(spacing: isExpanded ? 14 : 0) {
-            HStack(spacing: 12) {
-                ArtworkView(url: info.artworkURL, cornerRadius: artworkCornerRadius)
-                    .frame(width: artworkSize, height: artworkSize)
-                    .parallax3D()
-                VStack(alignment: .leading, spacing: headerSpacing) {
-                    Text(info.title)
-                        .font(.system(size: titleFontSize, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .lineLimit(1)
-                    Text(info.artist)
-                        .font(.system(size: artistFontSize))
-                        .foregroundStyle(.white.opacity(0.7))
-                        .lineLimit(1)
+        ZStack {
+            BlurredArtworkBackground(url: info.artworkURL)
+
+            VStack(spacing: isExpanded ? 16 : 0) {
+                HStack(spacing: 12) {
+                    ArtworkView(url: info.artworkURL, cornerRadius: artworkCornerRadius)
+                        .frame(width: artworkSize, height: artworkSize)
+                        .shadow(color: .black.opacity(0.3), radius: 6, y: 3)
+                        .parallax3D()
+                    VStack(alignment: .leading, spacing: headerSpacing) {
+                        Text(info.title)
+                            .font(.system(size: titleFontSize, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .lineLimit(1)
+                        Text(info.artist)
+                            .font(.system(size: artistFontSize))
+                            .foregroundStyle(.white.opacity(0.7))
+                            .lineLimit(1)
+                    }
+                    Spacer(minLength: 0)
                 }
-                Spacer(minLength: 0)
+
+                ScrubberView(duration: info.duration, elapsed: info.elapsed, onSeek: onSeek)
+                    .frame(height: isExpanded ? 16 : 0)
+                    .opacity(isExpanded ? 1 : 0)
+                    .clipped()
+
+                transportRow(for: info)
+                    .frame(height: isExpanded ? 32 : 0)
+                    .opacity(isExpanded ? 1 : 0)
+                    .clipped()
             }
-
-            ScrubberView(duration: info.duration, elapsed: info.elapsed, onSeek: onSeek)
-                .frame(height: isExpanded ? 14 : 0)
-                .opacity(isExpanded ? 1 : 0)
-                .clipped()
-
-            transportRow(for: info)
-                .frame(height: isExpanded ? 26 : 0)
-                .opacity(isExpanded ? 1 : 0)
-                .clipped()
+            .padding(16)
         }
-        .padding(16)
         .frame(width: cardSize.width, height: cardSize.height)
-        // Real Liquid Glass (`.glassEffect`), not a flat tinted rectangle --
-        // Atoll's `LockScreenMusicPanel` uses the same material family
-        // (`.ultraThinMaterial`/liquid glass) so the card reads correctly
-        // over an arbitrary wallpaper instead of looking like a dark box.
-        .glassEffect(in: .rect(cornerRadius: cardCornerRadius))
+        .clipShape(RoundedRectangle(cornerRadius: cardCornerRadius, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: cardCornerRadius, style: .continuous)
+                .strokeBorder(Color.white.opacity(0.16), lineWidth: 0.8)
+        )
+        .shadow(color: .black.opacity(0.4), radius: 24, y: 10)
     }
 
+    /// Evenly distributed across the full card width (`Spacer()` on both
+    /// ends and between each control), matching the Lock Screen/Control
+    /// Center transport row rather than a tight cluster with fixed gaps --
+    /// a fixed-spacing `HStack` reads as a widget bolted onto a corner
+    /// instead of a control row that owns the space it's given.
+    /// Prev/next sit one full step down from play/pause on both size and
+    /// weight -- deliberate, not the previous version's bug where they had
+    /// no explicit font size at all and fell back to the system default.
     private func transportRow(for info: NowPlayingInfo) -> some View {
-        HStack(spacing: 28) {
+        HStack {
+            Spacer()
             Button(action: onPrevious) {
                 Image(systemName: "backward.fill")
+                    .font(.system(size: 15, weight: .semibold))
             }
+            Spacer()
             Button(action: onPlayPause) {
                 Image(systemName: info.isPlaying ? "pause.fill" : "play.fill")
-                    .font(.system(size: 20))
+                    .font(.system(size: 22, weight: .semibold))
             }
+            Spacer()
             Button(action: onNext) {
                 Image(systemName: "forward.fill")
+                    .font(.system(size: 15, weight: .semibold))
             }
+            Spacer()
         }
         .buttonStyle(.plain)
         .foregroundStyle(.white)
+    }
+}
+
+/// A blurred, darkened, saturated copy of the artwork filling the card --
+/// see the type doc for why this replaces a flat tint or system glass.
+/// Shares `ArtworkImageCache` with `ArtworkView` so the two don't each run
+/// their own fetch of the same URL.
+private struct BlurredArtworkBackground: View {
+    let url: URL?
+    @State private var image: NSImage?
+
+    var body: some View {
+        GeometryReader { geo in
+            Group {
+                if let image {
+                    Image(nsImage: image)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: geo.size.width, height: geo.size.height)
+                        .blur(radius: 36)
+                        .saturation(1.4)
+                } else {
+                    Color.black
+                }
+            }
+            .overlay(Color.black.opacity(0.4))
+        }
+        .task(id: url) {
+            image = nil
+            guard let url,
+                  let data = await ArtworkImageCache.shared.data(for: url),
+                  let nsImage = NSImage(data: data) else { return }
+            image = nsImage
+        }
     }
 }
