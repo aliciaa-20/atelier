@@ -44,6 +44,11 @@ final class NotchController {
     /// panel's total height must add the physical notch height on top of
     /// this.
     private static let playerContentHeight: CGFloat = 164
+    /// Idle Home (date/time + battery %, no scrubber/transport row) needs
+    /// far less room than a real player -- deliberately shorter than
+    /// `playerContentHeight`. Starting value, expected to be tuned further
+    /// on-device.
+    private static let idleHomeContentHeight: CGFloat = 90
     private static let expandedWidth: CGFloat = 352
     /// A single row of ~64pt item cells plus padding -- matches
     /// `ShelfView`'s own column width. Shorter than `playerContentHeight`
@@ -85,7 +90,7 @@ final class NotchController {
         shelfStore.sweepExpired()
 
         guard let screen = NSScreen.notchedOrMain else {
-            viewModel = NotchViewModel(collapsedSize: .zero, expandedSize: .zero, pillSize: .zero, peekSize: .zero, compactPeekSize: .zero, shelfSize: .zero)
+            viewModel = NotchViewModel(collapsedSize: .zero, expandedSize: .zero, idleHomeSize: .zero, pillSize: .zero, peekSize: .zero, compactPeekSize: .zero, shelfSize: .zero)
             let hudOrder = SystemHUDOrder()
             let volumeSource = VolumeSource(notchHeight: 0, hudOrder: hudOrder)
             let brightnessSource = BrightnessSource(notchHeight: 0, hudOrder: hudOrder)
@@ -149,6 +154,10 @@ final class NotchController {
             width: Self.expandedWidth,
             height: collapsedRect.height + Self.playerContentHeight
         )
+        let idleHomeSize = CGSize(
+            width: Self.expandedWidth,
+            height: collapsedRect.height + Self.idleHomeContentHeight
+        )
         let pillSize = CGSize(
             width: collapsedRect.width + Self.pillExtraWidth,
             height: collapsedRect.height
@@ -168,6 +177,7 @@ final class NotchController {
         viewModel = NotchViewModel(
             collapsedSize: collapsedRect.size,
             expandedSize: expandedSize,
+            idleHomeSize: idleHomeSize,
             pillSize: pillSize,
             peekSize: peekSize,
             compactPeekSize: compactPeekSize,

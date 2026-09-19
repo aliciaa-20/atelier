@@ -72,7 +72,15 @@ struct NotchRootView: View {
         case .peeking:
             let content = liveActivity.topContent ?? lastPeekContent
             return content?.isExpandable == false ? viewModel.compactPeekSize : viewModel.peekSize
-        case .pill, .collapsed, .expanded, .shelf:
+        case .expanded:
+            // Idle Home (nothing playing, Home tab) gets its own shorter
+            // footprint -- far less to show than a real player or the
+            // shelf grid, so it shouldn't claim the same vertical space.
+            if viewModel.currentPage == .home, nowPlaying.current == nil {
+                return viewModel.idleHomeSize
+            }
+            return viewModel.currentSize
+        case .pill, .collapsed, .shelf:
             return viewModel.currentSize
         }
     }
