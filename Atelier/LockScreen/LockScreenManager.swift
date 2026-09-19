@@ -10,6 +10,9 @@ import Foundation
 final class LockScreenManager: ObservableObject {
     @Published private(set) var isLocked = false
 
+    // `deinit` runs nonisolated regardless of this class's actor, and these
+    // properties are only ever touched from `init` (MainActor) and `deinit` at
+    // teardown -- same reasoning as BatterySource's `nonisolated(unsafe)` properties.
     private nonisolated(unsafe) var lockObserver: NSObjectProtocol?
     private nonisolated(unsafe) var unlockObserver: NSObjectProtocol?
 
