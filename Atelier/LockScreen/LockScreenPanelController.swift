@@ -68,15 +68,20 @@ final class LockScreenPanelController {
         return newWindow
     }
 
-    /// Bottom-center of the screen, clear of the password/Touch ID entry
-    /// area (which sits center-screen). 60pt up from the bottom edge --
-    /// a starting value, expected to be tuned on-device.
+    /// Bottom-left corner, not bottom-center: the login/password field
+    /// always sits centered on the lock screen (that's true across macOS
+    /// versions, unlike its exact vertical position), so centering the
+    /// card there guarantees an eventual overlap. Both Clayton630/QuartzNotch's
+    /// `LockScreenPanelManager.panelFrame` and Ebullioscopic/Atoll's own
+    /// lock-screen panel avoid dead-center for the same reason -- QuartzNotch
+    /// anchors bottom-left with a fixed inset, which is what this mirrors.
     private func positionWindow(_ window: NSWindow) {
         guard let screen = NSScreen.notchedOrMain else { return }
         let size = LockScreenMusicCardView.expandedSize
+        let inset: CGFloat = 40
         let origin = CGPoint(
-            x: screen.frame.midX - size.width / 2,
-            y: screen.frame.minY + 60
+            x: screen.frame.minX + inset,
+            y: screen.frame.minY + inset
         )
         window.setFrame(CGRect(origin: origin, size: size), display: true)
     }
