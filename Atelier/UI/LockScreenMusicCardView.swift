@@ -36,6 +36,11 @@ struct LockScreenMusicCardView: View {
         }
     }
 
+    /// Real Liquid Glass (`.glassEffect`), not a flat tinted rectangle --
+    /// Ebullioscopic/Atoll's own `LockScreenMusicPanel` uses the same
+    /// material family (`.ultraThinMaterial`/liquid glass) for its
+    /// lock-screen card so it reads correctly over an arbitrary wallpaper
+    /// rather than looking like a plain dark box.
     @ViewBuilder
     private func content(for info: NowPlayingInfo) -> some View {
         Group {
@@ -48,10 +53,7 @@ struct LockScreenMusicCardView: View {
             }
         }
         .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(Color.black.opacity(0.55))
-        )
+        .glassEffect(in: .rect(cornerRadius: 24))
     }
 
     private func collapsedContent(for info: NowPlayingInfo) -> some View {
