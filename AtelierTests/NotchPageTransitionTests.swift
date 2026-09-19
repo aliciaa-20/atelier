@@ -31,4 +31,16 @@ struct NotchPageTransitionTests {
 
         #expect(result == .shelf)
     }
+
+    @Test func expandedPreservesHomePage() {
+        let result = NotchPageTransition.page(for: .expanded, currentPage: .home)
+
+        #expect(result == .home)
+    }
+
+    @Test func peekingPreservesHomePage() {
+        let result = NotchPageTransition.page(for: .peeking, currentPage: .home)
+
+        #expect(result == .home)
+    }
 }
