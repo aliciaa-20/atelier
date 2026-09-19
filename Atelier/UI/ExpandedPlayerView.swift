@@ -194,7 +194,7 @@ private struct OutputDeviceMenu: View {
 /// via `gh api` after a below-the-bar time-label layout didn't match the
 /// reference. Their actual layout is one row: elapsed time, then the bar,
 /// then duration, all inline — not the bar with labels stacked underneath.
-private struct ScrubberView: View {
+struct ScrubberView: View {
     let duration: TimeInterval
     let elapsed: TimeInterval
     let onSeek: (TimeInterval) -> Void
