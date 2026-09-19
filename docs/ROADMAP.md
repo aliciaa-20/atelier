@@ -6,6 +6,14 @@ overall plan is [the design spec](superpowers/specs/2026-08-31-atelier-notch-des
 this file tracks progress against it.
 
 **Where we are:** Phases 0–8 code-complete, Phases 9 and 10 in progress.
+A post-v1 feature request landed out of band from the phase survey — a
+Home/Shelf tab switcher for the expanded notch, plus real idle-Home content
+(date/time + battery %, in its own smaller footprint than the player) —
+shipped and manually verified on-device (see
+[the design spec](superpowers/specs/2026-09-19-tabbed-navigation-idle-home-design.md)
+and [the plan](superpowers/plans/2026-09-19-tabbed-navigation-idle-home.md)).
+Further "make it feel more iOS-like" visual polish is deliberately deferred —
+see the Backlog.
 Phase 9's file shelf sub-project is code-complete (all 6 implementation
 tasks reviewed, two real bugs found and fixed) but not yet manually
 verified on-device — on-device testing is now underway and has surfaced
@@ -590,3 +598,7 @@ Items not part of the Phase 6–16 feature survey (see
   helper that can break on any macOS release. See
   [ADR 0001](decisions/0001-mediaremote-unavailable.md).
 - **Multi-monitor polish** — notchless / external display handling.
+- **iOS-like visual polish for the Home/Shelf tab bar and idle Home view** —
+  shipped functional (sizes tuned live on-device: idle Home content height
+  90pt, width 200pt), deliberately left plain (system font/colors, no
+  custom transitions between tab content) pending a dedicated design pass.
