@@ -33,15 +33,17 @@ final class NotchController {
     /// artwork size and left/right gap for the matching content values.
     private static let pillExtraWidth: CGFloat = 64
 
-    /// Height of `ExpandedPlayerView`'s own content: artwork+text row (50)
-    /// + spacing (8) + scrubber incl. time labels (22) + spacing (8) +
-    /// transport row (26) + bottom padding (10). Kept compact deliberately
-    /// -- an earlier, roomier pass (144/360, matching dynamicnotch's own
-    /// absolute pixel sizes) opened too far down for a menu-bar-adjacent
-    /// panel; this sits *below* the real notch cutout, which has no
-    /// display pixels of its own, so the panel's total height must add the
-    /// physical notch height on top of this.
-    private static let playerContentHeight: CGFloat = 128
+    /// Height of the `.expanded` content: the `NotchTabBar` row (its top
+    /// padding plus its own intrinsic height) plus `ExpandedPlayerView`'s
+    /// own content -- artwork+text row (50) + spacing (8) + scrubber incl.
+    /// time labels (22) + spacing (8) + transport row (26) + bottom padding
+    /// (10). Kept compact deliberately -- an earlier, roomier pass
+    /// (144/360, matching dynamicnotch's own absolute pixel sizes) opened
+    /// too far down for a menu-bar-adjacent panel; this sits *below* the
+    /// real notch cutout, which has no display pixels of its own, so the
+    /// panel's total height must add the physical notch height on top of
+    /// this.
+    private static let playerContentHeight: CGFloat = 164
     private static let expandedWidth: CGFloat = 352
     /// A single row of ~64pt item cells plus padding -- matches
     /// `ShelfView`'s own column width. Shorter than `playerContentHeight`
