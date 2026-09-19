@@ -10,7 +10,7 @@ import SwiftUI
 /// Adapted from the algorithm in TheBoredTeam/boring.notch (itself credited
 /// there to MrKai77/DynamicNotchKit) — a verified solution to this exact
 /// problem rather than a guess.
-struct NotchShape: Shape {
+nonisolated struct NotchShape: Shape {
     var topCornerRadius: CGFloat = 6
     var bottomCornerRadius: CGFloat = 14
 
