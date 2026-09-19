@@ -23,22 +23,22 @@ struct IdleHomeView: View {
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 60)) { timeline in
-            VStack(spacing: 6) {
+            VStack(spacing: 3) {
                 Text(Self.timeFormatter.string(from: timeline.date))
-                    .font(.title2)
+                    .font(.subheadline)
                     .fontWeight(.medium)
                 Text(Self.dateFormatter.string(from: timeline.date))
-                    .font(.caption)
+                    .font(.caption2)
                     .foregroundStyle(.white.opacity(0.6))
                 if let percent {
                     Label("\(percent)%", systemImage: "battery.100")
-                        .font(.caption)
+                        .font(.caption2)
                         .foregroundStyle(.white.opacity(0.75))
-                        .padding(.top, 4)
+                        .padding(.top, 2)
                 }
             }
             .foregroundStyle(.white)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .frame(maxWidth: .infinity, alignment: .top)
         }
         .onReceive(batterySource.currentPercentPublisher) { percent = $0 }
     }
