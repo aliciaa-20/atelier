@@ -8,7 +8,10 @@ this file tracks progress against it.
 **Where we are:** Phases 0–8 code-complete, Phases 9 and 10 in progress.
 Phase 9's file shelf sub-project is code-complete (all 6 implementation
 tasks reviewed, two real bugs found and fixed) but not yet manually
-verified on-device — see Phase 9's entry below. Phase 6 (Live Activity / widget
+verified on-device — on-device testing is now underway and has surfaced
+two more real bugs, one fixed (drag-out `acceptsFirstMouse`) and two still
+open (drag-out preview image, Mission Control triggering on drop) — see
+Phase 9's entry below. Phase 6 (Live Activity / widget
 architecture) is implemented and confirmed on real hardware: pill/peek/hover/
 decay behavior and the Battery widget were tuned live into their final shape
 — Battery is deliberately pill-only (`peeksOnChange == false` — no auto-peek,
@@ -427,6 +430,32 @@ both depend on the shelf existing first) — see
       **Not yet manually verified on-device** — checkbox stays unchecked
       until drag-enter/exit, drop, remove, drag-out, and relaunch
       persistence are actually exercised on real hardware.
+
+  **Two on-device bugs found during manual verification, one open:**
+  - Drag-out preview: the custom icon+filename drag ghost wasn't showing
+    (fell back to a generic preview). Root-caused to two stacked issues —
+    `ShelfDragSourceView` (a raw `NSView`, outside SwiftUI's own gesture
+    machinery) needed the same `acceptsFirstMouse` override ADR 0003
+    already applied to the root hosting view (confirmed via `os.Logger`
+    instrumentation + `log stream`: without it, `mouseDown` never reached
+    the view on a not-yet-key panel). That fix confirmed the drag pipeline
+    now runs end to end, but the custom image *still* doesn't render —
+    current hypothesis is that `lockFocus`/`unlockFocus`-drawn `NSImage`s
+    don't reliably serialize as a drag ghost across the Drag Manager's
+    out-of-process compositor; swapped to an explicit
+    `NSBitmapImageRep`-backed image as the next attempt, **not yet
+    verified on-device**.
+  - Dropping onto the shelf triggers macOS's own Mission Control
+    (confirmed: happens whenever a drag hovers near the menu bar, not
+    specific to Atelier) — likely inherent OS behavior tied to the cursor
+    reaching the literal top screen edge during any drag, since the
+    shelf's whole interaction model requires hovering there. Not
+    root-caused yet; no reference app (boring.notch's own `DragDetector`
+    uses the identical global-`NSEvent`-monitor approach) shows a known
+    fix. Next step if picked back up: try registering the panel as a real
+    `NSDraggingDestination` (`registerForDraggedTypes`) instead of pure
+    event polling — untested, may or may not suppress it.
+
 - [ ] AirDrop integration — sub-project 2, not started.
 - [ ] File format converter — sub-project 3, not started.
 
