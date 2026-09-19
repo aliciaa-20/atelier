@@ -8,6 +8,16 @@ import SwiftUI
 /// directly (not a snapshot `NowPlayingInfo`) so the card stays live for
 /// as long as the window exists, the same way any other SwiftUI subtree
 /// reacts to a `@Published` change.
+///
+/// One persistent view hierarchy for both states, sized by scalar
+/// properties keyed on `isExpanded` -- matching Ebullioscopic/Atoll's own
+/// `LockScreenMusicPanel` (`controlFrameSize`/`playPauseIconSize`/etc.).
+/// An earlier version swapped between two separate `if isExpanded {}`
+/// subtrees (a plain HStack vs. a whole different VStack), which SwiftUI
+/// animates as a remove-then-insert rather than a smooth resize -- that's
+/// what read as "not smooth". Keeping one tree and only animating its
+/// sizes/spacing/opacity is what makes Atoll's hover morph, and iOS's own
+/// Lock Screen widget expansion, read as one continuous motion.
 struct LockScreenMusicCardView: View {
     @ObservedObject var nowPlaying: NowPlayingCoordinator
     let onPlayPause: () -> Void
@@ -20,6 +30,16 @@ struct LockScreenMusicCardView: View {
     static let collapsedSize = CGSize(width: 280, height: 72)
     static let expandedSize = CGSize(width: 340, height: 200)
 
+    private static let hoverSpring = Animation.spring(response: 0.45, dampingFraction: 0.85)
+
+    private var artworkSize: CGFloat { isExpanded ? 64 : 40 }
+    private var artworkCornerRadius: CGFloat { isExpanded ? 18 : 12 }
+    private var titleFontSize: CGFloat { isExpanded ? 15 : 13 }
+    private var artistFontSize: CGFloat { isExpanded ? 12 : 11 }
+    private var headerSpacing: CGFloat { isExpanded ? 4 : 2 }
+    private var cardCornerRadius: CGFloat { isExpanded ? 30 : 24 }
+    private var cardSize: CGSize { isExpanded ? Self.expandedSize : Self.collapsedSize }
+
     var body: some View {
         Group {
             if let info = nowPlaying.current {
@@ -30,84 +50,64 @@ struct LockScreenMusicCardView: View {
         }
         .frame(width: Self.expandedSize.width, height: Self.expandedSize.height, alignment: .bottom)
         .onHover { hovering in
-            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+            withAnimation(Self.hoverSpring) {
                 isExpanded = hovering
             }
         }
     }
 
-    /// Real Liquid Glass (`.glassEffect`), not a flat tinted rectangle --
-    /// Ebullioscopic/Atoll's own `LockScreenMusicPanel` uses the same
-    /// material family (`.ultraThinMaterial`/liquid glass) for its
-    /// lock-screen card so it reads correctly over an arbitrary wallpaper
-    /// rather than looking like a plain dark box.
-    @ViewBuilder
     private func content(for info: NowPlayingInfo) -> some View {
-        Group {
-            if isExpanded {
-                expandedContent(for: info)
-                    .frame(width: Self.expandedSize.width, height: Self.expandedSize.height)
-            } else {
-                collapsedContent(for: info)
-                    .frame(width: Self.collapsedSize.width, height: Self.collapsedSize.height)
-            }
-        }
-        .padding(16)
-        .glassEffect(in: .rect(cornerRadius: 24))
-    }
-
-    private func collapsedContent(for info: NowPlayingInfo) -> some View {
-        HStack(spacing: 12) {
-            ArtworkView(url: info.artworkURL, cornerRadius: 12)
-                .frame(width: 40, height: 40)
-                .parallax3D()
-            VStack(alignment: .leading, spacing: 2) {
-                Text(info.title)
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .lineLimit(1)
-                Text(info.artist)
-                    .font(.system(size: 11))
-                    .foregroundStyle(.white.opacity(0.7))
-                    .lineLimit(1)
-            }
-            Spacer(minLength: 0)
-        }
-    }
-
-    private func expandedContent(for info: NowPlayingInfo) -> some View {
-        VStack(spacing: 12) {
+        VStack(spacing: isExpanded ? 14 : 0) {
             HStack(spacing: 12) {
-                ArtworkView(url: info.artworkURL, cornerRadius: 12)
-                    .frame(width: 64, height: 64)
+                ArtworkView(url: info.artworkURL, cornerRadius: artworkCornerRadius)
+                    .frame(width: artworkSize, height: artworkSize)
                     .parallax3D()
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: headerSpacing) {
                     Text(info.title)
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(.system(size: titleFontSize, weight: .semibold))
                         .foregroundStyle(.white)
                         .lineLimit(1)
                     Text(info.artist)
-                        .font(.system(size: 12))
+                        .font(.system(size: artistFontSize))
                         .foregroundStyle(.white.opacity(0.7))
                         .lineLimit(1)
                 }
                 Spacer(minLength: 0)
             }
+
             ScrubberView(duration: info.duration, elapsed: info.elapsed, onSeek: onSeek)
-            HStack(spacing: 28) {
-                Button(action: onPrevious) {
-                    Image(systemName: "backward.fill")
-                }
-                Button(action: onPlayPause) {
-                    Image(systemName: info.isPlaying ? "pause.fill" : "play.fill")
-                        .font(.system(size: 20))
-                }
-                Button(action: onNext) {
-                    Image(systemName: "forward.fill")
-                }
-            }
-            .buttonStyle(.plain)
-            .foregroundStyle(.white)
+                .frame(height: isExpanded ? 14 : 0)
+                .opacity(isExpanded ? 1 : 0)
+                .clipped()
+
+            transportRow(for: info)
+                .frame(height: isExpanded ? 26 : 0)
+                .opacity(isExpanded ? 1 : 0)
+                .clipped()
         }
+        .padding(16)
+        .frame(width: cardSize.width, height: cardSize.height)
+        // Real Liquid Glass (`.glassEffect`), not a flat tinted rectangle --
+        // Atoll's `LockScreenMusicPanel` uses the same material family
+        // (`.ultraThinMaterial`/liquid glass) so the card reads correctly
+        // over an arbitrary wallpaper instead of looking like a dark box.
+        .glassEffect(in: .rect(cornerRadius: cardCornerRadius))
+    }
+
+    private func transportRow(for info: NowPlayingInfo) -> some View {
+        HStack(spacing: 28) {
+            Button(action: onPrevious) {
+                Image(systemName: "backward.fill")
+            }
+            Button(action: onPlayPause) {
+                Image(systemName: info.isPlaying ? "pause.fill" : "play.fill")
+                    .font(.system(size: 20))
+            }
+            Button(action: onNext) {
+                Image(systemName: "forward.fill")
+            }
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(.white)
     }
 }
