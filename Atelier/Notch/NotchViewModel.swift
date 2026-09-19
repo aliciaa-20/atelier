@@ -8,6 +8,7 @@ import Foundation
 @MainActor
 final class NotchViewModel: ObservableObject {
     @Published private(set) var state: NotchState = .collapsed
+    @Published private(set) var currentPage: NotchPage = .home
 
     let collapsedSize: CGSize
     let expandedSize: CGSize
@@ -42,7 +43,15 @@ final class NotchViewModel: ObservableObject {
     }
 
     func handle(_ event: NotchEvent) {
-        state = NotchStateMachine.reduce(state, on: event)
+        let newState = NotchStateMachine.reduce(state, on: event)
+        currentPage = NotchPageTransition.page(for: newState, currentPage: currentPage)
+        state = newState
+    }
+
+    /// Called directly from a tab tap — bypasses `NotchPageTransition` since
+    /// this is a UI action, not a state-machine transition.
+    func selectPage(_ page: NotchPage) {
+        currentPage = page
     }
 
     func notchLandedOnNewSpace() {
