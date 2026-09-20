@@ -318,9 +318,25 @@ struct NotchRootView: View {
         .onChange(of: nowPlaying.current?.artworkURL) { _, url in
             artworkColor.load(from: url)
         }
-        .onChange(of: liveActivity.topContent?.id) { _, _ in
-            if let topContent = liveActivity.topContent {
-                lastPeekContent = topContent
+        // Captured only on the transition *into* `.peeking`, not on every
+        // `topContent` change -- the old `onChange(of: topContent?.id)`
+        // updated `lastPeekContent` any time the id changed, including
+        // mid-peek. That's a real bug: when Volume/Brightness's own peek
+        // content self-clears (its decay is timed to roughly the same
+        // moment `peekDecayTask` below closes the peek) while music is
+        // still playing underneath, `topContent` falls through to
+        // NowPlaying's content for the last moment of the peek --
+        // overwriting `lastPeekContent` to NowPlaying and rendering its
+        // peek view for a frame before the close animation catches up.
+        // Confirmed on-device: "changing volume/brightness flashes
+        // now-playing right before closing." Freezing the capture to
+        // peek-entry means whatever content this specific peek started
+        // for is what stays on screen for its whole duration and its
+        // closing animation, regardless of what the stack's top later
+        // becomes.
+        .onChange(of: viewModel.state) { oldState, newState in
+            if newState == .peeking, oldState != .peeking {
+                lastPeekContent = liveActivity.topContent
             }
         }
     }
