@@ -5,6 +5,7 @@ struct NotchRootView: View {
     @ObservedObject var viewModel: NotchViewModel
     @ObservedObject var nowPlaying: NowPlayingCoordinator
     @ObservedObject var liveActivity: LiveActivityCoordinator
+    @ObservedObject var audioTap: AudioTap
     @ObservedObject var shelfStore: ShelfStore
     @StateObject private var artworkColor = ArtworkColorLoader()
     @State private var settleScale: CGFloat = 1
@@ -121,6 +122,7 @@ struct NotchRootView: View {
                             ExpandedPlayerView(
                                 info: nowPlaying.current,
                                 waveformColor: artworkColor.color,
+                                audioTap: audioTap,
                                 outputDevices: outputDevices,
                                 currentOutputDeviceID: currentOutputDeviceID,
                                 onPlayPause: { Task { await nowPlaying.playPause() } },
