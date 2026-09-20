@@ -38,17 +38,15 @@ final class NotchController {
     /// Height of the `.expanded` content: the `NotchTabBar` row (its
     /// PeekPlayerView-style `+ 4` notch clearance plus its own intrinsic
     /// height, ~22) plus `ExpandedPlayerView`'s own content -- a small
-    /// fixed gap (8) + artwork+text row (44) + fixed spacing (8) +
-    /// scrubber incl. time labels (22) + fixed spacing (8) + transport row
-    /// (26) + bottom padding (12). An earlier pass of this constant (164,
-    /// then 156) still carried a redundant second notch-clearance offset
-    /// inside `ExpandedPlayerView` itself, stacked on top of the tab bar's
-    /// own -- both views were always clearing the same real notch height
-    /// twice. Removed (see `ExpandedPlayerView`'s now-gone `notchHeight`
-    /// parameter); this value trimmed to match. A starting point, like
-    /// every other size in this file, expected to be confirmed or
-    /// adjusted on-device.
-    private static let playerContentHeight: CGFloat = 140
+    /// fixed gap (8) + artwork+text row, now sized to match
+    /// `PeekPlayerView`'s own 34pt artwork (10) + fixed spacing (8) +
+    /// scrubber incl. time labels (22) + fixed spacing (8) + transport row,
+    /// shrunk further per direct feedback (22) + bottom padding (9, also
+    /// matching Peek). See git history for two earlier, larger values
+    /// (164, 156, 140) that each still carried some slack this pass
+    /// removed. A starting point, like every other size in this file,
+    /// expected to be confirmed or adjusted on-device.
+    private static let playerContentHeight: CGFloat = 122
     /// Idle Home (now just date/time -- battery was dropped, see
     /// `IdleHomeView`'s own doc comment) needs far less room than a real
     /// player. A prior value here (64) was measured by hand from the
