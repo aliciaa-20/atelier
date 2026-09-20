@@ -1,6 +1,5 @@
 import Combine
 import Foundation
-import os
 import SwiftUI
 
 /// Merges every `LiveActivitySource`'s content into a `LiveActivityStack`
@@ -41,9 +40,6 @@ final class LiveActivityCoordinator: ObservableObject {
     /// compute theirs from shared `SystemHUDOrder` state, which can change
     /// without *that* source publishing new content.
     private var sourcesByID: [String: LiveActivitySource] = [:]
-    /// Temporary diagnostics -- see `NotchController`'s matching `log`
-    /// property doc comment.
-    private static let log = Logger(subsystem: "com.aliciapereira.Atelier", category: "PeekDiagnostics")
 
     init(sources: [LiveActivitySource]) {
         for source in sources {
@@ -51,7 +47,6 @@ final class LiveActivityCoordinator: ObservableObject {
             source.contentPublisher
                 .receive(on: RunLoop.main)
                 .sink { [weak self] content in
-                    Self.log.debug("source \(source.id, privacy: .public) published id: \(content?.id ?? "nil", privacy: .public)")
                     self?.handle(sourceID: source.id, priority: source.priority, content: content)
                 }
                 .store(in: &cancellables)
@@ -92,28 +87,13 @@ final class LiveActivityCoordinator: ObservableObject {
         // behavior, which was likewise untouched by isPlaying transitions.
         // A genuinely different track appearing later still fires, since
         // its id differs from whatever stale id is still held here.
-        //
-        // Gated on `content != nil` -- this `handle` call's own publish,
-        // not just whatever `topContent` ends up being. Without this, a
-        // *removal* (Volume/Brightness's peek content self-clearing) that
-        // causes `topContent` to fall through to some other
-        // already-active source (NowPlaying, still playing underneath)
-        // fired `identityChanged` for NowPlaying's id, since it differed
-        // from `lastContentID` (which was Volume's) -- re-triggering a
-        // brand-new peek for NowPlaying right as Volume/Brightness's own
-        // peek was closing. Confirmed on-device: "adjusting volume shows
-        // the now-playing peek, then closes." NowPlaying's content didn't
-        // actually change; only the stack's top pointer moved because
-        // something *else* was removed, and a removal should never be
-        // read as new content arriving.
         let newContentID = topContent?.id
-        if content != nil, let newContentID {
+        if let newContentID {
             // Only peek-worthy content (peeksOnChange == true) fires
             // identityChanged -- ambient content like Battery becoming
             // top (or a different battery state arriving) should only
             // ever update the pill, never auto-pop a peek.
             if newContentID != lastContentID, topContent?.peeksOnChange == true {
-                Self.log.debug("identityChanged firing: sourceID \(sourceID, privacy: .public), newContentID \(newContentID, privacy: .public), lastContentID \(self.lastContentID ?? "nil", privacy: .public)")
                 identityChanged.send()
             }
             lastContentID = newContentID

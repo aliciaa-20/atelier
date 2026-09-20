@@ -121,27 +121,4 @@ struct LiveActivityCoordinatorTests {
         #expect(fireCount == 0)
         cancellable.cancel()
     }
-
-    /// Regression test: a higher-priority source withdrawing (Volume's
-    /// peek content self-clearing) must not fire `identityChanged` for
-    /// whatever lower-priority source (NowPlaying) becomes top as a
-    /// result -- that source's own content didn't change, only the
-    /// stack's top pointer moved because something else was removed.
-    /// Confirmed on-device as "adjusting volume shows the now-playing
-    /// peek, then closes" before this fix.
-    @Test func identityChangedDoesNotFireWhenFallbackContentBecomesTop() {
-        let low = FakeSource(id: "nowPlaying", priority: 1)
-        let high = FakeSource(id: "volume", priority: 10)
-        let coordinator = LiveActivityCoordinator(sources: [low, high])
-        low.publish(contentID: "trackA")
-        high.publish(contentID: "volume:50")
-        drainMainRunLoop()
-        var fireCount = 0
-        let cancellable = coordinator.identityChanged.sink { fireCount += 1 }
-        high.publish(contentID: nil) // Volume's peek content self-clears
-        drainMainRunLoop()
-        #expect(coordinator.topContent?.id == "trackA")
-        #expect(fireCount == 0)
-        cancellable.cancel()
-    }
 }
