@@ -110,13 +110,13 @@ struct ExpandedPlayerView: View {
                 }
             }
 
-            // A background circle (tried per the previous feedback pass)
-            // was rejected outright -- reverted to a bare glyph. What
-            // actually read as "floating" was the distance from the
-            // transport cluster (pinned all the way out at the panel's
-            // edges), not the lack of a backdrop -- pulled in with much
-            // wider horizontal padding so both sit close to prev/next
-            // instead of out past them.
+            // A background circle (tried per an earlier feedback pass) was
+            // rejected outright -- reverted to a bare glyph. What actually
+            // read as "floating" was the distance from the transport
+            // cluster (pinned all the way out at the panel's edges), not
+            // the lack of a backdrop. Pulled in with wider horizontal
+            // padding (4 -> 46 -> 30, the middle value after 46 read as
+            // too close) for a real but modest gap from prev/next.
             HStack {
                 Button(action: onToggleShuffle) {
                     Image(systemName: "shuffle")
@@ -135,7 +135,7 @@ struct ExpandedPlayerView: View {
                 .font(.system(size: 13, weight: .medium))
                 .frame(width: 24, height: 24)
             }
-            .padding(.horizontal, 46)
+            .padding(.horizontal, 30)
         }
         .buttonStyle(.plain)
         .foregroundStyle(.white)
