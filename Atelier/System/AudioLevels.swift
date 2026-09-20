@@ -17,7 +17,13 @@ import Foundation
 /// the first time this was exercised on-device.
 nonisolated enum AudioLevels {
     static let barCount = 6
-    static let minimumScale: Float = 0.32
+    /// Lower than the fake animation's floor (was 0.32, matching
+    /// `WaveformView`'s own -- lowered per direct feedback that the real
+    /// waveform's swing read as too narrow) -- real audio's RMS tends to
+    /// sit mid-range rather than swinging randomly across the full band
+    /// the way the fake animation does, so a lower floor gives it more
+    /// room to visually breathe between quiet and loud passages.
+    static let minimumScale: Float = 0.18
     /// Multiplied into `peak` on every call before comparing against the
     /// current loudest chunk -- lets the normalization ceiling settle back
     /// down after a loud passage instead of staying pinned at its level

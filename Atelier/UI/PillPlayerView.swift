@@ -13,6 +13,7 @@ import SwiftUI
 struct PillPlayerView: View {
     let info: NowPlayingInfo?
     let notchHeight: CGFloat
+    @ObservedObject var audioTap: AudioTap
     @StateObject private var artworkColor = ArtworkColorLoader()
 
     /// Sized with real margin on every side (both vertical, via the
@@ -51,7 +52,8 @@ struct PillPlayerView: View {
                         color: artworkColor.color,
                         barWidth: 2,
                         barSpacing: 1.3,
-                        height: artworkSide
+                        height: artworkSide,
+                        levels: audioTap.isRunning ? audioTap.levels : nil
                     )
                     .frame(width: artworkSide)
                 }

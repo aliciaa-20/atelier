@@ -116,7 +116,7 @@ final class NotchController {
             )
             mediaKeyInterceptor = MediaKeyInterceptor(volumeSource: volumeSource, brightnessSource: brightnessSource)
             liveActivityCoordinator = LiveActivityCoordinator(sources: [
-                NowPlayingLiveActivitySource(coordinator: nowPlayingCoordinator, notchHeight: 0),
+                NowPlayingLiveActivitySource(coordinator: nowPlayingCoordinator, notchHeight: 0, audioTap: audioTap),
                 batterySource,
                 ScreenRecordingSource(notchHeight: 0),
                 volumeSource,
@@ -166,7 +166,7 @@ final class NotchController {
         )
         mediaKeyInterceptor = MediaKeyInterceptor(volumeSource: volumeSource, brightnessSource: brightnessSource)
         liveActivityCoordinator = LiveActivityCoordinator(sources: [
-            NowPlayingLiveActivitySource(coordinator: nowPlayingCoordinator, notchHeight: collapsedRect.height),
+            NowPlayingLiveActivitySource(coordinator: nowPlayingCoordinator, notchHeight: collapsedRect.height, audioTap: audioTap),
             batterySource,
             ScreenRecordingSource(notchHeight: collapsedRect.height),
             volumeSource,

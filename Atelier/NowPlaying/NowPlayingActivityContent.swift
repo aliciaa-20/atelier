@@ -10,12 +10,13 @@ import SwiftUI
 struct NowPlayingActivityContent: LiveActivityContent {
     let info: NowPlayingInfo
     let notchHeight: CGFloat
+    let audioTap: AudioTap
 
     var id: String { "\(info.title)|\(info.artist)" }
     var isExpandable: Bool { true }
 
     func pillView() -> AnyView {
-        AnyView(PillPlayerView(info: info, notchHeight: notchHeight))
+        AnyView(PillPlayerView(info: info, notchHeight: notchHeight, audioTap: audioTap))
     }
 
     func peekView() -> AnyView {
