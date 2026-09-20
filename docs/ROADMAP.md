@@ -639,7 +639,16 @@ Items not part of the Phase 6–16 feature survey (see
   helper that can break on any macOS release. See
   [ADR 0001](decisions/0001-mediaremote-unavailable.md).
 - **Multi-monitor polish** — notchless / external display handling.
-- **iOS-like visual polish for the Home/Shelf tab bar and idle Home view** —
-  shipped functional (sizes tuned live on-device: idle Home content height
-  90pt, width 200pt), deliberately left plain (system font/colors, no
-  custom transitions between tab content) pending a dedicated design pass.
+- **iOS-like visual polish for the Home/Shelf tab bar, idle Home, and the
+  now-playing player** — in progress on `worktree-visual-identity-tabbar`
+  (PR #10, not yet merged): dot-based tab bar rework (ADR 0011), Idle Home
+  simplified (battery line dropped, content height 56pt, width 215pt,
+  18pt hero time), and the now-playing player shrunk and re-tuned toward
+  iOS's own Control Center Now Playing module (smaller artwork/fonts,
+  tighter transport row, edge padding and shuffle/output spacing tuned
+  live on-device across several feedback passes). Still queued on that
+  same branch: the marquee/scrubber title-column fix (150pt, cherry-pick
+  from old commit `9527f80`), and a real, unresolved hover-retract
+  reliability bug (onHover on this non-activating panel occasionally
+  fails to close the panel on mouse-away; one fix attempt made it worse
+  and was reverted, root cause not yet found).
