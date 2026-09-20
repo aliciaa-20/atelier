@@ -1,46 +1,49 @@
 import SwiftUI
 
-/// A two-item Home/Shelf segmented control shown above the expanded
-/// notch's content. Adapted from TheBoredTeam/boring.notch's
-/// `TabSelectionView`/`TabButton` (read via `gh api` per
-/// check-reference-apps-first) — same capsule-with-sliding-highlight
-/// shape, simplified to this app's two fixed tabs instead of a
-/// data-driven list.
+/// Home/Shelf switcher for the expanded notch -- a small dot row, tap a
+/// dot to switch, rather than a capsule of labeled tabs.
+///
+/// Per ADR 0011: surveyed TheBoredTeam/boring.notch's icon-only capsule
+/// (`TabSelectionView`/`TabButton`, what the previous version of this file
+/// was built from) against jackson-storm/dynamicnotch's
+/// `HomePagePageIndicatorView` -- the iOS Home Screen's own page-dot
+/// idiom. Chose the dot idiom specifically per direct feedback that the
+/// priority is "not too cluttered" -- a dot row is visually lighter than
+/// an icon-filled capsule. Tap-only, deliberately: an earlier pass added a
+/// swipe gesture (first a plain SwiftUI `DragGesture`, later a full
+/// trackpad-swipe mechanism with its own `NSEvent` monitors), and the
+/// `NSEvent` version's plumbing was the most likely source of a real
+/// regression (the panel not retracting on hover-away) found once shipped.
+/// Not worth the risk for a feature this small -- see ADR 0011's
+/// consequences section.
+///
+/// The current page's dot stretches into a short pill rather than just
+/// changing color -- the same "current indicator elongates" treatment
+/// system page controls use elsewhere in Apple's own UI, so the selection
+/// state reads at a glance without needing a highlight capsule behind it.
 struct NotchTabBar: View {
     let currentPage: NotchPage
     let onSelect: (NotchPage) -> Void
 
-    private static let tabs: [(page: NotchPage, label: String)] = [
-        (.home, "Home"),
-        (.shelf, "Shelf")
-    ]
-
-    @Namespace private var highlight
+    private static let pages = NotchPage.allCases
+    private static let dotSize: CGFloat = 6
+    private static let selectedDotWidth: CGFloat = 16
 
     var body: some View {
-        HStack(spacing: 0) {
-            ForEach(Self.tabs, id: \.page) { tab in
-                Button {
-                    onSelect(tab.page)
-                } label: {
-                    Text(tab.label)
-                        .font(.caption)
-                        .fontWeight(.medium)
-                        .foregroundStyle(currentPage == tab.page ? .white : .white.opacity(0.5))
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 6)
-                        .background {
-                            if currentPage == tab.page {
-                                Capsule()
-                                    .fill(Color.white.opacity(0.15))
-                                    .matchedGeometryEffect(id: "tabHighlight", in: highlight)
-                            }
-                        }
-                }
-                .buttonStyle(.plain)
+        HStack(spacing: 6) {
+            ForEach(Self.pages, id: \.self) { page in
+                Capsule()
+                    .fill(page == currentPage ? Color.white : Color.white.opacity(0.35))
+                    .frame(
+                        width: page == currentPage ? Self.selectedDotWidth : Self.dotSize,
+                        height: Self.dotSize
+                    )
+                    .animation(.spring(response: 0.3, dampingFraction: 0.8), value: currentPage)
+                    .onTapGesture { onSelect(page) }
             }
         }
-        .background(Capsule().fill(Color.white.opacity(0.05)))
-        .clipShape(Capsule())
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .contentShape(Rectangle())
     }
 }
