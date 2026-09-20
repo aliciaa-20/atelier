@@ -65,7 +65,13 @@ struct ExpandedPlayerView: View {
         // whether `.focusable()` actually gets key events here without a
         // prior click is unconfirmed -- manual verification only, like
         // everything else that needs a real notch/real interaction.
+        //
+        // `.focusEffectDisabled()` suppresses the default system focus
+        // ring -- confirmed on-device as a bright rectangle around the
+        // whole player, which reads as a stray visual bug on a panel this
+        // small and doesn't fit Invariant 7's stock-notch-like restraint.
         .focusable()
+        .focusEffectDisabled()
         .onKeyPress(.space) {
             onPlayPause()
             return .handled
@@ -164,6 +170,7 @@ struct ExpandedPlayerView: View {
             .padding(.horizontal, 30)
         }
         .buttonStyle(PressScaleButtonStyle())
+        .focusEffectDisabled()
         .foregroundStyle(.white)
     }
 
