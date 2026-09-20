@@ -49,14 +49,11 @@ final class NotchController {
     private static let playerContentHeight: CGFloat = 122
     /// Idle Home (now just date/time -- battery was dropped, see
     /// `IdleHomeView`'s own doc comment) needs far less room than a real
-    /// player. A prior value here (64) was measured by hand from the
-    /// SwiftUI source rather than confirmed on-device, and turned out
-    /// too tight -- the battery line (since removed) was visibly clipped
-    /// at the card's bottom edge in a screenshot. Raised with real
-    /// margin this time rather than cutting it fine again; still a
-    /// starting point, pending on-device confirmation like
-    /// `playerContentHeight` above.
-    private static let idleHomeContentHeight: CGFloat = 76
+    /// player. Set to 65 per direct feedback (down from 76, itself raised
+    /// from an earlier 64 that clipped the since-removed battery line --
+    /// content is simpler now, just time+date, so 65 has more margin than
+    /// that original 64 despite being close to it in absolute value).
+    private static let idleHomeContentHeight: CGFloat = 65
     /// Narrower than `expandedWidth` for the same reason -- a short
     /// time/date block doesn't need the full player's width. Set to 215
     /// per direct feedback.
