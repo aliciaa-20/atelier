@@ -49,11 +49,11 @@ final class NotchController {
     private static let playerContentHeight: CGFloat = 122
     /// Idle Home (now just date/time -- battery was dropped, see
     /// `IdleHomeView`'s own doc comment) needs far less room than a real
-    /// player. Set to 65 per direct feedback (down from 76, itself raised
-    /// from an earlier 64 that clipped the since-removed battery line --
-    /// content is simpler now, just time+date, so 65 has more margin than
-    /// that original 64 despite being close to it in absolute value).
-    private static let idleHomeContentHeight: CGFloat = 65
+    /// player. At 65, the content (~61pt: time+date+top/bottom padding)
+    /// left almost no margin -- shrinking this further without shrinking
+    /// the content first would've clipped again, so `IdleHomeView`'s own
+    /// time font came down (22->18) alongside this.
+    private static let idleHomeContentHeight: CGFloat = 56
     /// Narrower than `expandedWidth` for the same reason -- a short
     /// time/date block doesn't need the full player's width. Set to 215
     /// per direct feedback.
