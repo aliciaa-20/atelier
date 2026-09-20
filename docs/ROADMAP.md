@@ -540,7 +540,8 @@ surface scope gated on a feasibility spike.*
       confirmed AirPods pause/skip unaffected, so the design switched to
       it and dropped the Bluetooth-route guard entirely — see
       [the v2 spec](superpowers/specs/2026-09-20-real-audio-visualizer-design.md)
-      and [the plan](superpowers/plans/2026-09-20-real-audio-visualizer.md).
+      [the plan](superpowers/plans/2026-09-20-real-audio-visualizer.md), and
+      [ADR 0012](decisions/0012-whole-system-audio-tap.md).
       RMS-per-chunk math lives in `AudioLevels.swift` (pure, unit-tested,
       explicitly `nonisolated` — the project's `SWIFT_DEFAULT_ACTOR_ISOLATION
       = MainActor` setting would otherwise make it `@MainActor`-isolated
