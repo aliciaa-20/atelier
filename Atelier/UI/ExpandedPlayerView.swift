@@ -14,11 +14,6 @@ import SwiftUI
 /// deliberate group instead of being stretched across the whole width.
 struct ExpandedPlayerView: View {
     let info: NowPlayingInfo?
-    /// The real notch cutout has no display pixels of its own, so content
-    /// must start below it rather than at the top of our own frame — see
-    /// `docs/decisions/0003-notch-panel-can-become-key.md`'s sibling sizing
-    /// note in `NotchController`.
-    let notchHeight: CGFloat
     let waveformColor: Color
     let outputDevices: [AudioOutputDevice]
     let currentOutputDeviceID: AudioDeviceID?
@@ -39,7 +34,15 @@ struct ExpandedPlayerView: View {
         }
         .padding(.horizontal, 28)
         .padding(.bottom, 16)
-        .padding(.top, notchHeight + 12)
+        // No separate notch-clearance offset here -- this view is only
+        // ever shown beneath NotchRootView's own NotchTabBar now, which
+        // already clears the real notch (PeekPlayerView-style `+ 4`). A
+        // leftover `notchHeight` parameter used to duplicate that
+        // clearance on top of the tab bar's own, producing a large dead
+        // gap between the dots and the actual content. This is just the
+        // small breathing room between the tab bar and this content,
+        // matching ShelfView's own equivalent gap in the same position.
+        .padding(.top, 8)
     }
 
     private func player(for info: NowPlayingInfo) -> some View {
