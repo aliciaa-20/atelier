@@ -19,12 +19,20 @@ gesture controls with spring physics, and a system HUD replacement for the
 volume/brightness keys.
 
 Also shipped since: a Home/Shelf tab switcher with idle-Home content
-(date/time + battery %); a file shelf with drag-and-drop, AirDrop, and
-expiry (two known bugs still open — drag-out preview image, Mission
-Control triggering on drop); a screen-recording system alert (the first of
-several planned); and a lock-screen now-playing widget, rendered via a
-private CGS space since macOS has no public lock-screen widget API for
-third-party apps (see [ADR 0010](docs/decisions/0010-lock-screen-private-cgs-space.md)).
+(date/time only — battery was dropped after clipping at the card's bottom
+edge, see [ADR 0011](docs/decisions/0011-visual-identity-native-restraint.md));
+a file shelf with drag-and-drop, AirDrop, and expiry (two known bugs still
+open — drag-out preview image, Mission Control triggering on drop); a
+screen-recording system alert (the first of several planned); and a
+lock-screen now-playing widget, rendered via a private CGS space since
+macOS has no public lock-screen widget API for third-party apps (see
+[ADR 0010](docs/decisions/0010-lock-screen-private-cgs-space.md)).
+
+**In progress** (`worktree-visual-identity-tabbar`, PR #10, not yet
+merged): an iOS-Control-Center-style visual pass — dot-based tab bar,
+simplified/compacted Idle Home, and a smaller, re-tuned now-playing
+player. Still open on that branch: the marquee/scrubber title-column fix,
+and a real, unresolved intermittent hover-retract bug on the panel.
 
 **Not shipped**: AirPods support is disabled — a crash deep in Apple's own
 CoreBluetooth bridge on this machine's current macOS build, not something
