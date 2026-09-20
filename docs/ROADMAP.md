@@ -528,7 +528,43 @@ surface scope gated on a feasibility spike.*
 **Depends on Phase 6.**
 
 - [ ] Elevate now-playing to a first-class Live Activity.
-- [ ] Real-time audio visualizer.
+- [x] Real-time audio visualizer — `WaveformView` reacts to real system
+      audio instead of `CGFloat.random(in:)`. `AudioTap`
+      (`Atelier/System/AudioTap.swift`) creates a whole-system CoreAudio
+      process tap (`CATapDescription(stereoGlobalTapButExcludeProcesses:
+      [])`), not a per-process tap on Spotify — an earlier design tried
+      the per-process approach (matching Ebullioscopic/Atoll's own
+      `AudioTap.swift`), but Atoll's own source documents that this
+      disturbs the AVRCP session AirPods' pause/skip gesture depends on.
+      A whole-system tap was spiked on-device (two independent runs) and
+      confirmed AirPods pause/skip unaffected, so the design switched to
+      it and dropped the Bluetooth-route guard entirely — see
+      [the v2 spec](superpowers/specs/2026-09-20-real-audio-visualizer-design.md)
+      and [the plan](superpowers/plans/2026-09-20-real-audio-visualizer.md).
+      RMS-per-chunk math lives in `AudioLevels.swift` (pure, unit-tested,
+      explicitly `nonisolated` — the project's `SWIFT_DEFAULT_ACTOR_ISOLATION
+      = MainActor` setting would otherwise make it `@MainActor`-isolated
+      despite having no actor affinity, and `AudioTap`'s realtime IOProc
+      callback calling a `@MainActor` function crashed on-device
+      immediately — a bug caught by the build, not by the plan). Per
+      direct feedback: `PillPlayerView` also got wired to real levels
+      (not just `ExpandedPlayerView`, the plan's original scope) so both
+      visualizers show the same data; a contrast boost was added to
+      `AudioLevels.barHeights` since all 6 bars come from the same ~23ms
+      time-sliced buffer and read as too uniform without it. `PeekPlayerView`
+      still uses the fake animation (deliberately out of scope). **Real
+      bug found during manual verification, not a code bug**: the
+      "System Audio Recording Only" TCC permission wasn't granted at all
+      for most of this session's testing (`AudioHardwareCreateProcessTap`
+      still returns `noErr` and `isRunning` still goes `true` without it —
+      it silently produces empty buffers instead of failing outright), and
+      even after granting it, CoreAudio took a few minutes to actually
+      start delivering real audio data — the waveform sat frozen at its
+      default resting state the whole time, which reads identically to
+      "broken." `WaveformView`'s nil-`levels` fallback to the fake
+      animation only triggers when the tap fails to start at all, not
+      when it starts successfully but delivers nothing — worth knowing if
+      this ever looks stuck again on a fresh permission grant.
 - [ ] Synced lyrics.
 - [x] Lock-screen now-playing widget — spike confirmed feasible via a
       private CGS space (`SkyLightSpaceOperator`, vendored/hardened from

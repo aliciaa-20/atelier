@@ -31,7 +31,7 @@
 **Interfaces:**
 - Produces: `AudioLevels.barCount: Int`, `AudioLevels.minimumScale: Float`, `AudioLevels.barHeights(samples: [Float], peak: inout Float) -> [Float]` — used by Task 2 (`AudioTap`).
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `AtelierTests/AudioLevelsTests.swift`:
 
@@ -90,12 +90,12 @@ struct AudioLevelsTests {
 }
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `xcodebuild test -scheme Atelier -destination 'platform=macOS' -only-testing:AtelierTests/AudioLevelsTests`
 Expected: FAIL — `AudioLevels` doesn't exist yet.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 Create `Atelier/System/AudioLevels.swift`:
 
@@ -158,12 +158,12 @@ enum AudioLevels {
 }
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `xcodebuild test -scheme Atelier -destination 'platform=macOS' -only-testing:AtelierTests/AudioLevelsTests`
 Expected: `** TEST SUCCEEDED **`, all 5 tests pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add Atelier/System/AudioLevels.swift AtelierTests/AudioLevelsTests.swift
@@ -181,7 +181,7 @@ git commit -m "feat: add AudioLevels RMS/normalization math for the real audio v
 - Consumes: `AudioLevels.barCount`, `AudioLevels.minimumScale`, `AudioLevels.barHeights(samples:peak:)` (Task 1).
 - Produces: `AudioTap` (`ObservableObject`), `.levels: [Float]` (`@Published`), `.isRunning: Bool` (`@Published`), `.start()`, `.stop()` — used by Task 4 (`ExpandedPlayerView`/`NotchRootView`) and Task 5 (`NotchController`).
 
-- [ ] **Step 1: Write the file**
+- [x] **Step 1: Write the file**
 
 Create `Atelier/System/AudioTap.swift`:
 
@@ -360,12 +360,12 @@ final class AudioTap: ObservableObject, @unchecked Sendable {
 }
 ```
 
-- [ ] **Step 2: Build to verify it compiles**
+- [x] **Step 2: Build to verify it compiles**
 
 Run: `xcodebuild -scheme Atelier -configuration Debug build`
 Expected: `** BUILD SUCCEEDED **`. If Swift 6 strict concurrency rejects the `[weak self]` capture in `ioBlock` (a non-`@Sendable` closure type from the CoreAudio overlay), the `@unchecked Sendable` conformance above should already cover it — if not, the fix is to make the capture explicit via `nonisolated(unsafe) let unsafeSelf = self` inside the block rather than relaxing any of the `nonisolated(unsafe)` property markers.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add Atelier/System/AudioTap.swift
@@ -383,7 +383,7 @@ git commit -m "feat: add AudioTap, a whole-system CoreAudio process tap for the 
 - Consumes: nothing new (takes `levels: [Float]?` as plain data — no dependency on `AudioTap` itself, callers decide what to pass).
 - Produces: `WaveformView(isPlaying:color:barWidth:barSpacing:height:levels:)` — the `levels` parameter used by Task 4.
 
-- [ ] **Step 1: Rewrite the file**
+- [x] **Step 1: Rewrite the file**
 
 Replace `Atelier/UI/WaveformView.swift` with:
 
@@ -468,12 +468,12 @@ struct WaveformView: View {
 }
 ```
 
-- [ ] **Step 2: Build to verify it compiles**
+- [x] **Step 2: Build to verify it compiles**
 
 Run: `xcodebuild -scheme Atelier -configuration Debug build`
 Expected: `** BUILD SUCCEEDED **` — `PillPlayerView`/`PeekPlayerView`'s existing `WaveformView(...)` call sites still compile unchanged since `levels` defaults to `nil`.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add Atelier/UI/WaveformView.swift
@@ -492,7 +492,7 @@ git commit -m "feat: WaveformView accepts real levels, falls back to fake animat
 - Consumes: `AudioTap` (Task 2), `WaveformView`'s `levels` parameter (Task 3).
 - Produces: `ExpandedPlayerView`'s and `NotchRootView`'s new `audioTap: AudioTap` parameter — constructed and passed in by Task 5 (`NotchController`).
 
-- [ ] **Step 1: Add the parameter and pass real levels to `WaveformView` in `ExpandedPlayerView`**
+- [x] **Step 1: Add the parameter and pass real levels to `WaveformView` in `ExpandedPlayerView`**
 
 In `Atelier/UI/ExpandedPlayerView.swift`, add a stored property next to the existing ones (around line 16-25):
 
@@ -514,7 +514,7 @@ Then update the `WaveformView` call in `headerSection(for:)` (currently line 109
             )
 ```
 
-- [ ] **Step 2: Thread `audioTap` through `NotchRootView`**
+- [x] **Step 2: Thread `audioTap` through `NotchRootView`**
 
 In `Atelier/UI/NotchRootView.swift`, add a stored property next to the existing observed objects (around line 6-7):
 
@@ -543,12 +543,12 @@ Then pass it through at the `ExpandedPlayerView(...)` construction site (around 
 
 (Keep every other existing argument in `ExpandedPlayerView(...)` exactly as it is today — only inserting the new `audioTap: audioTap` line. Read the surrounding lines before editing so the argument order and existing values are preserved exactly.)
 
-- [ ] **Step 3: Build to verify it compiles**
+- [x] **Step 3: Build to verify it compiles**
 
 Run: `xcodebuild -scheme Atelier -configuration Debug build`
 Expected: This will fail until Task 5 updates every `NotchRootView(...)` construction site to pass `audioTap:` — that's expected here; if it fails only on the two `NotchRootView(...)` call sites in `NotchController.swift` missing the new argument, that confirms this task's own changes are otherwise correct. Do not modify `NotchController.swift` in this task — that's Task 5.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add Atelier/UI/ExpandedPlayerView.swift Atelier/UI/NotchRootView.swift
@@ -566,7 +566,7 @@ git commit -m "feat: thread AudioTap into NotchRootView and ExpandedPlayerView"
 **Interfaces:**
 - Consumes: `AudioTap` (Task 2), `NotchRootView`'s `audioTap:` parameter (Task 4), existing `nowPlayingCoordinator.$current`.
 
-- [ ] **Step 1: Add the stored property**
+- [x] **Step 1: Add the stored property**
 
 In `Atelier/Notch/NotchController.swift`, add next to the existing stored properties (around line 25-29):
 
@@ -580,7 +580,7 @@ In `Atelier/Notch/NotchController.swift`, add next to the existing stored proper
     private var audioTapCancellable: AnyCancellable?
 ```
 
-- [ ] **Step 2: Pass `audioTap` into both `NotchRootView(...)` construction sites**
+- [x] **Step 2: Pass `audioTap` into both `NotchRootView(...)` construction sites**
 
 In the fallback (no-notch-screen) path, around line 125-132:
 
@@ -610,7 +610,7 @@ In the real (notched-screen) path, around line 213-220, make the identical chang
         )
 ```
 
-- [ ] **Step 3: Drive `start()`/`stop()` from playback state**
+- [x] **Step 3: Drive `start()`/`stop()` from playback state**
 
 In `init()`, near where `isPlayingCancellable`/`trackChangeCancellable` are set up (around line 268-309, after `isPlayingCancellable = ...` finishes its `.sink` block), add:
 
@@ -633,36 +633,36 @@ In `init()`, near where `isPlayingCancellable`/`trackChangeCancellable` are set 
 
 (This subscription only makes sense in the real, notched-screen `init()` path, alongside `notchStateCancellable`/`isPlayingCancellable`/`trackChangeCancellable` — the fallback no-notch-screen path returns early before reaching that code and does not need it, matching how the other three cancellables are already scoped.)
 
-- [ ] **Step 4: Build to verify it compiles**
+- [x] **Step 4: Build to verify it compiles**
 
 Run: `xcodebuild -scheme Atelier -configuration Debug build`
 Expected: `** BUILD SUCCEEDED **`
 
-- [ ] **Step 5: Run the full unit suite**
+- [x] **Step 5: Run the full unit suite**
 
 Run: `xcodebuild test -scheme Atelier -destination 'platform=macOS'`
 Expected: `** TEST SUCCEEDED **`, 120 tests (115 existing + 5 new `AudioLevelsTests` from Task 1).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add Atelier/Notch/NotchController.swift
 git commit -m "feat: wire AudioTap lifecycle into NotchController, tied to isPlaying"
 ```
 
-- [ ] **Step 7: Build and relaunch for manual verification**
+- [x] **Step 7: Build and relaunch for manual verification**
 
 Use the `build` skill: kill any running `Atelier`, build, relaunch.
 
 Manually verify on-device (check these off only once actually exercised, per `CLAUDE.md`'s Testing section):
-- [ ] Play music, hover the notch open → `ExpandedPlayerView`'s waveform visibly reacts to the actual audio (louder passages produce taller bars, quiet/silent passages settle near the floor), not the old uniform random flicker.
-- [ ] First tap creation triggers macOS's system-audio-recording permission prompt — grant it, confirm the waveform goes live afterward.
-- [ ] Deny the permission prompt (test on a second run, or via System Settings → Privacy & Security → Audio Recording once granted, revoke and relaunch) → the waveform falls back to the fake animation instead of staying blank or crashing.
-- [ ] With AirPods as the output device, play a full track start to finish: pause/skip via the physical AirPods gesture still works throughout — the actual regression this whole design guards against.
-- [ ] Pause playback → the waveform settles to its minimum-scale resting state; the tap stops (no lingering realtime callback burning CPU while paused — check Activity Monitor's %CPU for Atelier settles back down).
-- [ ] Resume playback → the tap restarts and the waveform goes live again without a restart of the app.
-- [ ] `PillPlayerView`'s and `PeekPlayerView`'s waveforms are unchanged (still the fake animation) — confirms this plan's intentionally narrower scope didn't accidentally touch them.
-- [ ] Update `docs/ROADMAP.md` with the result of manual verification (or any bug found), same discipline as prior phases' entries.
+- [x] Play music, hover the notch open → `ExpandedPlayerView`'s waveform visibly reacts to the actual audio (louder passages produce taller bars, quiet/silent passages settle near the floor), not the old uniform random flicker.
+- [x] Permission handling — no system prompt was actually observed appearing for this `LSUIElement` background app; the "System Audio Recording Only" grant had to be added manually via System Settings → Privacy & Security. Confirmed once granted (and after a several-minute settle delay CoreAudio needed before real data actually started flowing — see the ROADMAP entry) the waveform goes live.
+- [ ] Deny the permission prompt → falls back to fake animation. **Not tested** — `AudioHardwareCreateProcessTap` returning `noErr` even without the permission (confirmed this session — `isRunning` goes `true`, but samples stay empty) means an explicit hard-denial path still needs on-device verification; not yet confirmed whether that produces empty buffers forever (same as the not-yet-settled case, currently NOT falling back to the fake animation) or an actual error.
+- [ ] With AirPods as the output device, pause/skip via the physical gesture still works on this exact integrated code path. Verified on the standalone spike harness (see the v2 spec) but not re-confirmed against this final integrated build this session.
+- [ ] Pause playback → resting state, tap stops, CPU settles. Not explicitly checked via Activity Monitor.
+- [x] Resume / track-change → the tap picks back up and the waveform goes live again without an app restart (observed across multiple track changes this session).
+- [x] ~~`PillPlayerView`'s and `PeekPlayerView`'s waveforms are unchanged~~ — scope intentionally expanded mid-plan per direct feedback: `PillPlayerView` now also gets real levels (matches `ExpandedPlayerView`), confirmed working. `PeekPlayerView` alone still uses the fake animation, as originally scoped.
+- [x] Update `docs/ROADMAP.md` with the result of manual verification (or any bug found), same discipline as prior phases' entries.
 
 ---
 
