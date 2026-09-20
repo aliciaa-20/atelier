@@ -639,12 +639,7 @@ Items not part of the Phase 6–16 feature survey (see
   helper that can break on any macOS release. See
   [ADR 0001](decisions/0001-mediaremote-unavailable.md).
 - **Multi-monitor polish** — notchless / external display handling.
-- **iOS-like visual polish for idle Home view** — shipped functional (sizes
-  tuned live on-device: idle Home content height 90pt, width 200pt),
-  deliberately left plain (system font/colors) pending further design
-  passes.
-- ~~iOS-like visual polish for the Home/Shelf tab bar~~ — **done**: the
-  text-label capsule was reworked into a dot indicator (tap or swipe),
-  per [ADR 0011](decisions/0011-visual-identity-native-restraint.md)'s
-  survey of reference-app visual identities. Manual on-device verification
-  of the swipe gesture still pending.
+- **iOS-like visual polish for the Home/Shelf tab bar and idle Home view** —
+  shipped functional (sizes tuned live on-device: idle Home content height
+  90pt, width 200pt), deliberately left plain (system font/colors, no
+  custom transitions between tab content) pending a dedicated design pass.

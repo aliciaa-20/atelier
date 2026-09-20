@@ -3,27 +3,9 @@
 /// into `NotchState` itself would duplicate every hover/peek transition
 /// per page). Only matters while `NotchState == .expanded`; `NotchState`
 /// itself still governs whether the notch is open at all.
-enum NotchPage: Hashable, CaseIterable {
+enum NotchPage: Equatable {
     case home
     case shelf
-}
-
-extension NotchPage {
-    /// Steps to the neighboring page within `pages` (defaults to every
-    /// page; callers with a filtered set -- e.g. Shelf disabled in
-    /// Settings -- pass that instead). Does not wrap: stepping past
-    /// either end returns `nil`, matching `NotchTabBar`'s own tap/drag
-    /// (there is no "wrap around" affordance), so a swipe gesture that
-    /// means the same motion doesn't behave differently. Shared by
-    /// `NotchTabBar`'s drag gesture and the tab-bar-scoped trackpad swipe
-    /// in `NotchRootView`, so both interaction paths agree on what "next
-    /// page" means.
-    func advanced(by offset: Int, in pages: [NotchPage] = NotchPage.allCases) -> NotchPage? {
-        guard let index = pages.firstIndex(of: self) else { return nil }
-        let newIndex = index + offset
-        guard pages.indices.contains(newIndex) else { return nil }
-        return pages[newIndex]
-    }
 }
 
 /// Decides `NotchPage` alongside `NotchStateMachine.reduce` — kept pure

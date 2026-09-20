@@ -6,6 +6,7 @@ struct NotchRootView: View {
     @ObservedObject var nowPlaying: NowPlayingCoordinator
     @ObservedObject var liveActivity: LiveActivityCoordinator
     @ObservedObject var shelfStore: ShelfStore
+    let batterySource: BatterySource
     @StateObject private var artworkColor = ArtworkColorLoader()
     @State private var settleScale: CGFloat = 1
     @State private var outputDevices: [AudioOutputDevice] = []
@@ -17,10 +18,6 @@ struct NotchRootView: View {
     /// is still playing out. Not cleared on retract -- see Fix 3 in the
     /// final review pass.
     @State private var lastPeekContent: LiveActivityContent?
-    /// Shared with `NotchTabBar`'s own gesture modifier below, so the
-    /// whole-panel skip-track swipe knows not to fire for a swipe that
-    /// began over the tab bar's dots -- see `NotchGestureExclusionZone`.
-    @State private var tabBarExclusionZone = NotchGestureExclusionZone()
 
     /// Small/sharp notch-cutout radii at rest, softer/rounder-card radii
     /// once expanded -- matching jackson-storm/dynamicnotch's own
@@ -52,12 +49,7 @@ struct NotchRootView: View {
         case .expanded:
             return (top: 14, bottom: 20)
         case .peeking:
-            // `lastPeekContent` first, not `topContent` -- see the render
-            // branch below for why: preferring live `topContent` is what
-            // let a decaying Volume/Brightness peek pick up NowPlaying's
-            // content (and thus its non-compact radii) for its last
-            // moment on screen.
-            let content = lastPeekContent ?? liveActivity.topContent
+            let content = liveActivity.topContent ?? lastPeekContent
             return content?.isExpandable == false ? (top: 6, bottom: 14) : (top: 14, bottom: 14)
         case .shelf:
             return (top: 14, bottom: 20)
@@ -67,18 +59,18 @@ struct NotchRootView: View {
     /// `viewModel.currentSize` alone can't distinguish a compact peek
     /// (Volume, Brightness -- no title/artist text) from a regular one
     /// (track change, Battery) -- it only knows `state`, not which live
-    /// activity content is actually showing. Same `lastPeekContent`-first
-    /// preference as the `.peeking` render branch below, so the frame size
-    /// and the content it's sizing around never mismatch mid-decay. The
-    /// `.pill` state, unlike peeking, uses one width (`pillSize`, matching
-    /// the music pill) for every source -- an earlier pass gave
-    /// Volume/Brightness their own narrower notch-width pill, but
-    /// on-device that read as too cramped; matching the pill everything
-    /// else already uses reads more consistent.
+    /// activity content is actually showing. Same `topContent ??
+    /// lastPeekContent` fallback as the `.peeking` render branch below, so
+    /// the frame size and the content it's sizing around never mismatch
+    /// mid-decay. The `.pill` state, unlike peeking, uses one width
+    /// (`pillSize`, matching the music pill) for every source -- an
+    /// earlier pass gave Volume/Brightness their own narrower notch-width
+    /// pill, but on-device that read as too cramped; matching the pill
+    /// everything else already uses reads more consistent.
     private var frameSize: CGSize {
         switch viewModel.state {
         case .peeking:
-            let content = lastPeekContent ?? liveActivity.topContent
+            let content = liveActivity.topContent ?? lastPeekContent
             return content?.isExpandable == false ? viewModel.compactPeekSize : viewModel.peekSize
         case .expanded:
             // Idle Home (nothing playing, Home tab) gets its own shorter
@@ -101,55 +93,24 @@ struct NotchRootView: View {
 
                 if viewModel.state == .expanded {
                     VStack(spacing: 0) {
-                        // Shelf toggled off in Settings leaves only Home --
-                        // no point showing a switcher with one destination.
-                        if AtelierSettings.shelfEnabled {
-                            NotchTabBar(currentPage: viewModel.currentPage) { page in
-                                withAnimation(NotchAnimations.open) {
-                                    viewModel.selectPage(page)
-                                }
+                        NotchTabBar(currentPage: viewModel.currentPage) { page in
+                            withAnimation(NotchAnimations.open) {
+                                viewModel.selectPage(page)
                             }
-                            // Matches PeekPlayerView's own `notchHeight + 4`
-                            // clearance -- this used to be `+ 8` stacked on
-                            // top of ExpandedPlayerView's/ShelfView's own
-                            // separate notch-clearance padding below, which
-                            // (now that they're always called with
-                            // `notchHeight: 0`, having been superseded by
-                            // this tab bar) left the whole header reading as
-                            // floating in dead space rather than sitting
-                            // flush under the real notch.
-                            .padding(.top, viewModel.collapsedSize.height + 4)
-                            .modifier(
-                                NotchGestureModifier(
-                                    capabilities: NotchGestureCapabilities(canOpen: false, canClose: false, canSkip: true),
-                                    onOpen: {},
-                                    onClose: {},
-                                    onSkipForward: {
-                                        if let next = viewModel.currentPage.advanced(by: 1) {
-                                            withAnimation(NotchAnimations.open) { viewModel.selectPage(next) }
-                                        }
-                                    },
-                                    onSkipBackward: {
-                                        if let previous = viewModel.currentPage.advanced(by: -1) {
-                                            withAnimation(NotchAnimations.open) { viewModel.selectPage(previous) }
-                                        }
-                                    },
-                                    ownsExclusionZone: tabBarExclusionZone
-                                )
-                            )
-                        } else {
-                            Color.clear.frame(height: viewModel.collapsedSize.height + 4)
                         }
+                        .padding(.top, viewModel.collapsedSize.height + 8)
 
-                        if AtelierSettings.shelfEnabled, viewModel.currentPage == .shelf {
+                        if viewModel.currentPage == .shelf {
                             ShelfView(store: shelfStore, rootDirectory: shelfStore.rootDirectory, notchHeight: 0)
                                 .onAppear { shelfStore.sweepExpired() }
                         } else {
                             ExpandedPlayerView(
                                 info: nowPlaying.current,
+                                notchHeight: 0,
                                 waveformColor: artworkColor.color,
                                 outputDevices: outputDevices,
                                 currentOutputDeviceID: currentOutputDeviceID,
+                                batterySource: batterySource,
                                 onPlayPause: { Task { await nowPlaying.playPause() } },
                                 onNext: { Task { await nowPlaying.next() } },
                                 onPrevious: { Task { await nowPlaying.previous() } },
@@ -168,20 +129,7 @@ struct NotchRootView: View {
                     }
                     .transition(.opacity)
                 } else if viewModel.state == .peeking {
-                    // lastPeekContent first, not topContent -- this is the
-                    // actual fix for the volume/brightness-peek-flashes-
-                    // now-playing bug. Freezing when lastPeekContent gets
-                    // *captured* (a prior pass) wasn't sufficient on its
-                    // own: this line still preferred live topContent
-                    // whenever it was non-nil, and topContent legitimately
-                    // becomes NowPlaying's content (not nil) the moment
-                    // Volume/Brightness's own content clears while music
-                    // plays underneath -- so the old `??` order picked it
-                    // up regardless of what lastPeekContent held. Now the
-                    // content this specific peek started for wins for the
-                    // peek's entire duration, live topContent is only a
-                    // fallback for the case lastPeekContent is nil.
-                    if let topContent = lastPeekContent ?? liveActivity.topContent {
+                    if let topContent = liveActivity.topContent ?? lastPeekContent {
                         topContent.peekView()
                             .transition(.opacity)
                     }
@@ -270,14 +218,12 @@ struct NotchRootView: View {
                     },
                     onSkipBackward: {
                         Task { await nowPlaying.previous() }
-                    },
-                    respectsExclusionZones: [tabBarExclusionZone]
+                    }
                 )
             )
             .modifier(
                 NotchDragModifier(
                     onDragEntered: {
-                        guard AtelierSettings.shelfEnabled else { return }
                         withAnimation(NotchAnimations.open) {
                             viewModel.handle(.dragEntered)
                         }
@@ -336,25 +282,9 @@ struct NotchRootView: View {
         .onChange(of: nowPlaying.current?.artworkURL) { _, url in
             artworkColor.load(from: url)
         }
-        // Captured only on the transition *into* `.peeking`, not on every
-        // `topContent` change -- the old `onChange(of: topContent?.id)`
-        // updated `lastPeekContent` any time the id changed, including
-        // mid-peek. That's a real bug: when Volume/Brightness's own peek
-        // content self-clears (its decay is timed to roughly the same
-        // moment `peekDecayTask` below closes the peek) while music is
-        // still playing underneath, `topContent` falls through to
-        // NowPlaying's content for the last moment of the peek --
-        // overwriting `lastPeekContent` to NowPlaying and rendering its
-        // peek view for a frame before the close animation catches up.
-        // Confirmed on-device: "changing volume/brightness flashes
-        // now-playing right before closing." Freezing the capture to
-        // peek-entry means whatever content this specific peek started
-        // for is what stays on screen for its whole duration and its
-        // closing animation, regardless of what the stack's top later
-        // becomes.
-        .onChange(of: viewModel.state) { oldState, newState in
-            if newState == .peeking, oldState != .peeking {
-                lastPeekContent = liveActivity.topContent
+        .onChange(of: liveActivity.topContent?.id) { _, _ in
+            if let topContent = liveActivity.topContent {
+                lastPeekContent = topContent
             }
         }
     }

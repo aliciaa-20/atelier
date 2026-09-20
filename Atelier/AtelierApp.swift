@@ -17,20 +17,6 @@ struct AtelierApp: App {
     /// Held for the app's lifetime; `NotchController` owns the panel itself.
     private let notchController: NotchController?
 
-    /// `@AppStorage`, not a manual `Binding(get:set:)` reading
-    /// `AtelierSettings`/`UserDefaults` directly (what this used to do) --
-    /// a plain `Binding` closure pair has no way to tell SwiftUI the
-    /// underlying value changed, since raw `UserDefaults` isn't observed.
-    /// The `Toggle` kept firing its `set` (the setting really did change,
-    /// `NotchGestureModifier`/`NotchTabBar` picked it up on their next
-    /// read) but its own checkmark never visually flipped, since nothing
-    /// told this view to re-render. `@AppStorage` wraps the same keys with
-    /// real KVO-backed observation, so the checkmark now updates
-    /// immediately.
-    @AppStorage(AtelierSettings.peekOnTrackChangeKey) private var peekOnTrackChangeEnabled = true
-    @AppStorage(AtelierSettings.gesturesEnabledKey) private var gesturesEnabled = true
-    @AppStorage(AtelierSettings.shelfEnabledKey) private var shelfEnabled = true
-
     init() {
         AtelierSettings.registerDefaults()
         notchController = Self.isRunningTests ? nil : NotchController()
@@ -46,9 +32,15 @@ struct AtelierApp: App {
 
             Divider()
 
-            Toggle("Peek on Track Change", isOn: $peekOnTrackChangeEnabled)
-            Toggle("Enable Gestures", isOn: $gesturesEnabled)
-            Toggle("Enable File Shelf", isOn: $shelfEnabled)
+            Toggle("Peek on Track Change", isOn: Binding(
+                get: { AtelierSettings.peekOnTrackChangeEnabled },
+                set: { UserDefaults.standard.set($0, forKey: AtelierSettings.peekOnTrackChangeKey) }
+            ))
+
+            Toggle("Enable Gestures", isOn: Binding(
+                get: { AtelierSettings.gesturesEnabled },
+                set: { UserDefaults.standard.set($0, forKey: AtelierSettings.gesturesEnabledKey) }
+            ))
 
             // Checked live on every menu open, not cached -- matches how
             // the toggles above already read `AtelierSettings` live.

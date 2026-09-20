@@ -4,10 +4,6 @@ import Foundation
 struct AudioOutputDevice: Identifiable, Hashable {
     let id: AudioDeviceID
     let name: String
-    /// Bluetooth transport type plus a name check for "AirPods" -- CoreAudio
-    /// has no dedicated "is this AirPods" flag, only a generic Bluetooth
-    /// transport type shared with every other Bluetooth headset/speaker.
-    let isAirPods: Bool
 }
 
 /// Lists and switches the system's default audio output device via
@@ -34,9 +30,7 @@ enum OutputDeviceManager {
 
         return deviceIDs.compactMap { deviceID in
             guard hasOutputStreams(deviceID), let name = deviceName(deviceID) else { return nil }
-            let isAirPods = transportType(deviceID) == kAudioDeviceTransportTypeBluetooth
-                && name.localizedCaseInsensitiveContains("airpods")
-            return AudioOutputDevice(id: deviceID, name: name, isAirPods: isAirPods)
+            return AudioOutputDevice(id: deviceID, name: name)
         }
     }
 
@@ -69,20 +63,6 @@ enum OutputDeviceManager {
             UInt32(MemoryLayout<AudioDeviceID>.size),
             &mutableID
         )
-    }
-
-    private static func transportType(_ deviceID: AudioDeviceID) -> UInt32? {
-        var address = AudioObjectPropertyAddress(
-            mSelector: kAudioDevicePropertyTransportType,
-            mScope: kAudioObjectPropertyScopeGlobal,
-            mElement: kAudioObjectPropertyElementMain
-        )
-        var transportType: UInt32 = 0
-        var size = UInt32(MemoryLayout<UInt32>.size)
-        guard AudioObjectGetPropertyData(deviceID, &address, 0, nil, &size, &transportType) == noErr else {
-            return nil
-        }
-        return transportType
     }
 
     private static func hasOutputStreams(_ deviceID: AudioDeviceID) -> Bool {

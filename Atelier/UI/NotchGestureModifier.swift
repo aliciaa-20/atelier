@@ -1,20 +1,6 @@
 import SwiftUI
 import AppKit
 
-/// A shared, mutable box holding one `NotchGestureModifier` instance's own
-/// on-screen rect, so a *different* instance covering a larger region (the
-/// whole panel) can avoid starting a swipe that began inside it -- see
-/// `NotchTabBar`'s own tap-or-swipe dot row in `NotchRootView`, which needs
-/// a horizontal swipe over just the dots to switch pages rather than skip
-/// the track. Both the owning and the respecting instance read/write this
-/// via the same self-measured-NSView-bounds idiom `NotchGestureMonitorView`
-/// already uses for its own region check, so there's no SwiftUI/AppKit
-/// coordinate-space conversion to get wrong -- each instance only ever
-/// reports its own native bounds.
-@MainActor final class NotchGestureExclusionZone {
-    fileprivate(set) var screenRect: CGRect?
-}
-
 /// Trackpad swipe detection over the notch panel. Structurally adapted
 /// from jackson-storm/dynamicnotch's `NotchSwipeDismissModifier` and
 /// Ebullioscopic/Atoll's `panGesture`/`ScrollMonitor` (both read via
@@ -33,13 +19,6 @@ struct NotchGestureModifier: ViewModifier {
     let onClose: () -> Void
     let onSkipForward: () -> Void
     let onSkipBackward: () -> Void
-    /// Set on the narrower instance (the tab bar) so the wider one can
-    /// avoid it. `nil` for every other call site.
-    var ownsExclusionZone: NotchGestureExclusionZone? = nil
-    /// Set on the wider instance (the whole panel) so it defers to
-    /// whichever narrower instance owns the region a swipe began in.
-    /// Empty for every other call site.
-    var respectsExclusionZones: [NotchGestureExclusionZone] = []
 
     func body(content: Content) -> some View {
         content.background(
@@ -48,9 +27,7 @@ struct NotchGestureModifier: ViewModifier {
                 onOpen: onOpen,
                 onClose: onClose,
                 onSkipForward: onSkipForward,
-                onSkipBackward: onSkipBackward,
-                ownsExclusionZone: ownsExclusionZone,
-                respectsExclusionZones: respectsExclusionZones
+                onSkipBackward: onSkipBackward
             )
         )
     }
@@ -62,8 +39,6 @@ private struct NotchGestureMonitorRepresentable: NSViewRepresentable {
     let onClose: () -> Void
     let onSkipForward: () -> Void
     let onSkipBackward: () -> Void
-    let ownsExclusionZone: NotchGestureExclusionZone?
-    let respectsExclusionZones: [NotchGestureExclusionZone]
 
     func makeNSView(context: Context) -> NotchGestureMonitorView {
         let view = NotchGestureMonitorView()
@@ -72,9 +47,7 @@ private struct NotchGestureMonitorRepresentable: NSViewRepresentable {
             onOpen: onOpen,
             onClose: onClose,
             onSkipForward: onSkipForward,
-            onSkipBackward: onSkipBackward,
-            ownsExclusionZone: ownsExclusionZone,
-            respectsExclusionZones: respectsExclusionZones
+            onSkipBackward: onSkipBackward
         )
         return view
     }
@@ -85,9 +58,7 @@ private struct NotchGestureMonitorRepresentable: NSViewRepresentable {
             onOpen: onOpen,
             onClose: onClose,
             onSkipForward: onSkipForward,
-            onSkipBackward: onSkipBackward,
-            ownsExclusionZone: ownsExclusionZone,
-            respectsExclusionZones: respectsExclusionZones
+            onSkipBackward: onSkipBackward
         )
     }
 
@@ -105,8 +76,6 @@ private struct NotchGestureMonitorRepresentable: NSViewRepresentable {
     private var onClose: (() -> Void)?
     private var onSkipForward: (() -> Void)?
     private var onSkipBackward: (() -> Void)?
-    private var ownsExclusionZone: NotchGestureExclusionZone?
-    private var respectsExclusionZones: [NotchGestureExclusionZone] = []
 
     private var trackingState = NotchGestureTrackingState()
     private var isTracking = false
@@ -135,17 +104,13 @@ private struct NotchGestureMonitorRepresentable: NSViewRepresentable {
         onOpen: @escaping () -> Void,
         onClose: @escaping () -> Void,
         onSkipForward: @escaping () -> Void,
-        onSkipBackward: @escaping () -> Void,
-        ownsExclusionZone: NotchGestureExclusionZone?,
-        respectsExclusionZones: [NotchGestureExclusionZone]
+        onSkipBackward: @escaping () -> Void
     ) {
         self.capabilities = capabilities
         self.onOpen = onOpen
         self.onClose = onClose
         self.onSkipForward = onSkipForward
         self.onSkipBackward = onSkipBackward
-        self.ownsExclusionZone = ownsExclusionZone
-        self.respectsExclusionZones = respectsExclusionZones
     }
 
     func stopMonitoring() {
@@ -193,17 +158,8 @@ private extension NotchGestureMonitorView {
         guard event.hasPreciseScrollingDeltas else { return }
         guard let screenLocation, let screenRect = currentScreenRect() else { return }
 
-        // Refreshed on every event rather than on a separate layout hook --
-        // cheap, and this view's own bounds already only change when SwiftUI
-        // actually re-lays it out, which a scroll event doesn't trigger, so
-        // this is effectively "recompute once, reuse until layout changes".
-        ownsExclusionZone?.screenRect = screenRect
-
         if event.phase.contains(.began) || event.phase.contains(.mayBegin) {
-            let startedInExcludedZone = respectsExclusionZones.contains {
-                $0.screenRect?.contains(screenLocation) == true
-            }
-            isTracking = screenRect.contains(screenLocation) && !startedInExcludedZone
+            isTracking = screenRect.contains(screenLocation)
             trackingState = NotchGestureTrackingState()
             return
         }

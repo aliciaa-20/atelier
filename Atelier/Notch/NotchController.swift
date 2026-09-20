@@ -35,29 +35,25 @@ final class NotchController {
     /// artwork size and left/right gap for the matching content values.
     private static let pillExtraWidth: CGFloat = 64
 
-    /// Height of the `.expanded` content: the `NotchTabBar` row (its
-    /// PeekPlayerView-style `+ 4` notch clearance plus its own intrinsic
-    /// height, ~22) plus `ExpandedPlayerView`'s own content -- a small
-    /// fixed gap (8) + artwork+text row, now sized to match
-    /// `PeekPlayerView`'s own 34pt artwork (10) + fixed spacing (8) +
-    /// scrubber incl. time labels (22) + fixed spacing (8) + transport row,
-    /// shrunk further per direct feedback (22) + bottom padding (9, also
-    /// matching Peek). See git history for two earlier, larger values
-    /// (164, 156, 140) that each still carried some slack this pass
-    /// removed. A starting point, like every other size in this file,
-    /// expected to be confirmed or adjusted on-device.
-    private static let playerContentHeight: CGFloat = 122
-    /// Idle Home (now just date/time -- battery was dropped, see
-    /// `IdleHomeView`'s own doc comment) needs far less room than a real
-    /// player. At 65, the content (~61pt: time+date+top/bottom padding)
-    /// left almost no margin -- shrinking this further without shrinking
-    /// the content first would've clipped again, so `IdleHomeView`'s own
-    /// time font came down (22->18) alongside this.
-    private static let idleHomeContentHeight: CGFloat = 56
+    /// Height of the `.expanded` content: the `NotchTabBar` row (its top
+    /// padding plus its own intrinsic height) plus `ExpandedPlayerView`'s
+    /// own content -- artwork+text row (50) + spacing (8) + scrubber incl.
+    /// time labels (22) + spacing (8) + transport row (26) + bottom padding
+    /// (10). Kept compact deliberately -- an earlier, roomier pass
+    /// (144/360, matching dynamicnotch's own absolute pixel sizes) opened
+    /// too far down for a menu-bar-adjacent panel; this sits *below* the
+    /// real notch cutout, which has no display pixels of its own, so the
+    /// panel's total height must add the physical notch height on top of
+    /// this.
+    private static let playerContentHeight: CGFloat = 164
+    /// Idle Home (date/time + battery %, no scrubber/transport row) needs
+    /// far less room than a real player -- deliberately shorter than
+    /// `playerContentHeight`. Starting value, expected to be tuned further
+    /// on-device.
+    private static let idleHomeContentHeight: CGFloat = 90
     /// Narrower than `expandedWidth` for the same reason -- a short
-    /// time/date block doesn't need the full player's width. Set to 215
-    /// per direct feedback.
-    private static let idleHomeWidth: CGFloat = 215
+    /// time/date/battery block doesn't need the full player's width.
+    private static let idleHomeWidth: CGFloat = 200
     private static let expandedWidth: CGFloat = 352
     /// A single row of ~64pt item cells plus padding -- matches
     /// `ShelfView`'s own column width. Shorter than `playerContentHeight`
@@ -128,7 +124,8 @@ final class NotchController {
                     viewModel: viewModel,
                     nowPlaying: nowPlayingCoordinator,
                     liveActivity: liveActivityCoordinator,
-                    shelfStore: shelfStore
+                    shelfStore: shelfStore,
+                    batterySource: batterySource
                 )
             )
             return
@@ -216,7 +213,8 @@ final class NotchController {
                 viewModel: viewModel,
                 nowPlaying: nowPlayingCoordinator,
                 liveActivity: liveActivityCoordinator,
-                shelfStore: shelfStore
+                shelfStore: shelfStore,
+                batterySource: batterySource
             )
         )
         panel.setFrame(maxRect, display: true)
