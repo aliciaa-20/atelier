@@ -64,24 +64,20 @@ struct ExpandedPlayerView: View {
         }
     }
 
-    /// Artwork/spacing/fonts reused from `PeekPlayerView.content(for:)`
-    /// (34x34 artwork, cornerRadius 5, 8pt spacing, headline/subheadline
-    /// fonts, same `WaveformView` bar metrics) -- Peek is the one view
-    /// already confirmed correctly sized against the real notch. The text
-    /// column width is NOT reused from Peek, though: Peek's 92pt is sized
-    /// for a view meant to be glanced at briefly, and reusing it here made
-    /// most ordinary-length titles overflow and marquee-scroll
-    /// continuously in the main hover view, which people actually read --
-    /// confirmed on-device as "text movement is very buggy now." Widened
-    /// back out to 150 so typical titles sit still.
+    /// Reuses `PeekPlayerView.content(for:)`'s own values directly (34x34
+    /// artwork, cornerRadius 5, 8pt spacing, 92pt text column, headline/
+    /// subheadline fonts, same `WaveformView` bar metrics) rather than a
+    /// separately hand-tuned set -- Peek is the one view already confirmed
+    /// correctly sized against the real notch, so this header now matches
+    /// it instead of drifting on its own numbers.
     private func headerSection(for info: NowPlayingInfo) -> some View {
         HStack(spacing: 8) {
             ArtworkView(url: info.artworkURL, cornerRadius: 5)
                 .frame(width: 34, height: 34)
 
             VStack(alignment: .leading, spacing: 2) {
-                MarqueeText(text: info.title, font: .headline, color: .white, width: 150, height: 16)
-                MarqueeText(text: info.artist, font: .subheadline, color: .white.opacity(0.65), width: 150, height: 16)
+                MarqueeText(text: info.title, font: .headline, color: .white, width: 92, height: 16)
+                MarqueeText(text: info.artist, font: .subheadline, color: .white.opacity(0.65), width: 92, height: 16)
             }
 
             Spacer(minLength: 0)
@@ -251,7 +247,6 @@ struct ScrubberView: View {
                     Capsule().fill(.white.opacity(0.2))
                     Capsule().fill(.white.opacity(0.85)).frame(width: geo.size.width * progress)
                 }
-                .frame(maxWidth: .infinity)
                 .frame(height: dragging ? 6 : 4)
                 .frame(maxHeight: .infinity, alignment: .center)
                 .contentShape(Rectangle())
