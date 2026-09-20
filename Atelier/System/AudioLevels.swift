@@ -29,6 +29,15 @@ nonisolated enum AudioLevels {
     /// down after a loud passage instead of staying pinned at its level
     /// for the rest of the track.
     private static let peakDecay: Float = 0.98
+    /// All 6 chunks come from the same ~23ms buffer (1024 samples at
+    /// 44.1kHz), split by *time*, not frequency -- so absent any boost,
+    /// they tend to read as similar loudness within a single frame (real
+    /// per-bar variation would need frequency-band splitting/FFT, which
+    /// the design spec deliberately skips as overkill here). This exaggerates
+    /// each chunk's deviation from the frame's own mean before mapping to
+    /// bar height, so the six bars visually spread apart more per direct
+    /// feedback that they read as too uniform.
+    private static let contrastFactor: Float = 1.8
 
     /// Splits `samples` into `barCount` equal-ish chunks (the last chunk
     /// absorbs any remainder), computes RMS per chunk via `vDSP_rmsqv`,
@@ -63,9 +72,11 @@ nonisolated enum AudioLevels {
             return Array(repeating: minimumScale, count: barCount)
         }
 
-        return rawRMS.map { raw in
-            let normalized = min(1, raw / peak)
-            return minimumScale + normalized * (1 - minimumScale)
+        let normalized = rawRMS.map { min(1, $0 / peak) }
+        let mean = normalized.reduce(0, +) / Float(barCount)
+        return normalized.map { value in
+            let contrasted = min(1, max(0, mean + (value - mean) * contrastFactor))
+            return minimumScale + contrasted * (1 - minimumScale)
         }
     }
 }
