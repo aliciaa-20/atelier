@@ -38,35 +38,39 @@ struct ExpandedPlayerView: View {
                 emptyState
             }
         }
-        .padding(.horizontal, 28)
-        .padding(.bottom, 16)
+        .padding(.horizontal, 22)
+        .padding(.bottom, 12)
         .padding(.top, notchHeight + 12)
     }
 
+    /// A fixed, even gap between each section (header/scrubber/controls),
+    /// not `Spacer(minLength:)` -- flexible spacers stretched to absorb
+    /// whatever height the panel had left over from `NotchController`'s
+    /// fixed `playerContentHeight`, which is deliberate proximity/grouping
+    /// (Apple's own spacing discipline) turned into incidental leftover
+    /// space instead. `playerContentHeight` was trimmed to match this
+    /// tighter intrinsic height rather than left oversized around it.
     private func player(for info: NowPlayingInfo) -> some View {
-        VStack(spacing: 0) {
+        VStack(spacing: 10) {
             headerSection(for: info)
-            Spacer(minLength: 6)
             ScrubberView(duration: info.duration, elapsed: info.elapsed, onSeek: onSeek)
-            Spacer(minLength: 6)
             controlsSection(for: info)
         }
     }
 
-    /// Sizes match jackson-storm/dynamicnotch's `headerSection` exactly:
-    /// 60x60 artwork, 15pt header spacing, 16pt medium title / 14pt artist,
-    /// 2pt spacing between them. Text column widened to 170 (from the
-    /// original 148) so more titles fit before either line needs to
-    /// marquee. Both lines use the same continuous `MarqueeText` — title
-    /// and artist marquee independently, whichever actually overflows.
+    /// Originally matched jackson-storm/dynamicnotch's `headerSection`
+    /// exactly (60x60 artwork -- the comment was stale; the code has
+    /// always used 50x50 -- 15pt spacing, 16pt/14pt text). Trimmed further
+    /// for a more compact card: 44x44 artwork, 14pt/12pt text, tighter
+    /// column width to match.
     private func headerSection(for info: NowPlayingInfo) -> some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 10) {
             ArtworkView(url: info.artworkURL)
-                .frame(width: 50, height: 50)
+                .frame(width: 44, height: 44)
 
             VStack(alignment: .leading, spacing: 2) {
-                MarqueeText(text: info.title, font: .system(size: 15, weight: .medium), color: .white, width: 170, height: 20)
-                MarqueeText(text: info.artist, font: .system(size: 13), color: .white.opacity(0.65), width: 170, height: 20)
+                MarqueeText(text: info.title, font: .system(size: 14, weight: .medium), color: .white, width: 160, height: 18)
+                MarqueeText(text: info.artist, font: .system(size: 12), color: .white.opacity(0.65), width: 160, height: 16)
             }
 
             Spacer(minLength: 0)
@@ -82,7 +86,7 @@ struct ExpandedPlayerView: View {
     /// favorite/output buttons are 21pt, close to prev/next, not tiny.
     private func controlsSection(for info: NowPlayingInfo) -> some View {
         ZStack {
-            HStack(spacing: 24) {
+            HStack(spacing: 20) {
                 Button(action: onPrevious) {
                     Image(systemName: "backward.fill")
                         .font(.system(size: 18, weight: .semibold))
@@ -113,7 +117,7 @@ struct ExpandedPlayerView: View {
                 )
                 .font(.system(size: 15, weight: .medium))
             }
-            .padding(.horizontal, 10)
+            .padding(.horizontal, 8)
         }
         .buttonStyle(.plain)
         .foregroundStyle(.white)

@@ -36,21 +36,21 @@ final class NotchController {
     private static let pillExtraWidth: CGFloat = 64
 
     /// Height of the `.expanded` content: the `NotchTabBar` row (its top
-    /// padding plus its own intrinsic height) plus `ExpandedPlayerView`'s
-    /// own content -- artwork+text row (50) + spacing (8) + scrubber incl.
-    /// time labels (22) + spacing (8) + transport row (26) + bottom padding
-    /// (10). Kept compact deliberately -- an earlier, roomier pass
-    /// (144/360, matching dynamicnotch's own absolute pixel sizes) opened
-    /// too far down for a menu-bar-adjacent panel; this sits *below* the
-    /// real notch cutout, which has no display pixels of its own, so the
-    /// panel's total height must add the physical notch height on top of
-    /// this.
-    private static let playerContentHeight: CGFloat = 164
+    /// padding plus its own intrinsic height, ~26) plus
+    /// `ExpandedPlayerView`'s own content -- artwork+text row (44) + fixed
+    /// spacing (8) + scrubber incl. time labels (22) + fixed spacing (8) +
+    /// transport row (26) + top/bottom padding (12/10). Trimmed further
+    /// (from 164) alongside `ExpandedPlayerView`'s own tightened artwork/
+    /// font sizes and fixed (not flexible-`Spacer`) inter-section spacing --
+    /// a starting point for this pass, like every other size in this file,
+    /// expected to be confirmed or adjusted on-device.
+    private static let playerContentHeight: CGFloat = 156
     /// Idle Home (date/time + battery %, no scrubber/transport row) needs
     /// far less room than a real player -- deliberately shorter than
-    /// `playerContentHeight`. Starting value, expected to be tuned further
-    /// on-device.
-    private static let idleHomeContentHeight: CGFloat = 90
+    /// `playerContentHeight`. Trimmed from 90 alongside `IdleHomeView`'s
+    /// own tighter internal spacing; a starting point, pending on-device
+    /// confirmation like `playerContentHeight` above.
+    private static let idleHomeContentHeight: CGFloat = 80
     /// Narrower than `expandedWidth` for the same reason -- a short
     /// time/date/battery block doesn't need the full player's width.
     private static let idleHomeWidth: CGFloat = 200
