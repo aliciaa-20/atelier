@@ -17,7 +17,6 @@ struct ExpandedPlayerView: View {
     let waveformColor: Color
     let outputDevices: [AudioOutputDevice]
     let currentOutputDeviceID: AudioDeviceID?
-    let batterySource: BatterySource
     let onPlayPause: () -> Void
     let onNext: () -> Void
     let onPrevious: () -> Void
@@ -104,11 +103,19 @@ struct ExpandedPlayerView: View {
                 }
             }
 
+            // dynamicnotch's own NowPlayingExpandedNotchView.controlsSection
+            // gives every button here a fixed frame (42x42 there) rather
+            // than a bare glyph -- that's what keeps shuffle/output clear
+            // of the panel's rounded corners; a glyph with no surrounding
+            // frame sits exactly at its own tight bounding box, which is
+            // what let it crowd into the corner in a screenshot. Scaled
+            // down to 28x28 to match this panel's smaller scale.
             HStack {
                 Button(action: onToggleShuffle) {
                     Image(systemName: "shuffle")
                         .font(.system(size: 15, weight: .medium))
                         .foregroundStyle(info.isShuffling ? waveformColor : Color.white.opacity(0.35))
+                        .frame(width: 28, height: 28)
                 }
 
                 Spacer(minLength: 0)
@@ -119,6 +126,7 @@ struct ExpandedPlayerView: View {
                     onSelect: onSelectOutputDevice
                 )
                 .font(.system(size: 15, weight: .medium))
+                .frame(width: 28, height: 28)
             }
             .padding(.horizontal, 8)
         }
@@ -127,7 +135,7 @@ struct ExpandedPlayerView: View {
     }
 
     private var emptyState: some View {
-        IdleHomeView(batterySource: batterySource)
+        IdleHomeView()
     }
 }
 
