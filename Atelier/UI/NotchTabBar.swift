@@ -24,16 +24,24 @@ struct NotchTabBar: View {
     let currentPage: NotchPage
     let onSelect: (NotchPage) -> Void
 
-    private static let pages = NotchPage.allCases
     private static let dotSize: CGFloat = 6
     private static let selectedDotWidth: CGFloat = 16
     private static let dragThreshold: CGFloat = 30
 
     @State private var hasAdvancedThisDrag = false
 
+    /// Read live, not cached -- same tolerance as `NotchGestureModifier`'s
+    /// own `AtelierSettings.gesturesEnabled` check: a settings toggle
+    /// flipped in the menu bar takes effect on this view's next natural
+    /// re-render (a hover, a track change) rather than needing a
+    /// dedicated observation bridge for a `UserDefaults` value.
+    private var activePages: [NotchPage] {
+        AtelierSettings.shelfEnabled ? NotchPage.allCases : [.home]
+    }
+
     var body: some View {
         HStack(spacing: 6) {
-            ForEach(Self.pages, id: \.self) { page in
+            ForEach(activePages, id: \.self) { page in
                 Capsule()
                     .fill(page == currentPage ? Color.white : Color.white.opacity(0.35))
                     .frame(
@@ -68,10 +76,8 @@ struct NotchTabBar: View {
     }
 
     private func advance(by delta: Int) {
-        guard let index = Self.pages.firstIndex(of: currentPage) else { return }
-        let newIndex = index + delta
-        guard Self.pages.indices.contains(newIndex) else { return }
+        guard let next = currentPage.advanced(by: delta, in: activePages) else { return }
         hasAdvancedThisDrag = true
-        onSelect(Self.pages[newIndex])
+        onSelect(next)
     }
 }

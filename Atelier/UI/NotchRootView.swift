@@ -18,6 +18,10 @@ struct NotchRootView: View {
     /// is still playing out. Not cleared on retract -- see Fix 3 in the
     /// final review pass.
     @State private var lastPeekContent: LiveActivityContent?
+    /// Shared with `NotchTabBar`'s own gesture modifier below, so the
+    /// whole-panel skip-track swipe knows not to fire for a swipe that
+    /// began over the tab bar's dots -- see `NotchGestureExclusionZone`.
+    @State private var tabBarExclusionZone = NotchGestureExclusionZone()
 
     /// Small/sharp notch-cutout radii at rest, softer/rounder-card radii
     /// once expanded -- matching jackson-storm/dynamicnotch's own
@@ -93,14 +97,38 @@ struct NotchRootView: View {
 
                 if viewModel.state == .expanded {
                     VStack(spacing: 0) {
-                        NotchTabBar(currentPage: viewModel.currentPage) { page in
-                            withAnimation(NotchAnimations.open) {
-                                viewModel.selectPage(page)
+                        // Shelf toggled off in Settings leaves only Home --
+                        // no point showing a switcher with one destination.
+                        if AtelierSettings.shelfEnabled {
+                            NotchTabBar(currentPage: viewModel.currentPage) { page in
+                                withAnimation(NotchAnimations.open) {
+                                    viewModel.selectPage(page)
+                                }
                             }
+                            .padding(.top, viewModel.collapsedSize.height + 8)
+                            .modifier(
+                                NotchGestureModifier(
+                                    capabilities: NotchGestureCapabilities(canOpen: false, canClose: false, canSkip: true),
+                                    onOpen: {},
+                                    onClose: {},
+                                    onSkipForward: {
+                                        if let next = viewModel.currentPage.advanced(by: 1) {
+                                            withAnimation(NotchAnimations.open) { viewModel.selectPage(next) }
+                                        }
+                                    },
+                                    onSkipBackward: {
+                                        if let previous = viewModel.currentPage.advanced(by: -1) {
+                                            withAnimation(NotchAnimations.open) { viewModel.selectPage(previous) }
+                                        }
+                                    },
+                                    ownsExclusionZone: tabBarExclusionZone
+                                )
+                            )
+                        } else {
+                            Color.clear.frame(height: viewModel.collapsedSize.height + 8)
                         }
-                        .padding(.top, viewModel.collapsedSize.height + 8)
 
-                        if viewModel.currentPage == .shelf {
+                        if AtelierSettings.shelfEnabled, viewModel.currentPage == .shelf {
                             ShelfView(store: shelfStore, rootDirectory: shelfStore.rootDirectory, notchHeight: 0)
                                 .onAppear { shelfStore.sweepExpired() }
                         } else {
@@ -218,12 +246,14 @@ struct NotchRootView: View {
                     },
                     onSkipBackward: {
                         Task { await nowPlaying.previous() }
-                    }
+                    },
+                    respectsExclusionZones: [tabBarExclusionZone]
                 )
             )
             .modifier(
                 NotchDragModifier(
                     onDragEntered: {
+                        guard AtelierSettings.shelfEnabled else { return }
                         withAnimation(NotchAnimations.open) {
                             viewModel.handle(.dragEntered)
                         }

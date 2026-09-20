@@ -42,6 +42,11 @@ struct AtelierApp: App {
                 set: { UserDefaults.standard.set($0, forKey: AtelierSettings.gesturesEnabledKey) }
             ))
 
+            Toggle("Enable File Shelf", isOn: Binding(
+                get: { AtelierSettings.shelfEnabled },
+                set: { UserDefaults.standard.set($0, forKey: AtelierSettings.shelfEnabledKey) }
+            ))
+
             // Checked live on every menu open, not cached -- matches how
             // the toggles above already read `AtelierSettings` live.
             // `MediaKeyInterceptor` needs this permission for its
