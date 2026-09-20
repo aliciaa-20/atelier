@@ -32,8 +32,13 @@ struct ExpandedPlayerView: View {
                 emptyState
             }
         }
-        .padding(.horizontal, 20)
-        .padding(.bottom, 10)
+        // Horizontal padding widened (20->26) per direct feedback that
+        // content sat too close to the panel's rounded corners.
+        .padding(.horizontal, 26)
+        // Widened (10->16) so the transport row clears the bottom edge
+        // with real breathing room instead of reading as pinned to it --
+        // same direct feedback pass as the horizontal padding above.
+        .padding(.bottom, 16)
         // No separate notch-clearance offset here -- this view is only
         // ever shown beneath NotchRootView's own NotchTabBar now, which
         // already clears the real notch (PeekPlayerView-style `+ 4`). A
@@ -88,34 +93,36 @@ struct ExpandedPlayerView: View {
     /// one row of five evenly spaced buttons.
     private func controlsSection(for info: NowPlayingInfo) -> some View {
         ZStack {
-            HStack(spacing: 18) {
+            // Bumped back up slightly (15/20 -> 17/23) per direct feedback
+            // that the previous pass's trim read as a bit too small.
+            HStack(spacing: 20) {
                 Button(action: onPrevious) {
                     Image(systemName: "backward.fill")
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(.system(size: 17, weight: .semibold))
                 }
                 Button(action: onPlayPause) {
                     Image(systemName: info.isPlaying ? "pause.fill" : "play.fill")
-                        .font(.system(size: 20, weight: .semibold))
+                        .font(.system(size: 23, weight: .semibold))
                 }
                 Button(action: onNext) {
                     Image(systemName: "forward.fill")
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(.system(size: 17, weight: .semibold))
                 }
             }
 
-            // dynamicnotch's own NowPlayingExpandedNotchView.controlsSection
-            // gives every button here a fixed frame (42x42 there) rather
-            // than a bare glyph -- that's what keeps shuffle/output clear
-            // of the panel's rounded corners; a glyph with no surrounding
-            // frame sits exactly at its own tight bounding box, which is
-            // what let it crowd into the corner in a screenshot. Scaled
-            // down to 24x24 (from 28) alongside this pass's other trims.
+            // A bare glyph in the corner read as an accidental stray mark,
+            // not a button -- per direct feedback ("floating in space...
+            // do not seem intentionally there"). A soft translucent
+            // circle backdrop (iOS Control Center's own convention for
+            // its secondary buttons) gives each one a visible boundary/
+            // affordance instead of just an icon sitting on bare black.
             HStack {
                 Button(action: onToggleShuffle) {
                     Image(systemName: "shuffle")
                         .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(info.isShuffling ? waveformColor : Color.white.opacity(0.35))
-                        .frame(width: 24, height: 24)
+                        .foregroundStyle(info.isShuffling ? waveformColor : Color.white.opacity(0.65))
+                        .frame(width: 26, height: 26)
+                        .background(Circle().fill(Color.white.opacity(0.12)))
                 }
 
                 Spacer(minLength: 0)
@@ -126,9 +133,10 @@ struct ExpandedPlayerView: View {
                     onSelect: onSelectOutputDevice
                 )
                 .font(.system(size: 13, weight: .medium))
-                .frame(width: 24, height: 24)
+                .frame(width: 26, height: 26)
+                .background(Circle().fill(Color.white.opacity(0.12)))
             }
-            .padding(.horizontal, 8)
+            .padding(.horizontal, 4)
         }
         .buttonStyle(.plain)
         .foregroundStyle(.white)
