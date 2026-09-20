@@ -6,7 +6,6 @@ struct NotchRootView: View {
     @ObservedObject var nowPlaying: NowPlayingCoordinator
     @ObservedObject var liveActivity: LiveActivityCoordinator
     @ObservedObject var shelfStore: ShelfStore
-    let batterySource: BatterySource
     @StateObject private var artworkColor = ArtworkColorLoader()
     @State private var settleScale: CGFloat = 1
     @State private var outputDevices: [AudioOutputDevice] = []
@@ -93,24 +92,37 @@ struct NotchRootView: View {
 
                 if viewModel.state == .expanded {
                     VStack(spacing: 0) {
-                        NotchTabBar(currentPage: viewModel.currentPage) { page in
-                            withAnimation(NotchAnimations.open) {
-                                viewModel.selectPage(page)
+                        // Shelf toggled off in Settings leaves only Home --
+                        // no point showing a switcher with one destination.
+                        if AtelierSettings.shelfEnabled {
+                            NotchTabBar(currentPage: viewModel.currentPage) { page in
+                                withAnimation(NotchAnimations.open) {
+                                    viewModel.selectPage(page)
+                                }
                             }
+                            // Matches PeekPlayerView's own `notchHeight + 4`
+                            // clearance -- this used to be `+ 8` stacked on
+                            // top of ExpandedPlayerView's/ShelfView's own
+                            // separate notch-clearance padding below, which
+                            // (now that they're always called with
+                            // `notchHeight: 0`, having been superseded by
+                            // this tab bar) left the whole header reading as
+                            // floating in dead space rather than sitting
+                            // flush under the real notch.
+                            .padding(.top, viewModel.collapsedSize.height + 4)
+                        } else {
+                            Color.clear.frame(height: viewModel.collapsedSize.height + 4)
                         }
-                        .padding(.top, viewModel.collapsedSize.height + 8)
 
-                        if viewModel.currentPage == .shelf {
+                        if AtelierSettings.shelfEnabled, viewModel.currentPage == .shelf {
                             ShelfView(store: shelfStore, rootDirectory: shelfStore.rootDirectory, notchHeight: 0)
                                 .onAppear { shelfStore.sweepExpired() }
                         } else {
                             ExpandedPlayerView(
                                 info: nowPlaying.current,
-                                notchHeight: 0,
                                 waveformColor: artworkColor.color,
                                 outputDevices: outputDevices,
                                 currentOutputDeviceID: currentOutputDeviceID,
-                                batterySource: batterySource,
                                 onPlayPause: { Task { await nowPlaying.playPause() } },
                                 onNext: { Task { await nowPlaying.next() } },
                                 onPrevious: { Task { await nowPlaying.previous() } },
@@ -149,6 +161,13 @@ struct NotchRootView: View {
             }
             .frame(width: frameSize.width, height: frameSize.height)
             .clipShape(NotchShape(topCornerRadius: cornerRadii.top, bottomCornerRadius: cornerRadii.bottom))
+            // No shadow while `.collapsed` -- Invariant 7 requires that
+            // state to be visually indistinguishable from the stock notch,
+            // which casts none. Every other state is already a departure
+            // from the stock notch's look, and real Dynamic Island shows a
+            // subtle shadow once expanded/peeking to read as "lifted" off
+            // the wallpaper -- found missing in a ui-review-tahoe pass.
+            .shadow(color: .black.opacity(viewModel.state == .collapsed ? 0 : 0.25), radius: 8, y: 2)
             .scaleEffect(settleScale, anchor: .top)
             .contentShape(Rectangle())
             .onHover { hovering in
@@ -224,6 +243,7 @@ struct NotchRootView: View {
             .modifier(
                 NotchDragModifier(
                     onDragEntered: {
+                        guard AtelierSettings.shelfEnabled else { return }
                         withAnimation(NotchAnimations.open) {
                             viewModel.handle(.dragEntered)
                         }
