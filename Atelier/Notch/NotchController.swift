@@ -24,9 +24,11 @@ final class NotchController {
     private let mediaKeyInterceptor: MediaKeyInterceptor
     private let lockScreenManager: LockScreenManager
     private let lockScreenPanelController: LockScreenPanelController
+    private let audioTap = AudioTap()
     private var notchStateCancellable: AnyCancellable?
     private var isPlayingCancellable: AnyCancellable?
     private var trackChangeCancellable: AnyCancellable?
+    private var audioTapCancellable: AnyCancellable?
     private var peekDecayTask: Task<Void, Never>?
 
     /// The pill hugs the notch's own height but extends past its width so
@@ -127,6 +129,7 @@ final class NotchController {
                     viewModel: viewModel,
                     nowPlaying: nowPlayingCoordinator,
                     liveActivity: liveActivityCoordinator,
+                    audioTap: audioTap,
                     shelfStore: shelfStore
                 )
             )
@@ -215,6 +218,7 @@ final class NotchController {
                 viewModel: viewModel,
                 nowPlaying: nowPlayingCoordinator,
                 liveActivity: liveActivityCoordinator,
+                audioTap: audioTap,
                 shelfStore: shelfStore
             )
         )
@@ -283,6 +287,21 @@ final class NotchController {
                     withAnimation(NotchAnimations.open) {
                         viewModel.handle(.isPlayingChanged(hasContent))
                     }
+                }
+            }
+
+        // AudioTap's lifetime is tied to actual playback, not the pill/
+        // peek UI state above -- it should start the moment something is
+        // playing and stop the moment it isn't, independent of whether
+        // the notch happens to be expanded to show it.
+        audioTapCancellable = nowPlayingCoordinator.$current
+            .map { $0?.isPlaying ?? false }
+            .removeDuplicates()
+            .sink { [weak audioTap] isPlaying in
+                if isPlaying {
+                    audioTap?.start()
+                } else {
+                    audioTap?.stop()
                 }
             }
 
