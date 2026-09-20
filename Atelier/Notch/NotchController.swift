@@ -323,7 +323,22 @@ final class NotchController {
 
     private func triggerPeek(with event: NotchEvent) {
         guard AtelierSettings.peekOnTrackChangeEnabled else { return }
-        Self.log.debug("triggerPeek(event: \(String(describing: event))), state before: \(String(describing: self.viewModel.state)), topContent id: \(self.liveActivityCoordinator.topContent?.id ?? "nil")")
+        Self.log.debug("triggerPeek(event: \(String(describing: event), privacy: .public)), state before: \(String(describing: self.viewModel.state), privacy: .public), topContent id: \(self.liveActivityCoordinator.topContent?.id ?? "nil", privacy: .public)")
+        // A single real track change fires *two* near-simultaneous
+        // notifications from LiveActivityCoordinator -- identityChanged
+        // (a content id change) and a $hasContent toggle (nil -> new
+        // content also flips hasContent false->true in the same beat) --
+        // each wired to its own triggerPeek call. Confirmed on-device via
+        // log: both fired 34ms apart for one song change. The state
+        // machine already no-ops the second call's `viewModel.handle`
+        // (trackChanged/playbackToggled while already .peeking just
+        // returns .peeking), but unconditionally restarting the decay
+        // timer below did NOT no-op -- every track change silently
+        // extended its own peek's open duration by however much the two
+        // calls straddled peekDuration's countdown, and reads as the
+        // panel "not closing when it should" on every single track
+        // change, not just a volume/brightness edge case.
+        let wasAlreadyPeeking = viewModel.state == .peeking
         // Reuses the exact same curves as hovering (`NotchRootView`'s
         // `onHover`), not separate peek-only constants -- a peek is the
         // same open/close motion as hover, just triggered a different way.
@@ -334,6 +349,11 @@ final class NotchController {
             viewModel.handle(event)
         }
 
+        guard !wasAlreadyPeeking else {
+            Self.log.debug("triggerPeek: already peeking, skipping redundant decay-timer restart")
+            return
+        }
+
         // Cancel any still-pending decay from an earlier peek so a rapid
         // skip or play/pause flurry doesn't cut the new peek short.
         peekDecayTask?.cancel()
@@ -341,7 +361,7 @@ final class NotchController {
             try? await Task.sleep(for: Self.peekDuration)
             guard !Task.isCancelled, let self else { return }
             let hasContent = liveActivityCoordinator.hasContent
-            Self.log.debug("peekDecayTask firing, state: \(String(describing: self.viewModel.state)), hasContent: \(hasContent), topContent id: \(self.liveActivityCoordinator.topContent?.id ?? "nil")")
+            Self.log.debug("peekDecayTask firing, state: \(String(describing: self.viewModel.state), privacy: .public), hasContent: \(hasContent, privacy: .public), topContent id: \(self.liveActivityCoordinator.topContent?.id ?? "nil", privacy: .public)")
             withAnimation(NotchAnimations.close) {
                 viewModel.handle(.peekTimerElapsed(isPlaying: hasContent))
             }

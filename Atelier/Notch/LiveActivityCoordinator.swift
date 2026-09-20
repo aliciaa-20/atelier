@@ -51,7 +51,7 @@ final class LiveActivityCoordinator: ObservableObject {
             source.contentPublisher
                 .receive(on: RunLoop.main)
                 .sink { [weak self] content in
-                    Self.log.debug("source \(source.id) published id: \(content?.id ?? "nil")")
+                    Self.log.debug("source \(source.id, privacy: .public) published id: \(content?.id ?? "nil", privacy: .public)")
                     self?.handle(sourceID: source.id, priority: source.priority, content: content)
                 }
                 .store(in: &cancellables)
@@ -113,7 +113,7 @@ final class LiveActivityCoordinator: ObservableObject {
             // top (or a different battery state arriving) should only
             // ever update the pill, never auto-pop a peek.
             if newContentID != lastContentID, topContent?.peeksOnChange == true {
-                Self.log.debug("identityChanged firing: sourceID \(sourceID), newContentID \(newContentID), lastContentID \(self.lastContentID ?? "nil")")
+                Self.log.debug("identityChanged firing: sourceID \(sourceID, privacy: .public), newContentID \(newContentID, privacy: .public), lastContentID \(self.lastContentID ?? "nil", privacy: .public)")
                 identityChanged.send()
             }
             lastContentID = newContentID
