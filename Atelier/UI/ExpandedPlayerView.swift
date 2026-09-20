@@ -250,6 +250,12 @@ struct ScrubberView: View {
                     Capsule().fill(.white.opacity(0.2))
                     Capsule().fill(.white.opacity(0.85)).frame(width: geo.size.width * progress)
                 }
+                // Explicit, rather than relying on HStack's default
+                // flexible-sizing behavior to hand this row all available
+                // width -- cherry-picked from old commit 9527f80, which
+                // found the bar didn't reliably claim its full row without
+                // it.
+                .frame(maxWidth: .infinity)
                 .frame(height: dragging ? 6 : 4)
                 .frame(maxHeight: .infinity, alignment: .center)
                 .contentShape(Rectangle())
