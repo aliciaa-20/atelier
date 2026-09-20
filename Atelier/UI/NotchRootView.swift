@@ -6,7 +6,6 @@ struct NotchRootView: View {
     @ObservedObject var nowPlaying: NowPlayingCoordinator
     @ObservedObject var liveActivity: LiveActivityCoordinator
     @ObservedObject var shelfStore: ShelfStore
-    let batterySource: BatterySource
     @StateObject private var artworkColor = ArtworkColorLoader()
     @State private var settleScale: CGFloat = 1
     @State private var outputDevices: [AudioOutputDevice] = []
@@ -146,7 +145,6 @@ struct NotchRootView: View {
                                 waveformColor: artworkColor.color,
                                 outputDevices: outputDevices,
                                 currentOutputDeviceID: currentOutputDeviceID,
-                                batterySource: batterySource,
                                 onPlayPause: { Task { await nowPlaying.playPause() } },
                                 onNext: { Task { await nowPlaying.next() } },
                                 onPrevious: { Task { await nowPlaying.previous() } },
