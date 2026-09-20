@@ -32,8 +32,8 @@ struct ExpandedPlayerView: View {
                 emptyState
             }
         }
-        .padding(.horizontal, 28)
-        .padding(.bottom, 16)
+        .padding(.horizontal, 20)
+        .padding(.bottom, 10)
         // No separate notch-clearance offset here -- this view is only
         // ever shown beneath NotchRootView's own NotchTabBar now, which
         // already clears the real notch (PeekPlayerView-style `+ 4`). A
@@ -42,33 +42,35 @@ struct ExpandedPlayerView: View {
         // gap between the dots and the actual content. This is just the
         // small breathing room between the tab bar and this content,
         // matching ShelfView's own equivalent gap in the same position.
-        .padding(.top, 8)
+        .padding(.top, 6)
     }
 
     private func player(for info: NowPlayingInfo) -> some View {
         VStack(spacing: 0) {
             headerSection(for: info)
-            Spacer(minLength: 6)
+            Spacer(minLength: 4)
             ScrubberView(duration: info.duration, elapsed: info.elapsed, onSeek: onSeek)
-            Spacer(minLength: 6)
+            Spacer(minLength: 4)
             controlsSection(for: info)
         }
     }
 
-    /// Sizes match jackson-storm/dynamicnotch's `headerSection` exactly:
-    /// 60x60 artwork, 15pt header spacing, 16pt medium title / 14pt artist,
-    /// 2pt spacing between them. Text column widened to 170 (from the
-    /// original 148) so more titles fit before either line needs to
-    /// marquee. Both lines use the same continuous `MarqueeText` — title
-    /// and artist marquee independently, whichever actually overflows.
+    /// Shrunk from an earlier pass (50pt artwork, 15/13pt text, 170pt text
+    /// column) per direct feedback that the player read as oversized and
+    /// too spaced-out compared to iOS's own Control Center Now Playing
+    /// module -- that reference uses a noticeably smaller artwork-to-text
+    /// ratio and tighter line spacing than jackson-storm/dynamicnotch's
+    /// own (larger, macOS-native-styled) original. Text column narrowed to
+    /// 150 to match `ScrubberView`'s own already-correct full-width framing
+    /// (see the marquee/scrubber fix queued for this same rebuild).
     private func headerSection(for info: NowPlayingInfo) -> some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 10) {
             ArtworkView(url: info.artworkURL)
-                .frame(width: 50, height: 50)
+                .frame(width: 44, height: 44)
 
             VStack(alignment: .leading, spacing: 2) {
-                MarqueeText(text: info.title, font: .system(size: 15, weight: .medium), color: .white, width: 170, height: 20)
-                MarqueeText(text: info.artist, font: .system(size: 13), color: .white.opacity(0.65), width: 170, height: 20)
+                MarqueeText(text: info.title, font: .system(size: 14, weight: .medium), color: .white, width: 150, height: 18)
+                MarqueeText(text: info.artist, font: .system(size: 12), color: .white.opacity(0.65), width: 150, height: 18)
             }
 
             Spacer(minLength: 0)
@@ -77,25 +79,27 @@ struct ExpandedPlayerView: View {
         }
     }
 
-    /// Sizes/weights match jackson-storm/dynamicnotch's `PlayerControlButton`
-    /// usage in `NowPlayingExpandedNotchView.controlsSection`: prev/next at
-    /// 22pt, play/pause distinctly bigger at 32pt, both semibold — scaled
-    /// down here (18/26pt) for Atelier's narrower panel, same ratio. Their
-    /// favorite/output buttons are 21pt, close to prev/next, not tiny.
+    /// Sizes trimmed from an earlier pass (18/26pt prev-next/play, 24pt
+    /// spacing) to read closer to iOS's own Control Center transport row --
+    /// smaller glyphs, tighter spacing between them, per direct feedback
+    /// that the whole player took up too much room. Still keeps
+    /// jackson-storm/dynamicnotch's own layout idea: a `ZStack` of two rows
+    /// (centered transport cluster, edge-pinned shuffle/output) rather than
+    /// one row of five evenly spaced buttons.
     private func controlsSection(for info: NowPlayingInfo) -> some View {
         ZStack {
-            HStack(spacing: 24) {
+            HStack(spacing: 18) {
                 Button(action: onPrevious) {
                     Image(systemName: "backward.fill")
-                        .font(.system(size: 18, weight: .semibold))
+                        .font(.system(size: 15, weight: .semibold))
                 }
                 Button(action: onPlayPause) {
                     Image(systemName: info.isPlaying ? "pause.fill" : "play.fill")
-                        .font(.system(size: 26, weight: .semibold))
+                        .font(.system(size: 20, weight: .semibold))
                 }
                 Button(action: onNext) {
                     Image(systemName: "forward.fill")
-                        .font(.system(size: 18, weight: .semibold))
+                        .font(.system(size: 15, weight: .semibold))
                 }
             }
 
@@ -105,13 +109,13 @@ struct ExpandedPlayerView: View {
             // of the panel's rounded corners; a glyph with no surrounding
             // frame sits exactly at its own tight bounding box, which is
             // what let it crowd into the corner in a screenshot. Scaled
-            // down to 28x28 to match this panel's smaller scale.
+            // down to 24x24 (from 28) alongside this pass's other trims.
             HStack {
                 Button(action: onToggleShuffle) {
                     Image(systemName: "shuffle")
-                        .font(.system(size: 15, weight: .medium))
+                        .font(.system(size: 13, weight: .medium))
                         .foregroundStyle(info.isShuffling ? waveformColor : Color.white.opacity(0.35))
-                        .frame(width: 28, height: 28)
+                        .frame(width: 24, height: 24)
                 }
 
                 Spacer(minLength: 0)
@@ -121,10 +125,10 @@ struct ExpandedPlayerView: View {
                     currentDeviceID: currentOutputDeviceID,
                     onSelect: onSelectOutputDevice
                 )
-                .font(.system(size: 15, weight: .medium))
-                .frame(width: 28, height: 28)
+                .font(.system(size: 13, weight: .medium))
+                .frame(width: 24, height: 24)
             }
-            .padding(.horizontal, 10)
+            .padding(.horizontal, 8)
         }
         .buttonStyle(.plain)
         .foregroundStyle(.white)
@@ -222,9 +226,9 @@ struct ScrubberView: View {
     private var displayedElapsed: TimeInterval { dragValue ?? elapsed }
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 6) {
             Text(TimeFormatting.mmss(displayedElapsed))
-                .font(.system(size: 11, weight: .medium, design: .rounded))
+                .font(.system(size: 10, weight: .medium, design: .rounded))
                 .monospacedDigit()
                 .foregroundStyle(.white.opacity(0.55))
 
@@ -263,10 +267,10 @@ struct ScrubberView: View {
                 // finger 1:1, not lag behind an animation.
                 .animation(dragging ? nil : .easeOut(duration: 0.2), value: displayedElapsed)
             }
-            .frame(height: 14)
+            .frame(height: 12)
 
             Text(TimeFormatting.mmss(duration))
-                .font(.system(size: 11, weight: .medium, design: .rounded))
+                .font(.system(size: 10, weight: .medium, design: .rounded))
                 .monospacedDigit()
                 .foregroundStyle(.white.opacity(0.55))
         }
