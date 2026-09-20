@@ -25,6 +25,27 @@ deliberately also a vehicle for learning all three.
   Don't manufacture excuses to demo features.
 - She reviews every diff. Keep them small and legible.
 
+## UI/UX polish — use these skills proactively, not just on request
+
+Alicia wants this app to feel genuinely Apple-native (Dynamic Island/
+Control Center quality), not just functionally correct — and she's told
+me directly that the gaps she cares about (missing VoiceOver labels, no
+depth/shadow, no press feedback, missing keyboard shortcuts) are exactly
+the kind of thing she doesn't think to ask for by name, so waiting to be
+asked misses them. Whenever touching any SwiftUI view under `Atelier/UI/`
+(new or being tuned):
+
+- Run the **`ui-review-tahoe`** skill proactively — not just when asked —
+  after any round of visual/sizing changes, to catch accessibility
+  (VoiceOver labels, focus/keyboard), depth/shadow, press/hover feedback,
+  and animation-quality gaps before she has to spot them in a screenshot.
+- Use the **`apple-design`** skill when making layout/spacing/typography/
+  motion decisions from scratch (e.g. "make this feel more iOS-like"),
+  instead of guessing pixel values purely by trial-and-error round-trips.
+- Both are cheap relative to another round of "you like this now?" —
+  prefer surfacing a batch of findings in one pass over reacting to one
+  screenshot at a time.
+
 ## Architecture
 
 Four layers with deliberate seams. The two pure ones carry the test suite.
