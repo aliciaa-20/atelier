@@ -1,5 +1,6 @@
 import Combine
 import Foundation
+import os
 import SwiftUI
 
 /// Merges every `LiveActivitySource`'s content into a `LiveActivityStack`
@@ -40,6 +41,9 @@ final class LiveActivityCoordinator: ObservableObject {
     /// compute theirs from shared `SystemHUDOrder` state, which can change
     /// without *that* source publishing new content.
     private var sourcesByID: [String: LiveActivitySource] = [:]
+    /// Temporary diagnostics -- see `NotchController`'s matching `log`
+    /// property doc comment.
+    private static let log = Logger(subsystem: "com.aliciapereira.Atelier", category: "PeekDiagnostics")
 
     init(sources: [LiveActivitySource]) {
         for source in sources {
@@ -47,6 +51,7 @@ final class LiveActivityCoordinator: ObservableObject {
             source.contentPublisher
                 .receive(on: RunLoop.main)
                 .sink { [weak self] content in
+                    Self.log.debug("source \(source.id) published id: \(content?.id ?? "nil")")
                     self?.handle(sourceID: source.id, priority: source.priority, content: content)
                 }
                 .store(in: &cancellables)
@@ -108,6 +113,7 @@ final class LiveActivityCoordinator: ObservableObject {
             // top (or a different battery state arriving) should only
             // ever update the pill, never auto-pop a peek.
             if newContentID != lastContentID, topContent?.peeksOnChange == true {
+                Self.log.debug("identityChanged firing: sourceID \(sourceID), newContentID \(newContentID), lastContentID \(self.lastContentID ?? "nil")")
                 identityChanged.send()
             }
             lastContentID = newContentID
