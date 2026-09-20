@@ -16,6 +16,10 @@ final class BatterySource: LiveActivitySource {
     let priority = NotchLiveActivityPriority.battery
 
     private let subject = CurrentValueSubject<LiveActivityContent?, Never>(nil)
+    /// Always-on, unlike `subject` above (which only emits on charging/low/
+    /// full) — feeds `IdleHomeView`'s always-visible battery percent without
+    /// a second `IOKit.ps` reader duplicating this class's own poll logic.
+    private let percentSubject = CurrentValueSubject<Int, Never>(0)
     // `deinit` runs nonisolated regardless of this class's actor, and this
     // property is only ever touched from `init` (MainActor, constructed
     // once at app startup) and `deinit` at teardown -- same reasoning as
@@ -44,6 +48,10 @@ final class BatterySource: LiveActivitySource {
 
     var contentPublisher: AnyPublisher<LiveActivityContent?, Never> {
         subject.eraseToAnyPublisher()
+    }
+
+    var currentPercentPublisher: AnyPublisher<Int, Never> {
+        percentSubject.eraseToAnyPublisher()
     }
 
     init(notchHeight: CGFloat) {
@@ -95,6 +103,7 @@ final class BatterySource: LiveActivitySource {
         else { return }
 
         let percent = Int((Double(currentCapacity) / Double(maxCapacity) * 100).rounded())
+        percentSubject.send(percent)
 
         guard let state = BatteryActivityState.evaluate(percent: percent, isCharging: isCharging) else {
             if lastPublishWasContent {

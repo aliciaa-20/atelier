@@ -8,9 +8,16 @@ import Foundation
 @MainActor
 final class NotchViewModel: ObservableObject {
     @Published private(set) var state: NotchState = .collapsed
+    @Published private(set) var currentPage: NotchPage = .home
 
     let collapsedSize: CGSize
     let expandedSize: CGSize
+    /// A shorter `.expanded` footprint for the Home tab's idle content
+    /// (date/time + battery %) -- much less to show than a real player, so
+    /// it shouldn't claim the same vertical space. `NotchRootView` picks
+    /// between this and `expandedSize` based on whether anything's playing,
+    /// not `NotchViewModel` itself, which stays state-only.
+    let idleHomeSize: CGSize
     let pillSize: CGSize
     let peekSize: CGSize
     /// A smaller `.peeking` footprint for content with no title/artist
@@ -32,9 +39,10 @@ final class NotchViewModel: ObservableObject {
     /// moment you arrive, so the fixed position reads as deliberate.
     @Published private(set) var spaceChangeTick: Int = 0
 
-    init(collapsedSize: CGSize, expandedSize: CGSize, pillSize: CGSize, peekSize: CGSize, compactPeekSize: CGSize, shelfSize: CGSize) {
+    init(collapsedSize: CGSize, expandedSize: CGSize, idleHomeSize: CGSize, pillSize: CGSize, peekSize: CGSize, compactPeekSize: CGSize, shelfSize: CGSize) {
         self.collapsedSize = collapsedSize
         self.expandedSize = expandedSize
+        self.idleHomeSize = idleHomeSize
         self.pillSize = pillSize
         self.peekSize = peekSize
         self.compactPeekSize = compactPeekSize
@@ -42,7 +50,15 @@ final class NotchViewModel: ObservableObject {
     }
 
     func handle(_ event: NotchEvent) {
-        state = NotchStateMachine.reduce(state, on: event)
+        let newState = NotchStateMachine.reduce(state, on: event)
+        currentPage = NotchPageTransition.page(for: newState, currentPage: currentPage)
+        state = newState
+    }
+
+    /// Called directly from a tab tap — bypasses `NotchPageTransition` since
+    /// this is a UI action, not a state-machine transition.
+    func selectPage(_ page: NotchPage) {
+        currentPage = page
     }
 
     func notchLandedOnNewSpace() {

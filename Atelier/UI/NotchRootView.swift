@@ -6,6 +6,7 @@ struct NotchRootView: View {
     @ObservedObject var nowPlaying: NowPlayingCoordinator
     @ObservedObject var liveActivity: LiveActivityCoordinator
     @ObservedObject var shelfStore: ShelfStore
+    let batterySource: BatterySource
     @StateObject private var artworkColor = ArtworkColorLoader()
     @State private var settleScale: CGFloat = 1
     @State private var outputDevices: [AudioOutputDevice] = []
@@ -71,7 +72,15 @@ struct NotchRootView: View {
         case .peeking:
             let content = liveActivity.topContent ?? lastPeekContent
             return content?.isExpandable == false ? viewModel.compactPeekSize : viewModel.peekSize
-        case .pill, .collapsed, .expanded, .shelf:
+        case .expanded:
+            // Idle Home (nothing playing, Home tab) gets its own shorter
+            // footprint -- far less to show than a real player or the
+            // shelf grid, so it shouldn't claim the same vertical space.
+            if viewModel.currentPage == .home, nowPlaying.current == nil {
+                return viewModel.idleHomeSize
+            }
+            return viewModel.currentSize
+        case .pill, .collapsed, .shelf:
             return viewModel.currentSize
         }
     }
@@ -83,27 +92,42 @@ struct NotchRootView: View {
                     .fill(Color.black)
 
                 if viewModel.state == .expanded {
-                    ExpandedPlayerView(
-                        info: nowPlaying.current,
-                        notchHeight: viewModel.collapsedSize.height,
-                        waveformColor: artworkColor.color,
-                        outputDevices: outputDevices,
-                        currentOutputDeviceID: currentOutputDeviceID,
-                        onPlayPause: { Task { await nowPlaying.playPause() } },
-                        onNext: { Task { await nowPlaying.next() } },
-                        onPrevious: { Task { await nowPlaying.previous() } },
-                        onSeek: { time in Task { await nowPlaying.seek(to: time) } },
-                        onToggleShuffle: { Task { await nowPlaying.toggleShuffle() } },
-                        onSelectOutputDevice: { deviceID in
-                            OutputDeviceManager.setDefaultOutputDevice(deviceID)
-                            currentOutputDeviceID = deviceID
+                    VStack(spacing: 0) {
+                        NotchTabBar(currentPage: viewModel.currentPage) { page in
+                            withAnimation(NotchAnimations.open) {
+                                viewModel.selectPage(page)
+                            }
                         }
-                    )
-                    .transition(.opacity)
-                    .onAppear {
-                        outputDevices = OutputDeviceManager.availableOutputDevices()
-                        currentOutputDeviceID = OutputDeviceManager.currentDefaultOutputDevice()
+                        .padding(.top, viewModel.collapsedSize.height + 8)
+
+                        if viewModel.currentPage == .shelf {
+                            ShelfView(store: shelfStore, rootDirectory: shelfStore.rootDirectory, notchHeight: 0)
+                                .onAppear { shelfStore.sweepExpired() }
+                        } else {
+                            ExpandedPlayerView(
+                                info: nowPlaying.current,
+                                notchHeight: 0,
+                                waveformColor: artworkColor.color,
+                                outputDevices: outputDevices,
+                                currentOutputDeviceID: currentOutputDeviceID,
+                                batterySource: batterySource,
+                                onPlayPause: { Task { await nowPlaying.playPause() } },
+                                onNext: { Task { await nowPlaying.next() } },
+                                onPrevious: { Task { await nowPlaying.previous() } },
+                                onSeek: { time in Task { await nowPlaying.seek(to: time) } },
+                                onToggleShuffle: { Task { await nowPlaying.toggleShuffle() } },
+                                onSelectOutputDevice: { deviceID in
+                                    OutputDeviceManager.setDefaultOutputDevice(deviceID)
+                                    currentOutputDeviceID = deviceID
+                                }
+                            )
+                            .onAppear {
+                                outputDevices = OutputDeviceManager.availableOutputDevices()
+                                currentOutputDeviceID = OutputDeviceManager.currentDefaultOutputDevice()
+                            }
+                        }
                     }
+                    .transition(.opacity)
                 } else if viewModel.state == .peeking {
                     if let topContent = liveActivity.topContent ?? lastPeekContent {
                         topContent.peekView()
