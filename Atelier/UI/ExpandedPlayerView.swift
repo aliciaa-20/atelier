@@ -100,14 +100,17 @@ struct ExpandedPlayerView: View {
                     Image(systemName: "backward.fill")
                         .font(.system(size: 17, weight: .semibold))
                 }
+                .accessibilityLabel("Previous")
                 Button(action: onPlayPause) {
                     Image(systemName: info.isPlaying ? "pause.fill" : "play.fill")
                         .font(.system(size: 23, weight: .semibold))
                 }
+                .accessibilityLabel(info.isPlaying ? "Pause" : "Play")
                 Button(action: onNext) {
                     Image(systemName: "forward.fill")
                         .font(.system(size: 17, weight: .semibold))
                 }
+                .accessibilityLabel("Next")
             }
 
             // A background circle (tried per an earlier feedback pass) was
@@ -124,6 +127,8 @@ struct ExpandedPlayerView: View {
                         .foregroundStyle(info.isShuffling ? waveformColor : Color.white.opacity(0.65))
                         .frame(width: 24, height: 24)
                 }
+                .accessibilityLabel("Shuffle")
+                .accessibilityAddTraits(info.isShuffling ? .isSelected : [])
 
                 Spacer(minLength: 0)
 
@@ -134,6 +139,7 @@ struct ExpandedPlayerView: View {
                 )
                 .font(.system(size: 13, weight: .medium))
                 .frame(width: 24, height: 24)
+                .accessibilityLabel("Output device")
             }
             .padding(.horizontal, 30)
         }

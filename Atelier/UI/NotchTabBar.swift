@@ -45,19 +45,38 @@ struct NotchTabBar: View {
     var body: some View {
         HStack(spacing: -2) {
             ForEach(activePages, id: \.self) { page in
-                Capsule()
-                    .fill(page == currentPage ? Color.white : Color.white.opacity(0.35))
-                    .frame(
-                        width: page == currentPage ? Self.selectedDotWidth : Self.dotSize,
-                        height: Self.dotSize
-                    )
-                    .animation(.spring(response: 0.3, dampingFraction: 0.8), value: currentPage)
-                    .frame(width: Self.tapTargetSize, height: Self.tapTargetSize)
-                    .contentShape(Rectangle())
-                    .onTapGesture { onSelect(page) }
+                // A real `Button`, not `.onTapGesture` on a `Capsule` --
+                // VoiceOver doesn't expose a tap-gesture-only view as an
+                // interactive element at all, so the previous version was
+                // entirely unreachable via VoiceOver (couldn't switch tabs).
+                Button {
+                    onSelect(page)
+                } label: {
+                    Capsule()
+                        .fill(page == currentPage ? Color.white : Color.white.opacity(0.35))
+                        .frame(
+                            width: page == currentPage ? Self.selectedDotWidth : Self.dotSize,
+                            height: Self.dotSize
+                        )
+                        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: currentPage)
+                        .frame(width: Self.tapTargetSize, height: Self.tapTargetSize)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("\(page.accessibilityName) tab")
+                .accessibilityAddTraits(page == currentPage ? .isSelected : [])
             }
         }
         .padding(.horizontal, 4)
         .padding(.vertical, 2)
+    }
+}
+
+private extension NotchPage {
+    var accessibilityName: String {
+        switch self {
+        case .home: "Home"
+        case .shelf: "Shelf"
+        }
     }
 }
