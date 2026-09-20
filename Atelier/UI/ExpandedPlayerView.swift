@@ -143,12 +143,26 @@ struct ExpandedPlayerView: View {
             }
             .padding(.horizontal, 30)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(PressScaleButtonStyle())
         .foregroundStyle(.white)
     }
 
     private var emptyState: some View {
         IdleHomeView()
+    }
+}
+
+/// Found missing in a ui-review-tahoe pass: `.buttonStyle(.plain)` gave the
+/// transport row zero visual feedback on press, unlike real macOS controls
+/// (and iOS Control Center's own transport buttons, which dim/scale
+/// slightly). A light scale + opacity dip on press, no animation on
+/// release beyond the implicit spring back to 1.0/1.0.
+private struct PressScaleButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.88 : 1)
+            .opacity(configuration.isPressed ? 0.7 : 1)
+            .animation(.spring(response: 0.2, dampingFraction: 0.6), value: configuration.isPressed)
     }
 }
 
