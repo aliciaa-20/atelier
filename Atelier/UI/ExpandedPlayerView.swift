@@ -97,11 +97,19 @@ struct ExpandedPlayerView: View {
                 }
             }
 
+            // dynamicnotch's own NowPlayingExpandedNotchView.controlsSection
+            // gives every button here a fixed frame (42x42 there) rather
+            // than a bare glyph -- that's what keeps shuffle/output clear
+            // of the panel's rounded corners; a glyph with no surrounding
+            // frame sits exactly at its own tight bounding box, which is
+            // what let it crowd into the corner in a screenshot. Scaled
+            // down to 28x28 to match this panel's smaller scale.
             HStack {
                 Button(action: onToggleShuffle) {
                     Image(systemName: "shuffle")
                         .font(.system(size: 15, weight: .medium))
                         .foregroundStyle(info.isShuffling ? waveformColor : Color.white.opacity(0.35))
+                        .frame(width: 28, height: 28)
                 }
 
                 Spacer(minLength: 0)
@@ -112,6 +120,7 @@ struct ExpandedPlayerView: View {
                     onSelect: onSelectOutputDevice
                 )
                 .font(.system(size: 15, weight: .medium))
+                .frame(width: 28, height: 28)
             }
             .padding(.horizontal, 10)
         }
@@ -160,12 +169,19 @@ struct ArtworkView: View {
     }
 }
 
-/// A headphones-icon menu listing real output devices from
-/// `OutputDeviceManager`, matching the picker in the reference design.
+/// Lists real output devices from `OutputDeviceManager`. The label icon
+/// reflects the *current* device rather than always showing headphones --
+/// "headphones" only makes sense when audio is actually routed to
+/// AirPods/a headset; otherwise it's the same "speaker.wave.2.fill" glyph
+/// Apple's own Control Center Sound module uses for built-in output.
 private struct OutputDeviceMenu: View {
     let devices: [AudioOutputDevice]
     let currentDeviceID: AudioDeviceID?
     let onSelect: (AudioDeviceID) -> Void
+
+    private var currentDeviceIsAirPods: Bool {
+        devices.first(where: { $0.id == currentDeviceID })?.isAirPods ?? false
+    }
 
     var body: some View {
         Menu {
@@ -181,7 +197,7 @@ private struct OutputDeviceMenu: View {
                 }
             }
         } label: {
-            Image(systemName: "headphones")
+            Image(systemName: currentDeviceIsAirPods ? "headphones" : "speaker.wave.2.fill")
         }
         .menuStyle(.borderlessButton)
         .menuIndicator(.hidden)
