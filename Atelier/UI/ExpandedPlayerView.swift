@@ -58,6 +58,26 @@ struct ExpandedPlayerView: View {
             Spacer(minLength: 4)
             controlsSection(for: info)
         }
+        // Suggested in a ui-review-tahoe pass as a nice-to-have, since
+        // ADR 0003 already lets this panel become key. Best-effort: this
+        // panel is `.nonactivatingPanel` and never explicitly calls
+        // `makeKey()` (ADR 0003's whole point was avoiding that), so
+        // whether `.focusable()` actually gets key events here without a
+        // prior click is unconfirmed -- manual verification only, like
+        // everything else that needs a real notch/real interaction.
+        .focusable()
+        .onKeyPress(.space) {
+            onPlayPause()
+            return .handled
+        }
+        .onKeyPress(.leftArrow) {
+            onSeek(max(0, info.elapsed - 10))
+            return .handled
+        }
+        .onKeyPress(.rightArrow) {
+            onSeek(min(info.duration, info.elapsed + 10))
+            return .handled
+        }
     }
 
     /// Shrunk from an earlier pass (50pt artwork, 15/13pt text, 170pt text
