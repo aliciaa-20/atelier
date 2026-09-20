@@ -77,14 +77,18 @@ correctable defects, not a style preference: real system fills exist for
 exactly this (`.secondarySystemFill` and friends) and would look native for
 free. Rejected as-is; superseded by option 3's fix.
 
-### 3. Hybrid — dot indicator (tap + swipe), icon language kept minimal, native-restraint placement rules — **chosen**
+### 3. Hybrid — dot indicator (tap), icon language kept minimal, native-restraint placement rules — **chosen**
 
-- Navigation: a compact dot indicator (dynamicnotch's idiom) that supports
-  both a direct tap to a page and a swipe/drag between pages — chosen over a
-  pure capsule-of-icons specifically per direct feedback that the priority
-  is "not too cluttered," and a small dot row is visually lighter than an
-  icon-filled capsule while still being fully native (iOS Home Screen
-  paging).
+- Navigation: a compact dot indicator (dynamicnotch's visual idiom),
+  tap-to-switch — chosen over a pure capsule-of-icons specifically per
+  direct feedback that the priority is "not too cluttered," and a small
+  dot row is visually lighter than an icon-filled capsule. A trackpad-swipe
+  gesture over the dots was tried and dropped: its `NSEvent`-monitor/
+  exclusion-zone plumbing (needed so the swipe didn't collide with the
+  existing skip-track swipe) was the most likely source of a real
+  regression (the panel not retracting on hover-away) found once shipped,
+  and wasn't worth the risk for a feature this small. Tap-only is plain
+  SwiftUI with no custom `NSEvent` handling.
 - Colors/materials: replace hand-picked opacities with real system
   materials/colors wherever one exists, matching boring.notch's approach.
 - Placement rule for future features (Phase 12 and beyond): **a feature is
