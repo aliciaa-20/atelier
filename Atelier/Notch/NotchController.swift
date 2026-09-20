@@ -22,6 +22,8 @@ final class NotchController {
     /// Installs its `CGEventTap` on creation and tears it down on deinit --
     /// held for exactly that lifetime, same as `panel`/`viewModel`.
     private let mediaKeyInterceptor: MediaKeyInterceptor
+    private let lockScreenManager: LockScreenManager
+    private let lockScreenPanelController: LockScreenPanelController
     private var notchStateCancellable: AnyCancellable?
     private var isPlayingCancellable: AnyCancellable?
     private var trackChangeCancellable: AnyCancellable?
@@ -101,6 +103,12 @@ final class NotchController {
             self.volumeSource = volumeSource
             self.brightnessSource = brightnessSource
             self.batterySource = batterySource
+            let lockScreenManager = LockScreenManager()
+            self.lockScreenManager = lockScreenManager
+            self.lockScreenPanelController = LockScreenPanelController(
+                nowPlayingCoordinator: nowPlayingCoordinator,
+                lockScreenManager: lockScreenManager
+            )
             mediaKeyInterceptor = MediaKeyInterceptor(volumeSource: volumeSource, brightnessSource: brightnessSource)
             liveActivityCoordinator = LiveActivityCoordinator(sources: [
                 NowPlayingLiveActivitySource(coordinator: nowPlayingCoordinator, notchHeight: 0),
@@ -145,6 +153,12 @@ final class NotchController {
         self.volumeSource = volumeSource
         self.brightnessSource = brightnessSource
         self.batterySource = batterySource
+        let lockScreenManager = LockScreenManager()
+        self.lockScreenManager = lockScreenManager
+        self.lockScreenPanelController = LockScreenPanelController(
+            nowPlayingCoordinator: nowPlayingCoordinator,
+            lockScreenManager: lockScreenManager
+        )
         mediaKeyInterceptor = MediaKeyInterceptor(volumeSource: volumeSource, brightnessSource: brightnessSource)
         liveActivityCoordinator = LiveActivityCoordinator(sources: [
             NowPlayingLiveActivitySource(coordinator: nowPlayingCoordinator, notchHeight: collapsedRect.height),
