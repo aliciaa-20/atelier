@@ -25,13 +25,26 @@ struct NotchTabBar: View {
     let currentPage: NotchPage
     let onSelect: (NotchPage) -> Void
 
-    private static let pages = NotchPage.allCases
     private static let dotSize: CGFloat = 6
     private static let selectedDotWidth: CGFloat = 16
+    /// The visual dot stays small, but the tappable area around it is
+    /// much bigger -- a bare 6pt hit target is uncomfortably small to
+    /// aim at (confirmed on-device). 24pt matches Apple's own minimum
+    /// comfortable tap-target guidance even though this is a trackpad
+    /// pointer, not a finger.
+    private static let tapTargetSize: CGFloat = 24
+
+    /// Read live, not cached -- a settings toggle flipped in the menu bar
+    /// takes effect on this view's next natural re-render (a hover, a
+    /// track change) rather than needing a dedicated observation bridge
+    /// for a `UserDefaults` value.
+    private var activePages: [NotchPage] {
+        AtelierSettings.shelfEnabled ? NotchPage.allCases : [.home]
+    }
 
     var body: some View {
         HStack(spacing: 6) {
-            ForEach(Self.pages, id: \.self) { page in
+            ForEach(activePages, id: \.self) { page in
                 Capsule()
                     .fill(page == currentPage ? Color.white : Color.white.opacity(0.35))
                     .frame(
@@ -39,11 +52,12 @@ struct NotchTabBar: View {
                         height: Self.dotSize
                     )
                     .animation(.spring(response: 0.3, dampingFraction: 0.8), value: currentPage)
+                    .frame(width: Self.tapTargetSize, height: Self.tapTargetSize)
+                    .contentShape(Rectangle())
                     .onTapGesture { onSelect(page) }
             }
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 6)
-        .contentShape(Rectangle())
+        .padding(.horizontal, 4)
+        .padding(.vertical, 2)
     }
 }

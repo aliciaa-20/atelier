@@ -93,14 +93,20 @@ struct NotchRootView: View {
 
                 if viewModel.state == .expanded {
                     VStack(spacing: 0) {
-                        NotchTabBar(currentPage: viewModel.currentPage) { page in
-                            withAnimation(NotchAnimations.open) {
-                                viewModel.selectPage(page)
+                        // Shelf toggled off in Settings leaves only Home --
+                        // no point showing a switcher with one destination.
+                        if AtelierSettings.shelfEnabled {
+                            NotchTabBar(currentPage: viewModel.currentPage) { page in
+                                withAnimation(NotchAnimations.open) {
+                                    viewModel.selectPage(page)
+                                }
                             }
+                            .padding(.top, viewModel.collapsedSize.height + 8)
+                        } else {
+                            Color.clear.frame(height: viewModel.collapsedSize.height + 8)
                         }
-                        .padding(.top, viewModel.collapsedSize.height + 8)
 
-                        if viewModel.currentPage == .shelf {
+                        if AtelierSettings.shelfEnabled, viewModel.currentPage == .shelf {
                             ShelfView(store: shelfStore, rootDirectory: shelfStore.rootDirectory, notchHeight: 0)
                                 .onAppear { shelfStore.sweepExpired() }
                         } else {
@@ -224,6 +230,7 @@ struct NotchRootView: View {
             .modifier(
                 NotchDragModifier(
                     onDragEntered: {
+                        guard AtelierSettings.shelfEnabled else { return }
                         withAnimation(NotchAnimations.open) {
                             viewModel.handle(.dragEntered)
                         }
