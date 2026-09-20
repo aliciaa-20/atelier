@@ -30,19 +30,21 @@ final class NowPlayingLiveActivitySource: LiveActivitySource {
     let priority = NotchLiveActivityPriority.nowPlaying
 
     private let notchHeight: CGFloat
+    private let audioTap: AudioTap
 
-    init(coordinator: NowPlayingCoordinator, notchHeight: CGFloat) {
+    init(coordinator: NowPlayingCoordinator, notchHeight: CGFloat, audioTap: AudioTap) {
         self.notchHeight = notchHeight
         self.coordinator = coordinator
+        self.audioTap = audioTap
     }
 
     private let coordinator: NowPlayingCoordinator
 
     var contentPublisher: AnyPublisher<LiveActivityContent?, Never> {
         coordinator.$current
-            .map { [notchHeight] info -> LiveActivityContent? in
+            .map { [notchHeight, audioTap] info -> LiveActivityContent? in
                 guard let info, info.isPlaying else { return nil }
-                return NowPlayingActivityContent(info: info, notchHeight: notchHeight)
+                return NowPlayingActivityContent(info: info, notchHeight: notchHeight, audioTap: audioTap)
             }
             .eraseToAnyPublisher()
     }
