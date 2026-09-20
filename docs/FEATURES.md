@@ -34,6 +34,11 @@ QuartzNotch, or dynamicnotch (not just their README) to confirm what's
 really happening — a `check-reference-apps-first` spike, not an assumed
 capability.
 
+**Resolved:** confirmed exactly that — Atoll and QuartzNotch both delegate
+an ordinary `NSWindow` into a private CGS space (`SkyLightSpaceOperator`/
+`SkyLightWindow`) rather than using any OS-granted lock-screen surface.
+Implemented the same way; see `docs/ROADMAP.md`'s Phase 11 entry.
+
 ---
 
 ## 2. Interaction & feel
