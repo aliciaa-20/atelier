@@ -121,4 +121,27 @@ struct LiveActivityCoordinatorTests {
         #expect(fireCount == 0)
         cancellable.cancel()
     }
+
+    /// Regression test for "volume/brightness peek flashes the now-playing
+    /// view before closing": a higher-priority source (Volume) briefly
+    /// outranking a lower one (NowPlaying) and then clearing must NOT
+    /// re-fire `identityChanged` for the fallback to the still-unchanged
+    /// lower content. A single shared `lastContentID` field broke this --
+    /// it got overwritten with Volume's own id while Volume was on top, so
+    /// the fallback compared NowPlaying's unchanged id against Volume's
+    /// stale one instead of NowPlaying's own last-known id.
+    @Test func identityChangedDoesNotFireWhenHigherPrioritySourceClearsBackToUnchangedContent() {
+        let low = FakeSource(id: "nowPlaying", priority: 10)
+        let high = FakeSource(id: "volume", priority: 20)
+        let coordinator = LiveActivityCoordinator(sources: [low, high])
+        low.publish(contentID: "trackA")
+        drainMainRunLoop()
+        var fireCount = 0
+        let cancellable = coordinator.identityChanged.sink { fireCount += 1 }
+        high.publish(contentID: "volume:50") // interrupts, becomes topContent
+        high.publish(contentID: nil) // clears, falls back to nowPlaying (still trackA)
+        drainMainRunLoop()
+        #expect(fireCount == 1) // once for volume itself appearing, not again for the fallback
+        cancellable.cancel()
+    }
 }
