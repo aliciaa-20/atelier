@@ -31,9 +31,9 @@ struct IdleHomeView: View {
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 60)) { timeline in
-            VStack(spacing: 4) {
+            VStack(spacing: 3) {
                 Text(Self.timeFormatter.string(from: timeline.date))
-                    .font(.system(size: 22, weight: .semibold, design: .rounded))
+                    .font(.system(size: 18, weight: .semibold, design: .rounded))
                     .monospacedDigit()
 
                 Text(Self.dateFormatter.string(from: timeline.date))
