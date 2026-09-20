@@ -18,6 +18,7 @@ final class NotchController {
     /// `.step(by:)`/`.toggleMute()` on.
     private let volumeSource: VolumeSource
     private let brightnessSource: BrightnessSource
+    private let batterySource: BatterySource
     /// Installs its `CGEventTap` on creation and tears it down on deinit --
     /// held for exactly that lifetime, same as `panel`/`viewModel`.
     private let mediaKeyInterceptor: MediaKeyInterceptor
@@ -34,15 +35,25 @@ final class NotchController {
     /// artwork size and left/right gap for the matching content values.
     private static let pillExtraWidth: CGFloat = 64
 
-    /// Height of `ExpandedPlayerView`'s own content: artwork+text row (50)
-    /// + spacing (8) + scrubber incl. time labels (22) + spacing (8) +
-    /// transport row (26) + bottom padding (10). Kept compact deliberately
-    /// -- an earlier, roomier pass (144/360, matching dynamicnotch's own
-    /// absolute pixel sizes) opened too far down for a menu-bar-adjacent
-    /// panel; this sits *below* the real notch cutout, which has no
-    /// display pixels of its own, so the panel's total height must add the
-    /// physical notch height on top of this.
-    private static let playerContentHeight: CGFloat = 128
+    /// Height of the `.expanded` content: the `NotchTabBar` row (its top
+    /// padding plus its own intrinsic height) plus `ExpandedPlayerView`'s
+    /// own content -- artwork+text row (50) + spacing (8) + scrubber incl.
+    /// time labels (22) + spacing (8) + transport row (26) + bottom padding
+    /// (10). Kept compact deliberately -- an earlier, roomier pass
+    /// (144/360, matching dynamicnotch's own absolute pixel sizes) opened
+    /// too far down for a menu-bar-adjacent panel; this sits *below* the
+    /// real notch cutout, which has no display pixels of its own, so the
+    /// panel's total height must add the physical notch height on top of
+    /// this.
+    private static let playerContentHeight: CGFloat = 164
+    /// Idle Home (date/time + battery %, no scrubber/transport row) needs
+    /// far less room than a real player -- deliberately shorter than
+    /// `playerContentHeight`. Starting value, expected to be tuned further
+    /// on-device.
+    private static let idleHomeContentHeight: CGFloat = 90
+    /// Narrower than `expandedWidth` for the same reason -- a short
+    /// time/date/battery block doesn't need the full player's width.
+    private static let idleHomeWidth: CGFloat = 200
     private static let expandedWidth: CGFloat = 352
     /// A single row of ~64pt item cells plus padding -- matches
     /// `ShelfView`'s own column width. Shorter than `playerContentHeight`
@@ -84,12 +95,14 @@ final class NotchController {
         shelfStore.sweepExpired()
 
         guard let screen = NSScreen.notchedOrMain else {
-            viewModel = NotchViewModel(collapsedSize: .zero, expandedSize: .zero, pillSize: .zero, peekSize: .zero, compactPeekSize: .zero, shelfSize: .zero)
+            viewModel = NotchViewModel(collapsedSize: .zero, expandedSize: .zero, idleHomeSize: .zero, pillSize: .zero, peekSize: .zero, compactPeekSize: .zero, shelfSize: .zero)
             let hudOrder = SystemHUDOrder()
             let volumeSource = VolumeSource(notchHeight: 0, hudOrder: hudOrder)
             let brightnessSource = BrightnessSource(notchHeight: 0, hudOrder: hudOrder)
+            let batterySource = BatterySource(notchHeight: 0)
             self.volumeSource = volumeSource
             self.brightnessSource = brightnessSource
+            self.batterySource = batterySource
             let lockScreenManager = LockScreenManager()
             self.lockScreenManager = lockScreenManager
             self.lockScreenPanelController = LockScreenPanelController(
@@ -99,7 +112,7 @@ final class NotchController {
             mediaKeyInterceptor = MediaKeyInterceptor(volumeSource: volumeSource, brightnessSource: brightnessSource)
             liveActivityCoordinator = LiveActivityCoordinator(sources: [
                 NowPlayingLiveActivitySource(coordinator: nowPlayingCoordinator, notchHeight: 0),
-                BatterySource(notchHeight: 0),
+                batterySource,
                 ScreenRecordingSource(notchHeight: 0),
                 volumeSource,
                 brightnessSource
@@ -111,7 +124,8 @@ final class NotchController {
                     viewModel: viewModel,
                     nowPlaying: nowPlayingCoordinator,
                     liveActivity: liveActivityCoordinator,
-                    shelfStore: shelfStore
+                    shelfStore: shelfStore,
+                    batterySource: batterySource
                 )
             )
             return
@@ -135,8 +149,10 @@ final class NotchController {
         let hudOrder = SystemHUDOrder()
         let volumeSource = VolumeSource(notchHeight: collapsedRect.height, hudOrder: hudOrder)
         let brightnessSource = BrightnessSource(notchHeight: collapsedRect.height, hudOrder: hudOrder)
+        let batterySource = BatterySource(notchHeight: collapsedRect.height)
         self.volumeSource = volumeSource
         self.brightnessSource = brightnessSource
+        self.batterySource = batterySource
         let lockScreenManager = LockScreenManager()
         self.lockScreenManager = lockScreenManager
         self.lockScreenPanelController = LockScreenPanelController(
@@ -146,7 +162,7 @@ final class NotchController {
         mediaKeyInterceptor = MediaKeyInterceptor(volumeSource: volumeSource, brightnessSource: brightnessSource)
         liveActivityCoordinator = LiveActivityCoordinator(sources: [
             NowPlayingLiveActivitySource(coordinator: nowPlayingCoordinator, notchHeight: collapsedRect.height),
-            BatterySource(notchHeight: collapsedRect.height),
+            batterySource,
             ScreenRecordingSource(notchHeight: collapsedRect.height),
             volumeSource,
             brightnessSource
@@ -154,6 +170,10 @@ final class NotchController {
         let expandedSize = CGSize(
             width: Self.expandedWidth,
             height: collapsedRect.height + Self.playerContentHeight
+        )
+        let idleHomeSize = CGSize(
+            width: Self.idleHomeWidth,
+            height: collapsedRect.height + Self.idleHomeContentHeight
         )
         let pillSize = CGSize(
             width: collapsedRect.width + Self.pillExtraWidth,
@@ -174,6 +194,7 @@ final class NotchController {
         viewModel = NotchViewModel(
             collapsedSize: collapsedRect.size,
             expandedSize: expandedSize,
+            idleHomeSize: idleHomeSize,
             pillSize: pillSize,
             peekSize: peekSize,
             compactPeekSize: compactPeekSize,
@@ -192,7 +213,8 @@ final class NotchController {
                 viewModel: viewModel,
                 nowPlaying: nowPlayingCoordinator,
                 liveActivity: liveActivityCoordinator,
-                shelfStore: shelfStore
+                shelfStore: shelfStore,
+                batterySource: batterySource
             )
         )
         panel.setFrame(maxRect, display: true)
