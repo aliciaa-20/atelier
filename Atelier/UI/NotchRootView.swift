@@ -100,9 +100,18 @@ struct NotchRootView: View {
                                     viewModel.selectPage(page)
                                 }
                             }
-                            .padding(.top, viewModel.collapsedSize.height + 8)
+                            // Matches PeekPlayerView's own `notchHeight + 4`
+                            // clearance -- this used to be `+ 8` stacked on
+                            // top of ExpandedPlayerView's/ShelfView's own
+                            // separate notch-clearance padding below, which
+                            // (now that they're always called with
+                            // `notchHeight: 0`, having been superseded by
+                            // this tab bar) left the whole header reading as
+                            // floating in dead space rather than sitting
+                            // flush under the real notch.
+                            .padding(.top, viewModel.collapsedSize.height + 4)
                         } else {
-                            Color.clear.frame(height: viewModel.collapsedSize.height + 8)
+                            Color.clear.frame(height: viewModel.collapsedSize.height + 4)
                         }
 
                         if AtelierSettings.shelfEnabled, viewModel.currentPage == .shelf {
@@ -111,7 +120,6 @@ struct NotchRootView: View {
                         } else {
                             ExpandedPlayerView(
                                 info: nowPlaying.current,
-                                notchHeight: 0,
                                 waveformColor: artworkColor.color,
                                 outputDevices: outputDevices,
                                 currentOutputDeviceID: currentOutputDeviceID,
