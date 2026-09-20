@@ -63,6 +63,7 @@ struct NotchTabBar: View {
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                .focusEffectDisabled()
                 .accessibilityLabel("\(page.accessibilityName) tab")
                 .accessibilityAddTraits(page == currentPage ? .isSelected : [])
             }
