@@ -27,10 +27,24 @@ final class LiveActivityCoordinator: ObservableObject {
 
     private var stack = LiveActivityStack()
     private var latestContent: [String: LiveActivityContent] = [:]
-    private var lastContentID: String?
-    /// Per-source last-seen content id, independent of `lastContentID`
-    /// (which only tracks the *top* content's id) -- this is what lets a
-    /// source that's never on top still be noticed when its own content
+    /// The last id `identityChanged` fired for, keyed by *which source*
+    /// owned `topContent` at the time -- not a single global field. A
+    /// single shared field broke when a higher-priority source (Volume/
+    /// Brightness) temporarily outranked a lower one (NowPlaying) and then
+    /// cleared: the fallback to the still-unchanged lower source looked
+    /// like a new identity, because the shared field had last been set to
+    /// the higher source's own (freshly UUID'd every publish) id, not the
+    /// lower source's stable one -- confirmed on-device as "volume/
+    /// brightness peek flashes the now-playing view before closing."
+    /// Per-source, only ever updated for whichever source is topID at the
+    /// time (never cleared to nil), a pause/resume of the same track still
+    /// doesn't re-fire: the entry for that source simply sits untouched
+    /// while it's off the stack, same as the original single-field
+    /// behavior this replaces.
+    private var lastPeekedContentIDBySource: [String: String] = [:]
+    /// Per-source last-seen content id (including nil, unlike the field
+    /// above), independent of which source is on top -- this is what lets
+    /// a source that's never on top still be noticed when its own content
     /// changes, to drive `interruptContent`.
     private var lastContentIDBySource: [String: String] = [:]
     private var interruptClearTask: Task<Void, Never>?
@@ -78,25 +92,24 @@ final class LiveActivityCoordinator: ObservableObject {
 
         topContent = stack.topID.flatMap { latestContent[$0] }
 
-        // `lastContentID` is only ever updated to a non-nil id -- it is
-        // NOT cleared when content disappears (e.g. a pause). That way a
-        // pause/resume of the *same* track leaves `lastContentID`
-        // pointing at that track's still-correct id, so the resume
-        // publish sees `newContentID == lastContentID` and does not fire
-        // `identityChanged` -- matching the pre-Task-6 `lastTrackKey`
-        // behavior, which was likewise untouched by isPlaying transitions.
-        // A genuinely different track appearing later still fires, since
-        // its id differs from whatever stale id is still held here.
+        // Compared against the *owning source's own* last-peeked id, not a
+        // single shared field -- see `lastPeekedContentIDBySource`'s own
+        // doc comment for why. Only ever updated for `stack.topID`, and
+        // only when non-nil, so a pause/resume of the same track (which
+        // removes it from the stack entirely while paused, see
+        // `NowPlayingLiveActivitySource.contentPublisher`'s `isPlaying`
+        // guard) leaves this source's entry untouched while it's off the
+        // stack, then compares equal again on resume.
         let newContentID = topContent?.id
-        if let newContentID {
+        if let newContentID, let topID = stack.topID {
             // Only peek-worthy content (peeksOnChange == true) fires
             // identityChanged -- ambient content like Battery becoming
             // top (or a different battery state arriving) should only
             // ever update the pill, never auto-pop a peek.
-            if newContentID != lastContentID, topContent?.peeksOnChange == true {
+            if newContentID != lastPeekedContentIDBySource[topID], topContent?.peeksOnChange == true {
                 identityChanged.send()
             }
-            lastContentID = newContentID
+            lastPeekedContentIDBySource[topID] = newContentID
         }
 
         hasContent = topContent != nil
