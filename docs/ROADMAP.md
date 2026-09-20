@@ -48,6 +48,12 @@ Still undecided: whether/how to pursue a fix for the AirPods crash.
 **Phase 10 (System alerts) started**: screen recording is the first alert
 source shipped — see Phase 10's entry below. Working through the remaining
 alerts in order: Focus mode, Wi-Fi/VPN, Bluetooth.
+**Phase 11's lock-screen now-playing widget is code-complete** on
+`worktree-lockscreen-nowplaying-widget` (6 SDD tasks, 107 tests passing),
+iterated through two rounds of on-device visual fixes (positioning, glass
+background, hover-morph smoothness, corner-radius consistency, compactness)
+— see Phase 11's entry below. Not yet merged to `main`; the full manual
+on-device checklist and the merge are still open.
 
 ---
 
@@ -501,7 +507,7 @@ Bluetooth.
 
 See [FEATURES.md §5](FEATURES.md#5-live-activities--system-alerts-extensible-framework).
 
-### ⬜ Phase 11 — Now-Playing Live Activity + lock-screen widget
+### 🔜 Phase 11 — Now-Playing Live Activity + lock-screen widget
 *Ships: now-playing elevated to a first-class Live Activity; lock-screen
 surface scope gated on a feasibility spike.*
 **Depends on Phase 6.**
@@ -509,9 +515,44 @@ surface scope gated on a feasibility spike.*
 - [ ] Elevate now-playing to a first-class Live Activity.
 - [ ] Real-time audio visualizer.
 - [ ] Synced lyrics.
-- [ ] Lock-screen now-playing widget — **spike first**: macOS has no public
-      lock-screen widget API for third-party apps; confirm what reference
-      apps actually built before committing to scope.
+- [x] Lock-screen now-playing widget — spike confirmed feasible via a
+      private CGS space (`SkyLightSpaceOperator`, vendored/hardened from
+      Lakr233/SkyLightWindow), same technique Ebullioscopic/Atoll and
+      Clayton630/QuartzNotch use, since macOS has no public lock-screen
+      widget API. Implemented as 6 SDD tasks on
+      `worktree-lockscreen-nowplaying-widget` (all code-complete, reviewed,
+      107 tests passing): `SkyLightSpaceOperator` (space delegation,
+      hardened against a `dlsym` crash and an unvalidated-space-creation
+      bug found in review), `LockScreenManager` (lock/unlock detection),
+      `Parallax3DModifier` (artwork tilt), `LockScreenMusicCardView`
+      (reusing `ExpandedPlayerView`'s `ScrubberView`), `LockScreenPanelController`
+      (window lifecycle/positioning), and final wiring into
+      `NotchController`. Iterated twice more after initial on-device
+      review against screenshots: (1) the card originally centered
+      bottom-screen, which overlapped the login/password field — moved to
+      a fixed bottom-left inset instead, since the login field is always
+      horizontally centered regardless of macOS version (matches
+      QuartzNotch's `LockScreenPanelManager.panelFrame`); swapped the flat
+      `.glassEffect()` fill for a blurred/darkened copy of the track's own
+      artwork as the background, matching how iOS's own Lock Screen widget
+      builds its "glass" from content rather than desktop translucency;
+      (2) the hover-expand morph was swapping between two structurally
+      different view subtrees (SwiftUI animates that as remove-then-insert,
+      not a resize) — rebuilt as one persistent hierarchy with scalar
+      properties driving size/spacing, matching Atoll's
+      `LockScreenMusicPanel` technique; the corner radius was also
+      animating between states (24→30) and drifting out of sync with the
+      artwork's own radius mid-hover — fixed to one constant 26pt radius,
+      matching both reference apps' `panelCornerRadius`, with the artwork's
+      radius kept at a steady ratio of its own size instead of unrelated
+      per-state constants. Expanded size cut from 340×200 to 300×148 and
+      the transport row went from edge-pinned buttons with a dead gap in
+      the middle to a tight centered cluster, matching how compact both
+      reference apps keep the expanded state. **Still open**: the full
+      on-device manual-verification checklist (repeated lock/unlock for
+      duplicate-window/crash checks, confirming no overlap with the actual
+      Touch ID prompt, not just the password field) and merging the
+      worktree branch back to `main`.
 
 See [FEATURES.md §1](FEATURES.md#1-now-playing--live-activity-core).
 
