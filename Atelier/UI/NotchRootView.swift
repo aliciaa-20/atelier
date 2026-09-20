@@ -52,7 +52,12 @@ struct NotchRootView: View {
         case .expanded:
             return (top: 14, bottom: 20)
         case .peeking:
-            let content = liveActivity.topContent ?? lastPeekContent
+            // `lastPeekContent` first, not `topContent` -- see the render
+            // branch below for why: preferring live `topContent` is what
+            // let a decaying Volume/Brightness peek pick up NowPlaying's
+            // content (and thus its non-compact radii) for its last
+            // moment on screen.
+            let content = lastPeekContent ?? liveActivity.topContent
             return content?.isExpandable == false ? (top: 6, bottom: 14) : (top: 14, bottom: 14)
         case .shelf:
             return (top: 14, bottom: 20)
@@ -62,18 +67,18 @@ struct NotchRootView: View {
     /// `viewModel.currentSize` alone can't distinguish a compact peek
     /// (Volume, Brightness -- no title/artist text) from a regular one
     /// (track change, Battery) -- it only knows `state`, not which live
-    /// activity content is actually showing. Same `topContent ??
-    /// lastPeekContent` fallback as the `.peeking` render branch below, so
-    /// the frame size and the content it's sizing around never mismatch
-    /// mid-decay. The `.pill` state, unlike peeking, uses one width
-    /// (`pillSize`, matching the music pill) for every source -- an
-    /// earlier pass gave Volume/Brightness their own narrower notch-width
-    /// pill, but on-device that read as too cramped; matching the pill
-    /// everything else already uses reads more consistent.
+    /// activity content is actually showing. Same `lastPeekContent`-first
+    /// preference as the `.peeking` render branch below, so the frame size
+    /// and the content it's sizing around never mismatch mid-decay. The
+    /// `.pill` state, unlike peeking, uses one width (`pillSize`, matching
+    /// the music pill) for every source -- an earlier pass gave
+    /// Volume/Brightness their own narrower notch-width pill, but
+    /// on-device that read as too cramped; matching the pill everything
+    /// else already uses reads more consistent.
     private var frameSize: CGSize {
         switch viewModel.state {
         case .peeking:
-            let content = liveActivity.topContent ?? lastPeekContent
+            let content = lastPeekContent ?? liveActivity.topContent
             return content?.isExpandable == false ? viewModel.compactPeekSize : viewModel.peekSize
         case .expanded:
             // Idle Home (nothing playing, Home tab) gets its own shorter
@@ -163,7 +168,20 @@ struct NotchRootView: View {
                     }
                     .transition(.opacity)
                 } else if viewModel.state == .peeking {
-                    if let topContent = liveActivity.topContent ?? lastPeekContent {
+                    // lastPeekContent first, not topContent -- this is the
+                    // actual fix for the volume/brightness-peek-flashes-
+                    // now-playing bug. Freezing when lastPeekContent gets
+                    // *captured* (a prior pass) wasn't sufficient on its
+                    // own: this line still preferred live topContent
+                    // whenever it was non-nil, and topContent legitimately
+                    // becomes NowPlaying's content (not nil) the moment
+                    // Volume/Brightness's own content clears while music
+                    // plays underneath -- so the old `??` order picked it
+                    // up regardless of what lastPeekContent held. Now the
+                    // content this specific peek started for wins for the
+                    // peek's entire duration, live topContent is only a
+                    // fallback for the case lastPeekContent is nil.
+                    if let topContent = lastPeekContent ?? liveActivity.topContent {
                         topContent.peekView()
                             .transition(.opacity)
                     }
