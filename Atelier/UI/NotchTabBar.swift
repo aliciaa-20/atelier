@@ -43,7 +43,7 @@ struct NotchTabBar: View {
     }
 
     var body: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 3) {
             ForEach(activePages, id: \.self) { page in
                 Capsule()
                     .fill(page == currentPage ? Color.white : Color.white.opacity(0.35))
