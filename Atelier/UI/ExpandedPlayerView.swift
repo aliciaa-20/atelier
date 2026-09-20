@@ -14,9 +14,15 @@ import SwiftUI
 /// deliberate group instead of being stretched across the whole width.
 struct ExpandedPlayerView: View {
     let info: NowPlayingInfo?
+    /// The real notch cutout has no display pixels of its own, so content
+    /// must start below it rather than at the top of our own frame — see
+    /// `docs/decisions/0003-notch-panel-can-become-key.md`'s sibling sizing
+    /// note in `NotchController`.
+    let notchHeight: CGFloat
     let waveformColor: Color
     let outputDevices: [AudioOutputDevice]
     let currentOutputDeviceID: AudioDeviceID?
+    let batterySource: BatterySource
     let onPlayPause: () -> Void
     let onNext: () -> Void
     let onPrevious: () -> Void
@@ -32,98 +38,70 @@ struct ExpandedPlayerView: View {
                 emptyState
             }
         }
-        // Horizontal/bottom padding now literally reused from
-        // PeekPlayerView (24/9) rather than separately guessed -- Peek is
-        // the one view confirmed correctly aligned to the real notch's
-        // flat-zone inset, per direct feedback to stop re-guessing values.
-        .padding(.horizontal, 24)
-        .padding(.bottom, 9)
-        // No separate notch-clearance offset here -- this view is only
-        // ever shown beneath NotchRootView's own NotchTabBar now, which
-        // already clears the real notch (PeekPlayerView-style `+ 4`).
-        // A leftover `notchHeight` parameter used to duplicate that
-        // clearance on top of the tab bar's own, which is what produced
-        // the oversized gap a screenshot caught. This is just the small
-        // breathing room between the tab bar and this content, matching
-        // ShelfView's own equivalent gap in the same position.
-        .padding(.top, 8)
+        .padding(.horizontal, 28)
+        .padding(.bottom, 16)
+        .padding(.top, notchHeight + 12)
     }
 
-    /// A fixed, even gap between each section (header/scrubber/controls),
-    /// not `Spacer(minLength:)` -- flexible spacers stretched to absorb
-    /// whatever height the panel had left over from `NotchController`'s
-    /// fixed `playerContentHeight`, which is deliberate proximity/grouping
-    /// (Apple's own spacing discipline) turned into incidental leftover
-    /// space instead. `playerContentHeight` was trimmed to match this
-    /// tighter intrinsic height rather than left oversized around it.
     private func player(for info: NowPlayingInfo) -> some View {
-        VStack(spacing: 10) {
+        VStack(spacing: 0) {
             headerSection(for: info)
+            Spacer(minLength: 6)
             ScrubberView(duration: info.duration, elapsed: info.elapsed, onSeek: onSeek)
+            Spacer(minLength: 6)
             controlsSection(for: info)
         }
     }
 
-    /// Artwork/spacing/fonts reused from `PeekPlayerView.content(for:)`
-    /// (34x34 artwork, cornerRadius 5, 8pt spacing, headline/subheadline
-    /// fonts, same `WaveformView` bar metrics) -- Peek is the one view
-    /// already confirmed correctly sized against the real notch. The text
-    /// column width is NOT reused from Peek, though: Peek's 92pt is sized
-    /// for a view meant to be glanced at briefly, and reusing it here made
-    /// most ordinary-length titles overflow and marquee-scroll
-    /// continuously in the main hover view, which people actually read --
-    /// confirmed on-device as "text movement is very buggy now." Widened
-    /// back out to 150 so typical titles sit still.
+    /// Sizes match jackson-storm/dynamicnotch's `headerSection` exactly:
+    /// 60x60 artwork, 15pt header spacing, 16pt medium title / 14pt artist,
+    /// 2pt spacing between them. Text column widened to 170 (from the
+    /// original 148) so more titles fit before either line needs to
+    /// marquee. Both lines use the same continuous `MarqueeText` — title
+    /// and artist marquee independently, whichever actually overflows.
     private func headerSection(for info: NowPlayingInfo) -> some View {
-        HStack(spacing: 8) {
-            ArtworkView(url: info.artworkURL, cornerRadius: 5)
-                .frame(width: 34, height: 34)
+        HStack(spacing: 12) {
+            ArtworkView(url: info.artworkURL)
+                .frame(width: 50, height: 50)
 
             VStack(alignment: .leading, spacing: 2) {
-                MarqueeText(text: info.title, font: .headline, color: .white, width: 150, height: 16)
-                MarqueeText(text: info.artist, font: .subheadline, color: .white.opacity(0.65), width: 150, height: 16)
+                MarqueeText(text: info.title, font: .system(size: 15, weight: .medium), color: .white, width: 170, height: 20)
+                MarqueeText(text: info.artist, font: .system(size: 13), color: .white.opacity(0.65), width: 170, height: 20)
             }
 
             Spacer(minLength: 0)
 
-            WaveformView(isPlaying: info.isPlaying, color: waveformColor, barWidth: 2, barSpacing: 1.3, height: 14)
+            WaveformView(isPlaying: info.isPlaying, color: waveformColor)
         }
     }
 
     /// Sizes/weights match jackson-storm/dynamicnotch's `PlayerControlButton`
-    /// usage in `NowPlayingExpandedNotchView.controlsSection` (prev/next
-    /// 22pt, play/pause 32pt, both semibold), scaled down for Atelier's
-    /// narrower panel and shrunk further per direct feedback.
+    /// usage in `NowPlayingExpandedNotchView.controlsSection`: prev/next at
+    /// 22pt, play/pause distinctly bigger at 32pt, both semibold — scaled
+    /// down here (18/26pt) for Atelier's narrower panel, same ratio. Their
+    /// favorite/output buttons are 21pt, close to prev/next, not tiny.
     private func controlsSection(for info: NowPlayingInfo) -> some View {
         ZStack {
-            HStack(spacing: 18) {
+            HStack(spacing: 24) {
                 Button(action: onPrevious) {
                     Image(systemName: "backward.fill")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(.system(size: 18, weight: .semibold))
                 }
                 Button(action: onPlayPause) {
                     Image(systemName: info.isPlaying ? "pause.fill" : "play.fill")
-                        .font(.system(size: 22, weight: .semibold))
+                        .font(.system(size: 26, weight: .semibold))
                 }
                 Button(action: onNext) {
                     Image(systemName: "forward.fill")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(.system(size: 18, weight: .semibold))
                 }
             }
 
-            // dynamicnotch's own NowPlayingExpandedNotchView.controlsSection
-            // gives every button here a fixed frame (42x42 there) rather
-            // than a bare glyph -- that's what keeps shuffle/output clear
-            // of the panel's rounded corners; a glyph with no surrounding
-            // frame sits exactly at its own tight bounding box, which is
-            // what let it crowd into the corner in a screenshot. Scaled
-            // down to 24x24 to match this panel's smaller scale.
             HStack {
                 Button(action: onToggleShuffle) {
                     Image(systemName: "shuffle")
-                        .font(.system(size: 13, weight: .medium))
+                        .font(.system(size: 15, weight: .medium))
                         .foregroundStyle(info.isShuffling ? waveformColor : Color.white.opacity(0.35))
-                        .frame(width: 24, height: 24)
                 }
 
                 Spacer(minLength: 0)
@@ -133,17 +111,16 @@ struct ExpandedPlayerView: View {
                     currentDeviceID: currentOutputDeviceID,
                     onSelect: onSelectOutputDevice
                 )
-                .font(.system(size: 13, weight: .medium))
-                .frame(width: 24, height: 24)
+                .font(.system(size: 15, weight: .medium))
             }
-            .padding(.horizontal, 8)
+            .padding(.horizontal, 10)
         }
         .buttonStyle(.plain)
         .foregroundStyle(.white)
     }
 
     private var emptyState: some View {
-        IdleHomeView()
+        IdleHomeView(batterySource: batterySource)
     }
 }
 
@@ -183,19 +160,12 @@ struct ArtworkView: View {
     }
 }
 
-/// Lists real output devices from `OutputDeviceManager`. The label icon
-/// reflects the *current* device rather than always showing headphones --
-/// "headphones" only makes sense when audio is actually routed to
-/// AirPods/a headset; otherwise it's the same "speaker.wave.2.fill" glyph
-/// Apple's own Control Center Sound module uses for built-in output.
+/// A headphones-icon menu listing real output devices from
+/// `OutputDeviceManager`, matching the picker in the reference design.
 private struct OutputDeviceMenu: View {
     let devices: [AudioOutputDevice]
     let currentDeviceID: AudioDeviceID?
     let onSelect: (AudioDeviceID) -> Void
-
-    private var currentDeviceIsAirPods: Bool {
-        devices.first(where: { $0.id == currentDeviceID })?.isAirPods ?? false
-    }
 
     var body: some View {
         Menu {
@@ -211,7 +181,7 @@ private struct OutputDeviceMenu: View {
                 }
             }
         } label: {
-            Image(systemName: currentDeviceIsAirPods ? "headphones" : "speaker.wave.2.fill")
+            Image(systemName: "headphones")
         }
         .menuStyle(.borderlessButton)
         .menuIndicator(.hidden)
@@ -251,7 +221,6 @@ struct ScrubberView: View {
                     Capsule().fill(.white.opacity(0.2))
                     Capsule().fill(.white.opacity(0.85)).frame(width: geo.size.width * progress)
                 }
-                .frame(maxWidth: .infinity)
                 .frame(height: dragging ? 6 : 4)
                 .frame(maxHeight: .infinity, alignment: .center)
                 .contentShape(Rectangle())

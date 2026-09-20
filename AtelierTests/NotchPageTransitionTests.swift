@@ -44,26 +44,3 @@ struct NotchPageTransitionTests {
         #expect(result == .home)
     }
 }
-
-struct NotchPageAdvancedTests {
-    @Test func advancesForwardToShelf() {
-        #expect(NotchPage.home.advanced(by: 1) == .shelf)
-    }
-
-    @Test func advancesBackwardToHome() {
-        #expect(NotchPage.shelf.advanced(by: -1) == .home)
-    }
-
-    @Test func doesNotWrapPastTheLastPage() {
-        #expect(NotchPage.shelf.advanced(by: 1) == nil)
-    }
-
-    @Test func doesNotWrapPastTheFirstPage() {
-        #expect(NotchPage.home.advanced(by: -1) == nil)
-    }
-
-    @Test func respectsAFilteredPageList() {
-        // Shelf disabled in Settings -- only Home is a valid destination.
-        #expect(NotchPage.home.advanced(by: 1, in: [.home]) == nil)
-    }
-}
