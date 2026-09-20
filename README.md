@@ -1,52 +1,64 @@
 # Atelier
 
-A Dynamic-Island-style notch app for macOS, named after the MacBook it lives on.
+A Dynamic-Island-style notch app for macOS — named after the MacBook it lives
+on. It turns the notch from dead space into a live surface: a now-playing
+player on hover, a slim always-on pill while music plays, and quick peeks
+for system events, all shaped to look like it belongs there rather than
+bolted on.
 
-Hover the notch and it expands into a native-feeling now-playing player. While
-music plays, a slim pill hugs the notch — battery, volume, and brightness show
-there too, briefly, as their own compact widgets. When the track changes (or
-you touch a system control), it peeks for a moment and then retracts.
+Personal project, single target machine (MacBook Pro M3, macOS 26.6).
 
-v1 reads from **Spotify**. Apple Music and system-wide playback are on the
-backlog, behind the same `NowPlayingSource` seam.
+## What it does
+
+**Now playing, front and center.** Hover the notch and it expands into a
+native-feeling player: artwork, title/artist, a draggable scrubber, and
+transport controls (play/pause, skip, shuffle, output-device picker). A
+6-bar waveform reacts to the audio actually playing — not a canned
+animation — driven by a real-time CoreAudio tap on system audio. While
+you're not hovering, a slim pill hugs the notch showing artwork and that
+same live waveform; move away and it retracts, or wait for a track change
+and it peeks briefly before settling back down.
+
+**A file shelf, right where you're already dragging things.** Drag a file
+toward the notch and it opens into a shelf — drop it there and it's parked
+for later, swept away automatically after 24 hours.
+
+**System state shows up where you're looking.** Volume and brightness
+changes replace the stock macOS HUD with a matching pill/peek of their own.
+Battery state, a screen-recording indicator, and other system Live
+Activities surface the same way — a single extensible architecture
+(`LiveActivitySource`) drives all of it, so a new kind of alert is a new
+conformer, not a rewrite.
+
+**It follows you to the lock screen.** A now-playing card renders over the
+lock screen itself (there's no public API for this — see
+[ADR 0010](docs/decisions/0010-lock-screen-private-cgs-space.md) for how),
+with the same live artwork, scrubber, and transport.
+
+**Gestures, not just hover.** Swipe to open/close or skip tracks, with a
+tuned spring-physics feel — opt-in, gated behind a setting.
+
+**A home for what's next.** A tabbed Home/Shelf switcher on the expanded
+player, with an idle-state date/time view when nothing's playing.
+
+v1 reads from **Spotify** specifically, behind a `NowPlayingSource` seam
+designed so Apple Music (or anything else) is a new conformer, not a
+rewrite of the app.
 
 ## Status
 
-Phases 0–8 shipped: notch overlay, hover expand/collapse, real Spotify
-playback, the full expanded player, the pill/peek/auto-decay state machine,
-an extensible Live Activity architecture (Battery, Volume, Brightness),
-gesture controls with spring physics, and a system HUD replacement for the
-volume/brightness keys.
+See [`docs/ROADMAP.md`](docs/ROADMAP.md) for the live phase-by-phase log —
+what's shipped, what's mid-flight, and what's still open (including a
+couple of known bugs). [`docs/FEATURES.md`](docs/FEATURES.md) has the full
+feature survey this roadmap draws from, and
+[the original design spec](docs/superpowers/specs/2026-08-31-atelier-notch-design.md)
+has the full plan this was built against.
 
-Also shipped since: a Home/Shelf tab switcher with idle-Home content
-(date/time only — battery was dropped after clipping at the card's bottom
-edge, see [ADR 0011](docs/decisions/0011-visual-identity-native-restraint.md));
-a file shelf with drag-and-drop, AirDrop, and expiry (two known bugs still
-open — drag-out preview image, Mission Control triggering on drop); a
-screen-recording system alert (the first of several planned); and a
-lock-screen now-playing widget, rendered via a private CGS space since
-macOS has no public lock-screen widget API for third-party apps (see
-[ADR 0010](docs/decisions/0010-lock-screen-private-cgs-space.md)).
+120 tests passing.
 
-**In progress** (`worktree-visual-identity-tabbar`, PR #10, not yet
-merged): an iOS-Control-Center-style visual pass — dot-based tab bar,
-simplified/compacted Idle Home, and a smaller, re-tuned now-playing
-player. Still open on that branch: the marquee/scrubber title-column fix,
-and a real, unresolved intermittent hover-retract bug on the panel.
-
-**Not shipped**: AirPods support is disabled — a crash deep in Apple's own
+**Known gap:** AirPods support is disabled — a crash deep in Apple's own
 CoreBluetooth bridge on this machine's current macOS build, not something
-fixable from app code. Most of Phase 10's other system alerts (Focus mode,
-Wi-Fi/VPN, Bluetooth), the rest of Phase 11 (audio visualizer, synced
-lyrics), and Phases 12–16 (productivity widgets, resource monitor, camera
-mirror, dev-agent monitoring, settings/launch-at-login) haven't been
-started.
-
-114 tests passing.
-
-See [`docs/ROADMAP.md`](docs/ROADMAP.md) for the phase-by-phase log and
-[the design spec](docs/superpowers/specs/2026-08-31-atelier-notch-design.md)
-for the original full plan.
+fixable from app code.
 
 ## Requirements
 
@@ -66,13 +78,14 @@ xcodebuild test -scheme Atelier -destination 'platform=macOS'
 ```
 
 Unit tests cover pure logic only — geometry, state transitions, gesture
-resolution, AppleScript parsing. AppKit-boundary behavior (window/panel
-focus, the media-key event tap, real hardware keys) is manual-verification
-only; see `CLAUDE.md`'s Testing section.
+resolution, AppleScript parsing, audio-level normalization. AppKit- and
+CoreAudio-boundary behavior (window/panel focus, the media-key event tap,
+real hardware keys, the actual audio tap) is manual-verification only; see
+`CLAUDE.md`'s Testing section.
 
 ## Permissions
 
-Atelier asks for two separate permissions, each with its own reason:
+Atelier asks for a few separate permissions, each for a specific reason:
 
 - **Automation** — reads now-playing data via Apple Events to Spotify. If
   you decline, the app tells you so rather than silently showing nothing;
@@ -80,6 +93,15 @@ Atelier asks for two separate permissions, each with its own reason:
 - **Accessibility** — needed to intercept the volume/brightness/mute keys
   and replace the stock macOS HUD. Grant it from the menu-bar item ("Grant
   Accessibility Access…"), shown only while it isn't already granted.
+- **System Audio Recording Only** — needed for the real-time waveform to
+  react to actual audio, via a CoreAudio process tap on system output (not
+  scoped to any one app — see
+  [ADR 0012](docs/decisions/0012-whole-system-audio-tap.md) for why).
+  Without it, the waveform falls back to a non-reactive animation instead
+  of failing. Grant it in **System Settings → Privacy & Security → System
+  Audio Recording Only**. Note: right after granting it for the first time,
+  CoreAudio can take a few minutes to actually start delivering audio —
+  the waveform staying still isn't necessarily broken.
 
 Why Apple Events and not the usual private `MediaRemote` framework? See
 [ADR 0001](docs/decisions/0001-mediaremote-unavailable.md).

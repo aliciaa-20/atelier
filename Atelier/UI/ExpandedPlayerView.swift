@@ -15,6 +15,7 @@ import SwiftUI
 struct ExpandedPlayerView: View {
     let info: NowPlayingInfo?
     let waveformColor: Color
+    @ObservedObject var audioTap: AudioTap
     let outputDevices: [AudioOutputDevice]
     let currentOutputDeviceID: AudioDeviceID?
     let onPlayPause: () -> Void
@@ -106,7 +107,11 @@ struct ExpandedPlayerView: View {
 
             Spacer(minLength: 0)
 
-            WaveformView(isPlaying: info.isPlaying, color: waveformColor)
+            WaveformView(
+                isPlaying: info.isPlaying,
+                color: waveformColor,
+                levels: audioTap.isRunning ? audioTap.levels : nil
+            )
         }
     }
 
