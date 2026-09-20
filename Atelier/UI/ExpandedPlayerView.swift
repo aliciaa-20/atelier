@@ -22,7 +22,6 @@ struct ExpandedPlayerView: View {
     let waveformColor: Color
     let outputDevices: [AudioOutputDevice]
     let currentOutputDeviceID: AudioDeviceID?
-    let batterySource: BatterySource
     let onPlayPause: () -> Void
     let onNext: () -> Void
     let onPrevious: () -> Void
@@ -129,7 +128,7 @@ struct ExpandedPlayerView: View {
     }
 
     private var emptyState: some View {
-        IdleHomeView(batterySource: batterySource)
+        IdleHomeView()
     }
 }
 

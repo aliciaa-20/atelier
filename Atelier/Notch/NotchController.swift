@@ -46,13 +46,18 @@ final class NotchController {
     /// panel's total height must add the physical notch height on top of
     /// this.
     private static let playerContentHeight: CGFloat = 164
-    /// Idle Home (date/time + battery %, no scrubber/transport row) needs
-    /// far less room than a real player -- deliberately shorter than
-    /// `playerContentHeight`. Starting value, expected to be tuned further
-    /// on-device.
-    private static let idleHomeContentHeight: CGFloat = 90
+    /// Idle Home (now just date/time -- battery was dropped, see
+    /// `IdleHomeView`'s own doc comment) needs far less room than a real
+    /// player. A prior value here (64) was measured by hand from the
+    /// SwiftUI source rather than confirmed on-device, and turned out
+    /// too tight -- the battery line (since removed) was visibly clipped
+    /// at the card's bottom edge in a screenshot. Raised with real
+    /// margin this time rather than cutting it fine again; still a
+    /// starting point, pending on-device confirmation like
+    /// `playerContentHeight` above.
+    private static let idleHomeContentHeight: CGFloat = 76
     /// Narrower than `expandedWidth` for the same reason -- a short
-    /// time/date/battery block doesn't need the full player's width.
+    /// time/date block doesn't need the full player's width.
     private static let idleHomeWidth: CGFloat = 200
     private static let expandedWidth: CGFloat = 352
     /// A single row of ~64pt item cells plus padding -- matches
@@ -124,8 +129,7 @@ final class NotchController {
                     viewModel: viewModel,
                     nowPlaying: nowPlayingCoordinator,
                     liveActivity: liveActivityCoordinator,
-                    shelfStore: shelfStore,
-                    batterySource: batterySource
+                    shelfStore: shelfStore
                 )
             )
             return
@@ -213,8 +217,7 @@ final class NotchController {
                 viewModel: viewModel,
                 nowPlaying: nowPlayingCoordinator,
                 liveActivity: liveActivityCoordinator,
-                shelfStore: shelfStore,
-                batterySource: batterySource
+                shelfStore: shelfStore
             )
         )
         panel.setFrame(maxRect, display: true)
