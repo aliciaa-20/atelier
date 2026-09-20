@@ -6,7 +6,16 @@ import Foundation
 /// `AudioTap` extracts `[Float]` samples from an `AudioBufferList` before
 /// calling in here, which is what keeps this file unit-testable without a
 /// real audio tap. See docs/superpowers/specs/2026-09-20-real-audio-visualizer-design.md.
-enum AudioLevels {
+///
+/// `nonisolated`: the project defaults every type to `@MainActor`
+/// (`SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor`), which would make
+/// `barHeights` a `@MainActor` function despite having no actual affinity
+/// for it. `AudioTap`'s realtime IOProc callback calls `barHeights`
+/// synchronously from CoreAudio's own audio thread, not `@MainActor` — a
+/// `@MainActor`-isolated `barHeights` crashed there at runtime
+/// (`dispatch_assert_queue_fail` via the Swift runtime's isolation check)
+/// the first time this was exercised on-device.
+nonisolated enum AudioLevels {
     static let barCount = 6
     static let minimumScale: Float = 0.32
     /// Multiplied into `peak` on every call before comparing against the
