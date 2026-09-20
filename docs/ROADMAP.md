@@ -360,7 +360,14 @@ XPC-helper subsystem and is deferred to a later phase.
       commits following the design-spec one): CoreAudio's volume-scalar
       property isn't exposed on every device's master element (falls back
       to channel 1 now), and the peek/hover-close animations had quietly
-      drifted apart (unified onto the same curves). Accessibility
+      drifted apart (unified onto the same curves). A third, longer-lived
+      bug — Volume/Brightness's peek occasionally flashed the now-playing
+      view right before closing — was root-caused later
+      (`LiveActivityCoordinator.handle` compared against a single shared
+      `lastContentID` instead of a per-source one, so a fallback from
+      Volume back to an *unchanged* playing track looked like a new
+      identity) and fixed on `worktree-peek-flash-fix`, confirmed
+      on-device. Accessibility
       permission itself proved flaky across ad-hoc-signed rebuilds during
       this session — root-caused to code-signature churn, not the
       permission logic itself, and fixed by switching to stable Personal
