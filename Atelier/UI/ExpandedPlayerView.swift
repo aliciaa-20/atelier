@@ -110,19 +110,19 @@ struct ExpandedPlayerView: View {
                 }
             }
 
-            // A bare glyph in the corner read as an accidental stray mark,
-            // not a button -- per direct feedback ("floating in space...
-            // do not seem intentionally there"). A soft translucent
-            // circle backdrop (iOS Control Center's own convention for
-            // its secondary buttons) gives each one a visible boundary/
-            // affordance instead of just an icon sitting on bare black.
+            // A background circle (tried per the previous feedback pass)
+            // was rejected outright -- reverted to a bare glyph. What
+            // actually read as "floating" was the distance from the
+            // transport cluster (pinned all the way out at the panel's
+            // edges), not the lack of a backdrop -- pulled in with much
+            // wider horizontal padding so both sit close to prev/next
+            // instead of out past them.
             HStack {
                 Button(action: onToggleShuffle) {
                     Image(systemName: "shuffle")
                         .font(.system(size: 13, weight: .medium))
                         .foregroundStyle(info.isShuffling ? waveformColor : Color.white.opacity(0.65))
-                        .frame(width: 26, height: 26)
-                        .background(Circle().fill(Color.white.opacity(0.12)))
+                        .frame(width: 24, height: 24)
                 }
 
                 Spacer(minLength: 0)
@@ -133,10 +133,9 @@ struct ExpandedPlayerView: View {
                     onSelect: onSelectOutputDevice
                 )
                 .font(.system(size: 13, weight: .medium))
-                .frame(width: 26, height: 26)
-                .background(Circle().fill(Color.white.opacity(0.12)))
+                .frame(width: 24, height: 24)
             }
-            .padding(.horizontal, 4)
+            .padding(.horizontal, 46)
         }
         .buttonStyle(.plain)
         .foregroundStyle(.white)
