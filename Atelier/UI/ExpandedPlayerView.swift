@@ -14,15 +14,9 @@ import SwiftUI
 /// deliberate group instead of being stretched across the whole width.
 struct ExpandedPlayerView: View {
     let info: NowPlayingInfo?
-    /// The real notch cutout has no display pixels of its own, so content
-    /// must start below it rather than at the top of our own frame — see
-    /// `docs/decisions/0003-notch-panel-can-become-key.md`'s sibling sizing
-    /// note in `NotchController`.
-    let notchHeight: CGFloat
     let waveformColor: Color
     let outputDevices: [AudioOutputDevice]
     let currentOutputDeviceID: AudioDeviceID?
-    let batterySource: BatterySource
     let onPlayPause: () -> Void
     let onNext: () -> Void
     let onPrevious: () -> Void
@@ -38,35 +32,76 @@ struct ExpandedPlayerView: View {
                 emptyState
             }
         }
-        .padding(.horizontal, 28)
+        // Horizontal padding widened (20->26) per direct feedback that
+        // content sat too close to the panel's rounded corners.
+        .padding(.horizontal, 26)
+        // Widened (10->16) so the transport row clears the bottom edge
+        // with real breathing room instead of reading as pinned to it --
+        // same direct feedback pass as the horizontal padding above.
         .padding(.bottom, 16)
-        .padding(.top, notchHeight + 12)
+        // No separate notch-clearance offset here -- this view is only
+        // ever shown beneath NotchRootView's own NotchTabBar now, which
+        // already clears the real notch (PeekPlayerView-style `+ 4`). A
+        // leftover `notchHeight` parameter used to duplicate that
+        // clearance on top of the tab bar's own, producing a large dead
+        // gap between the dots and the actual content. This is just the
+        // small breathing room between the tab bar and this content,
+        // matching ShelfView's own equivalent gap in the same position.
+        .padding(.top, 6)
     }
 
     private func player(for info: NowPlayingInfo) -> some View {
         VStack(spacing: 0) {
             headerSection(for: info)
-            Spacer(minLength: 6)
+            Spacer(minLength: 4)
             ScrubberView(duration: info.duration, elapsed: info.elapsed, onSeek: onSeek)
-            Spacer(minLength: 6)
+            Spacer(minLength: 4)
             controlsSection(for: info)
+        }
+        // Suggested in a ui-review-tahoe pass as a nice-to-have, since
+        // ADR 0003 already lets this panel become key. Best-effort: this
+        // panel is `.nonactivatingPanel` and never explicitly calls
+        // `makeKey()` (ADR 0003's whole point was avoiding that), so
+        // whether `.focusable()` actually gets key events here without a
+        // prior click is unconfirmed -- manual verification only, like
+        // everything else that needs a real notch/real interaction.
+        //
+        // `.focusEffectDisabled()` suppresses the default system focus
+        // ring -- confirmed on-device as a bright rectangle around the
+        // whole player, which reads as a stray visual bug on a panel this
+        // small and doesn't fit Invariant 7's stock-notch-like restraint.
+        .focusable()
+        .focusEffectDisabled()
+        .onKeyPress(.space) {
+            onPlayPause()
+            return .handled
+        }
+        .onKeyPress(.leftArrow) {
+            onSeek(max(0, info.elapsed - 10))
+            return .handled
+        }
+        .onKeyPress(.rightArrow) {
+            onSeek(min(info.duration, info.elapsed + 10))
+            return .handled
         }
     }
 
-    /// Sizes match jackson-storm/dynamicnotch's `headerSection` exactly:
-    /// 60x60 artwork, 15pt header spacing, 16pt medium title / 14pt artist,
-    /// 2pt spacing between them. Text column widened to 170 (from the
-    /// original 148) so more titles fit before either line needs to
-    /// marquee. Both lines use the same continuous `MarqueeText` — title
-    /// and artist marquee independently, whichever actually overflows.
+    /// Shrunk from an earlier pass (50pt artwork, 15/13pt text, 170pt text
+    /// column) per direct feedback that the player read as oversized and
+    /// too spaced-out compared to iOS's own Control Center Now Playing
+    /// module -- that reference uses a noticeably smaller artwork-to-text
+    /// ratio and tighter line spacing than jackson-storm/dynamicnotch's
+    /// own (larger, macOS-native-styled) original. Text column narrowed to
+    /// 150 to match `ScrubberView`'s own already-correct full-width framing
+    /// (see the marquee/scrubber fix queued for this same rebuild).
     private func headerSection(for info: NowPlayingInfo) -> some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 10) {
             ArtworkView(url: info.artworkURL)
-                .frame(width: 50, height: 50)
+                .frame(width: 44, height: 44)
 
             VStack(alignment: .leading, spacing: 2) {
-                MarqueeText(text: info.title, font: .system(size: 15, weight: .medium), color: .white, width: 170, height: 20)
-                MarqueeText(text: info.artist, font: .system(size: 13), color: .white.opacity(0.65), width: 170, height: 20)
+                MarqueeText(text: info.title, font: .system(size: 14, weight: .medium), color: .white, width: 150, height: 18)
+                MarqueeText(text: info.artist, font: .system(size: 12), color: .white.opacity(0.65), width: 150, height: 18)
             }
 
             Spacer(minLength: 0)
@@ -75,34 +110,51 @@ struct ExpandedPlayerView: View {
         }
     }
 
-    /// Sizes/weights match jackson-storm/dynamicnotch's `PlayerControlButton`
-    /// usage in `NowPlayingExpandedNotchView.controlsSection`: prev/next at
-    /// 22pt, play/pause distinctly bigger at 32pt, both semibold — scaled
-    /// down here (18/26pt) for Atelier's narrower panel, same ratio. Their
-    /// favorite/output buttons are 21pt, close to prev/next, not tiny.
+    /// Sizes trimmed from an earlier pass (18/26pt prev-next/play, 24pt
+    /// spacing) to read closer to iOS's own Control Center transport row --
+    /// smaller glyphs, tighter spacing between them, per direct feedback
+    /// that the whole player took up too much room. Still keeps
+    /// jackson-storm/dynamicnotch's own layout idea: a `ZStack` of two rows
+    /// (centered transport cluster, edge-pinned shuffle/output) rather than
+    /// one row of five evenly spaced buttons.
     private func controlsSection(for info: NowPlayingInfo) -> some View {
         ZStack {
-            HStack(spacing: 24) {
+            // Bumped back up slightly (15/20 -> 17/23) per direct feedback
+            // that the previous pass's trim read as a bit too small.
+            HStack(spacing: 20) {
                 Button(action: onPrevious) {
                     Image(systemName: "backward.fill")
-                        .font(.system(size: 18, weight: .semibold))
+                        .font(.system(size: 17, weight: .semibold))
                 }
+                .accessibilityLabel("Previous")
                 Button(action: onPlayPause) {
                     Image(systemName: info.isPlaying ? "pause.fill" : "play.fill")
-                        .font(.system(size: 26, weight: .semibold))
+                        .font(.system(size: 23, weight: .semibold))
                 }
+                .accessibilityLabel(info.isPlaying ? "Pause" : "Play")
                 Button(action: onNext) {
                     Image(systemName: "forward.fill")
-                        .font(.system(size: 18, weight: .semibold))
+                        .font(.system(size: 17, weight: .semibold))
                 }
+                .accessibilityLabel("Next")
             }
 
+            // A background circle (tried per an earlier feedback pass) was
+            // rejected outright -- reverted to a bare glyph. What actually
+            // read as "floating" was the distance from the transport
+            // cluster (pinned all the way out at the panel's edges), not
+            // the lack of a backdrop. Pulled in with wider horizontal
+            // padding (4 -> 46 -> 30, the middle value after 46 read as
+            // too close) for a real but modest gap from prev/next.
             HStack {
                 Button(action: onToggleShuffle) {
                     Image(systemName: "shuffle")
-                        .font(.system(size: 15, weight: .medium))
-                        .foregroundStyle(info.isShuffling ? waveformColor : Color.white.opacity(0.35))
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(info.isShuffling ? waveformColor : Color.white.opacity(0.65))
+                        .frame(width: 24, height: 24)
                 }
+                .accessibilityLabel("Shuffle")
+                .accessibilityAddTraits(info.isShuffling ? .isSelected : [])
 
                 Spacer(minLength: 0)
 
@@ -111,16 +163,33 @@ struct ExpandedPlayerView: View {
                     currentDeviceID: currentOutputDeviceID,
                     onSelect: onSelectOutputDevice
                 )
-                .font(.system(size: 15, weight: .medium))
+                .font(.system(size: 13, weight: .medium))
+                .frame(width: 24, height: 24)
+                .accessibilityLabel("Output device")
             }
-            .padding(.horizontal, 10)
+            .padding(.horizontal, 30)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(PressScaleButtonStyle())
+        .focusEffectDisabled()
         .foregroundStyle(.white)
     }
 
     private var emptyState: some View {
-        IdleHomeView(batterySource: batterySource)
+        IdleHomeView()
+    }
+}
+
+/// Found missing in a ui-review-tahoe pass: `.buttonStyle(.plain)` gave the
+/// transport row zero visual feedback on press, unlike real macOS controls
+/// (and iOS Control Center's own transport buttons, which dim/scale
+/// slightly). A light scale + opacity dip on press, no animation on
+/// release beyond the implicit spring back to 1.0/1.0.
+private struct PressScaleButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.88 : 1)
+            .opacity(configuration.isPressed ? 0.7 : 1)
+            .animation(.spring(response: 0.2, dampingFraction: 0.6), value: configuration.isPressed)
     }
 }
 
@@ -160,12 +229,19 @@ struct ArtworkView: View {
     }
 }
 
-/// A headphones-icon menu listing real output devices from
-/// `OutputDeviceManager`, matching the picker in the reference design.
+/// Lists real output devices from `OutputDeviceManager`. The label icon
+/// reflects the *current* device rather than always showing headphones --
+/// "headphones" only makes sense when audio is actually routed to
+/// AirPods/a headset; otherwise it's the same "speaker.wave.2.fill" glyph
+/// Apple's own Control Center Sound module uses for built-in output.
 private struct OutputDeviceMenu: View {
     let devices: [AudioOutputDevice]
     let currentDeviceID: AudioDeviceID?
     let onSelect: (AudioDeviceID) -> Void
+
+    private var currentDeviceIsAirPods: Bool {
+        devices.first(where: { $0.id == currentDeviceID })?.isAirPods ?? false
+    }
 
     var body: some View {
         Menu {
@@ -181,7 +257,7 @@ private struct OutputDeviceMenu: View {
                 }
             }
         } label: {
-            Image(systemName: "headphones")
+            Image(systemName: currentDeviceIsAirPods ? "headphones" : "speaker.wave.2.fill")
         }
         .menuStyle(.borderlessButton)
         .menuIndicator(.hidden)
@@ -204,9 +280,9 @@ struct ScrubberView: View {
     private var displayedElapsed: TimeInterval { dragValue ?? elapsed }
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 6) {
             Text(TimeFormatting.mmss(displayedElapsed))
-                .font(.system(size: 11, weight: .medium, design: .rounded))
+                .font(.system(size: 10, weight: .medium, design: .rounded))
                 .monospacedDigit()
                 .foregroundStyle(.white.opacity(0.55))
 
@@ -221,6 +297,12 @@ struct ScrubberView: View {
                     Capsule().fill(.white.opacity(0.2))
                     Capsule().fill(.white.opacity(0.85)).frame(width: geo.size.width * progress)
                 }
+                // Explicit, rather than relying on HStack's default
+                // flexible-sizing behavior to hand this row all available
+                // width -- cherry-picked from old commit 9527f80, which
+                // found the bar didn't reliably claim its full row without
+                // it.
+                .frame(maxWidth: .infinity)
                 .frame(height: dragging ? 6 : 4)
                 .frame(maxHeight: .infinity, alignment: .center)
                 .contentShape(Rectangle())
@@ -245,10 +327,10 @@ struct ScrubberView: View {
                 // finger 1:1, not lag behind an animation.
                 .animation(dragging ? nil : .easeOut(duration: 0.2), value: displayedElapsed)
             }
-            .frame(height: 14)
+            .frame(height: 12)
 
             Text(TimeFormatting.mmss(duration))
-                .font(.system(size: 11, weight: .medium, design: .rounded))
+                .font(.system(size: 10, weight: .medium, design: .rounded))
                 .monospacedDigit()
                 .foregroundStyle(.white.opacity(0.55))
         }
