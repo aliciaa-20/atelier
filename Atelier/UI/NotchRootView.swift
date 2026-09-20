@@ -161,6 +161,13 @@ struct NotchRootView: View {
             }
             .frame(width: frameSize.width, height: frameSize.height)
             .clipShape(NotchShape(topCornerRadius: cornerRadii.top, bottomCornerRadius: cornerRadii.bottom))
+            // No shadow while `.collapsed` -- Invariant 7 requires that
+            // state to be visually indistinguishable from the stock notch,
+            // which casts none. Every other state is already a departure
+            // from the stock notch's look, and real Dynamic Island shows a
+            // subtle shadow once expanded/peeking to read as "lifted" off
+            // the wallpaper -- found missing in a ui-review-tahoe pass.
+            .shadow(color: .black.opacity(viewModel.state == .collapsed ? 0 : 0.25), radius: 8, y: 2)
             .scaleEffect(settleScale, anchor: .top)
             .contentShape(Rectangle())
             .onHover { hovering in
