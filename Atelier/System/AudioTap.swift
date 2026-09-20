@@ -13,6 +13,7 @@ import Foundation
 /// the system AVRCP session AirPods' pause/skip gesture depends on. A
 /// whole-system tap was spiked on-device instead (two independent runs,
 /// AirPods pause/skip unaffected both times) — see
+/// docs/decisions/0012-whole-system-audio-tap.md and
 /// docs/superpowers/specs/2026-09-20-real-audio-visualizer-design.md.
 ///
 /// Manual-verification only, like the rest of `System/` — the realtime
