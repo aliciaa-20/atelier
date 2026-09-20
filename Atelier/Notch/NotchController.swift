@@ -58,8 +58,9 @@ final class NotchController {
     /// `playerContentHeight` above.
     private static let idleHomeContentHeight: CGFloat = 76
     /// Narrower than `expandedWidth` for the same reason -- a short
-    /// time/date/battery block doesn't need the full player's width.
-    private static let idleHomeWidth: CGFloat = 200
+    /// time/date block doesn't need the full player's width. Set to 215
+    /// per direct feedback.
+    private static let idleHomeWidth: CGFloat = 215
     private static let expandedWidth: CGFloat = 352
     /// A single row of ~64pt item cells plus padding -- matches
     /// `ShelfView`'s own column width. Shorter than `playerContentHeight`
