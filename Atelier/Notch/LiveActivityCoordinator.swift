@@ -87,8 +87,22 @@ final class LiveActivityCoordinator: ObservableObject {
         // behavior, which was likewise untouched by isPlaying transitions.
         // A genuinely different track appearing later still fires, since
         // its id differs from whatever stale id is still held here.
+        //
+        // Gated on `content != nil` -- this `handle` call's own publish,
+        // not just whatever `topContent` ends up being. Without this, a
+        // *removal* (Volume/Brightness's peek content self-clearing) that
+        // causes `topContent` to fall through to some other
+        // already-active source (NowPlaying, still playing underneath)
+        // fired `identityChanged` for NowPlaying's id, since it differed
+        // from `lastContentID` (which was Volume's) -- re-triggering a
+        // brand-new peek for NowPlaying right as Volume/Brightness's own
+        // peek was closing. Confirmed on-device: "adjusting volume shows
+        // the now-playing peek, then closes." NowPlaying's content didn't
+        // actually change; only the stack's top pointer moved because
+        // something *else* was removed, and a removal should never be
+        // read as new content arriving.
         let newContentID = topContent?.id
-        if let newContentID {
+        if content != nil, let newContentID {
             // Only peek-worthy content (peeksOnChange == true) fires
             // identityChanged -- ambient content like Battery becoming
             // top (or a different battery state arriving) should only
