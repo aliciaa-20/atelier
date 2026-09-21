@@ -46,6 +46,27 @@ asked misses them. Whenever touching any SwiftUI view under `Atelier/UI/`
   prefer surfacing a batch of findings in one pass over reacting to one
   screenshot at a time.
 
+## Performance — lightweight by design, proactively
+
+Alicia has told me directly this is a differentiator, not a nice-to-have:
+Atelier should be lightweight on battery/memory/CPU unlike other menu-bar
+accessories, and that should be defaulted to while building, not fixed
+after the fact once it's a visible problem. When adding or touching
+anything animated, polled, or otherwise continuously running:
+
+- Default to the cheapest mechanism that still reads as smooth. Prefer a
+  capped/periodic schedule (`TimelineView(.periodic(from:by:))` at a
+  sensible fps) over one that follows the display's full refresh rate
+  (`.animation`), and skip the ticking code path entirely when nothing is
+  actually animating rather than merely pausing it. `MarqueeText.swift` is
+  the reference example.
+- Default pollers/timers/taps (`NowPlayingCoordinator`'s poll interval,
+  `AudioTap`, any future `LiveActivitySource`) to idle/off when their
+  output isn't currently visible or needed — matching the existing pattern
+  where `AudioTap`'s lifetime is already tied to `isPlaying`.
+- Surface a real memory/CPU/battery tradeoff explicitly when one exists,
+  rather than silently picking the expensive option.
+
 ## Architecture
 
 Four layers with deliberate seams. The two pure ones carry the test suite.

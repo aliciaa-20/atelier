@@ -1,28 +1,41 @@
 import SwiftUI
 
+private let marqueeGap: CGFloat = 24
+private let marqueePointsPerSecond: CGFloat = 18
+private let marqueeMinCycleDuration: TimeInterval = 4.5
+
 /// Scrolls text horizontally when it doesn't fit its container, instead of
-/// truncating with "…". Real bugs in earlier versions drove this shape:
+/// truncating with "…". Rewritten from scratch after the `@State` +
+/// `withAnimation(.repeatForever)` version got permanently "stuck" on real
+/// hardware after repeated track changes -- confirmed via on-device
+/// `os.Logger`/`log stream` capture: `ExpandedPlayerView` received a fresh,
+/// correct title on every single poll tick (~4Hz), for every track, with
+/// zero exceptions, but the old `MarqueeText`'s own render log fired for only
+/// 3 of 5 distinct titles across a 4-minute capture. The data was never the
+/// problem -- `.id(text)`-driven state teardown, combined with an animation
+/// armed via a bare `DispatchQueue.main.asyncAfter` (untied to SwiftUI's
+/// identity/transaction system), could silently miss a reset when the parent
+/// reconstructed this view faster than that mechanism could keep up. Two
+/// prior patches to the timing/cancellation details both failed on real
+/// hardware -- the signal that the *mechanism* was wrong, not the details.
 ///
-/// 1. A `GeometryReader`-measured container width, combined with a
-///    `.clipped()` buried inside a nested view, let the scrolling text
-///    bleed past the panel's own edges once actually exercised with a long
-///    title — `containerWidth` is now passed in explicitly (the caller
-///    already knows it; every call site uses a fixed width) instead of
-///    measured at runtime, and `.clipped()` sits on the outermost, already
-///    `.frame()`-constrained view so there's exactly one clip boundary,
-///    not a chain of them.
-/// 2. `.repeatForever(autoreverses: true)` scrolled right, then *back*
-///    right-to-left, forever — a back-and-forth wobble, not what a real
-///    marquee does.
-/// 3. A "scroll to the end, snap back to the start, pause" cycle read as
-///    restarting rather than continuing — a real ticker never resets, it
-///    keeps moving. This renders a second copy of the text right after the
-///    first (separated by a gap) and animates a continuous, non-reversing
-///    linear scroll by exactly one copy-width + gap — at that point the
-///    second copy sits exactly where the first started, so the loop point
-///    is invisible instead of a visible jump back to the start.
+/// This version has no animation object, no `Task.sleep`-driven restart, and
+/// no persistent "am I currently animating" state to desync. `TimelineView`
+/// recomputes the scroll offset as a pure function of wall-clock time on
+/// every frame: `offset = f(now - startDate)`. There is nothing to get
+/// stuck, because there is nothing being mutated by an animation -- the
+/// offset is thrown away and recomputed fresh each frame.
 ///
-/// `.id(text)` resets all state cleanly on every track change.
+/// Product requirements carried over unchanged from the previous version:
+/// 1. Container width is passed in explicitly by the caller, not measured
+///    at runtime, and `.clipped()` sits on the single outermost
+///    `.frame()`-constrained view -- exactly one clip boundary.
+/// 2. Continuous one-direction scroll only -- no back-and-forth wobble.
+/// 3. No visible restart/snap-back at the loop point: when the text doesn't
+///    fit, a second copy renders right after the first (separated by
+///    `marqueeGap`), and the offset wraps by exactly one copy-width + gap,
+///    so the loop point is invisible.
+/// 4. `.id(text)` resets all state cleanly on every track change.
 struct MarqueeText: View {
     let text: String
     let font: Font
@@ -30,27 +43,96 @@ struct MarqueeText: View {
     var width: CGFloat = 170
     var height: CGFloat = 20
 
-    private static let gap: CGFloat = 24
+    var body: some View {
+        MarqueeTextCore(text: text, font: font, color: color, width: width, height: height)
+            // Forces a brand-new `MarqueeTextCore` identity -- and therefore
+            // fresh `@State` (`textWidth`, `startDate`) -- on every distinct
+            // `text` value. This is the only piece of manual state-reset
+            // machinery left; everything downstream of it is a pure
+            // recomputation, not a stateful animation to keep in sync.
+            .id(text)
+    }
+}
 
+/// Does the actual measuring + time-driven scrolling. Split out from
+/// `MarqueeText` so `.id(text)` on the outer view can reset this one's
+/// `@State` wholesale without `MarqueeText` itself needing any.
+private struct MarqueeTextCore: View {
+    let text: String
+    let font: Font
+    let color: Color
+    let width: CGFloat
+    let height: CGFloat
+
+    /// Measured once per identity (i.e. once per distinct `text`) via
+    /// `WidthReader`. Read-only input to the per-frame offset calculation
+    /// below -- never mutated by animation logic, only by the one-shot
+    /// layout measurement, so there's no race between "what the animation
+    /// thinks the width is" and "what it actually is".
     @State private var textWidth: CGFloat = 0
-    @State private var looping = false
-    @State private var offset: CGFloat = 0
+
+    /// Captured once when this view's state is created (i.e. once per
+    /// `.id(text)` reset), and read-only from then on. This *is* the whole
+    /// "animation state" -- a single fixed reference point in time. Elapsed
+    /// time since it is recomputed fresh every frame by `TimelineView`,
+    /// instead of accumulating in a mutable `offset` that could get left in
+    /// an inconsistent state.
+    @State private var startDate = Date()
+
+    private var needsLoop: Bool { textWidth > width }
+    private var loopDistance: CGFloat { textWidth + marqueeGap }
+    private var cycleDuration: TimeInterval {
+        max(marqueeMinCycleDuration, Double(loopDistance / marqueePointsPerSecond))
+    }
 
     var body: some View {
-        HStack(spacing: Self.gap) {
+        Group {
+            // Short strings that fit (the common case) render completely
+            // outside `TimelineView` -- zero ticks, zero redraw cost, not
+            // just a paused schedule. `.periodic` (not `.animation`) caps
+            // the looping case's redraw rate at 16fps rather than
+            // following the display's own refresh rate (up to 120Hz on
+            // ProMotion) -- at `marqueePointsPerSecond` (18pt/s), that's
+            // ~1.1pt of motion per tick, well under a pixel's worth of
+            // visible steppiness, for a fraction of the continuous
+            // redraw/wake-up cost `.animation` would carry for however
+            // long a long title is on screen.
+            if needsLoop {
+                TimelineView(.periodic(from: startDate, by: 1.0 / 16.0)) { context in
+                    content(offset: currentOffset(at: context.date))
+                }
+            } else {
+                content(offset: 0)
+            }
+        }
+        .frame(width: width, height: height, alignment: .leading)
+        .clipped()
+    }
+
+    private func content(offset: CGFloat) -> some View {
+        HStack(spacing: marqueeGap) {
             line.background(WidthReader(width: $textWidth))
-            if looping {
+            if needsLoop {
                 line
             }
         }
         .offset(x: offset)
-        .frame(width: width, height: height, alignment: .leading)
-        .clipped()
-        .id(text)
-        .onChange(of: textWidth) { _, newValue in
-            guard newValue > 0, newValue > width, !looping else { return }
-            startLooping(textWidth: newValue)
-        }
+    }
+
+    /// Pure function of elapsed time -- no mutable animation state anywhere
+    /// in this call chain. `progress` wraps via `truncatingRemainder`, so
+    /// the offset sweeps from `0` to `-loopDistance` and then *jumps* back
+    /// to `0` in value -- but because the second copy of the text is
+    /// sitting exactly `loopDistance` to the right of the first, that jump
+    /// in the offset value lands the visible content in exactly the same
+    /// place on screen. That's the "invisible loop point" trick, now driven
+    /// by arithmetic instead of a manually re-armed animation.
+    private func currentOffset(at date: Date) -> CGFloat {
+        let elapsed = date.timeIntervalSince(startDate)
+        let cycle = cycleDuration
+        guard cycle > 0 else { return 0 }
+        let progress = elapsed.truncatingRemainder(dividingBy: cycle) / cycle
+        return -loopDistance * CGFloat(progress)
     }
 
     private var line: some View {
@@ -60,23 +142,13 @@ struct MarqueeText: View {
             .lineLimit(1)
             .fixedSize()
     }
-
-    private func startLooping(textWidth: CGFloat) {
-        let distance = textWidth + Self.gap
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            looping = true
-            // The second copy has to actually be laid out (one runloop
-            // turn) before animating past it, or the jump-to-loop-point is
-            // visible for one frame instead of seamless.
-            DispatchQueue.main.async {
-                withAnimation(.linear(duration: max(4.5, distance / 18)).repeatForever(autoreverses: false)) {
-                    offset = -distance
-                }
-            }
-        }
-    }
 }
 
+/// Measures the text's own intrinsic (unclipped, unconstrained) width by
+/// reading the size of its own layout pass -- attached to `line` itself,
+/// *before* any `.frame`/`.clipped` constraint is applied further out, so
+/// this reads the natural width of the text, not the container's fixed
+/// width.
 private struct WidthReader: View {
     @Binding var width: CGFloat
 

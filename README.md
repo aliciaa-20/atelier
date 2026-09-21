@@ -23,6 +23,10 @@ belongs there, not bolted on.
 - **Gesture-driven** — swipe to open, close, or skip tracks, tuned
   with real spring physics
 - **Home & Shelf tabs** — an idle view for when nothing's playing
+- **Lightweight by design** — animations and pollers run at capped rates
+  and idle to nothing when not visible (no continuous redraw for static
+  content, no polling when nothing's playing), so a menu-bar accessory
+  doesn't act like a background hog
 
 Built on Spotify today, behind a seam designed so any other player is a
 drop-in away.
