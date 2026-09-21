@@ -112,7 +112,8 @@ final class NotchController {
             self.lockScreenManager = lockScreenManager
             self.lockScreenPanelController = LockScreenPanelController(
                 nowPlayingCoordinator: nowPlayingCoordinator,
-                lockScreenManager: lockScreenManager
+                lockScreenManager: lockScreenManager,
+                audioTap: audioTap
             )
             mediaKeyInterceptor = MediaKeyInterceptor(volumeSource: volumeSource, brightnessSource: brightnessSource)
             liveActivityCoordinator = LiveActivityCoordinator(sources: [
@@ -162,7 +163,8 @@ final class NotchController {
         self.lockScreenManager = lockScreenManager
         self.lockScreenPanelController = LockScreenPanelController(
             nowPlayingCoordinator: nowPlayingCoordinator,
-            lockScreenManager: lockScreenManager
+            lockScreenManager: lockScreenManager,
+            audioTap: audioTap
         )
         mediaKeyInterceptor = MediaKeyInterceptor(volumeSource: volumeSource, brightnessSource: brightnessSource)
         liveActivityCoordinator = LiveActivityCoordinator(sources: [

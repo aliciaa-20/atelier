@@ -38,12 +38,20 @@ import SwiftUI
 /// design rules call out as incorrect.
 struct LockScreenMusicCardView: View {
     @ObservedObject var nowPlaying: NowPlayingCoordinator
+    /// Shared with `NotchController`/the main notch panel via
+    /// `LockScreenPanelController` -- not a second tap. See that
+    /// controller's own `audioTap` doc comment for why.
+    @ObservedObject var audioTap: AudioTap
     let onPlayPause: () -> Void
     let onNext: () -> Void
     let onPrevious: () -> Void
     let onSeek: (TimeInterval) -> Void
 
     @State private var isExpanded = false
+    /// Colors the waveform to match the artwork, same as `PillPlayerView`/
+    /// `ExpandedPlayerView` -- a plain white waveform read flat against
+    /// the artwork-derived background here.
+    @StateObject private var artworkColor = ArtworkColorLoader()
 
     static let collapsedSize = CGSize(width: 280, height: 72)
     /// Noticeably shorter than an earlier 200pt pass -- Atoll and
@@ -81,6 +89,8 @@ struct LockScreenMusicCardView: View {
                 isExpanded = hovering
             }
         }
+        .onAppear { artworkColor.load(from: nowPlaying.current?.artworkURL) }
+        .onChange(of: nowPlaying.current?.artworkURL) { _, url in artworkColor.load(from: url) }
     }
 
     private func content(for info: NowPlayingInfo) -> some View {
@@ -94,16 +104,40 @@ struct LockScreenMusicCardView: View {
                         .shadow(color: .black.opacity(0.3), radius: 6, y: 3)
                         .parallax3D()
                     VStack(alignment: .leading, spacing: headerSpacing) {
+                        // A light text shadow, new alongside the lighter
+                        // overlay above -- with less darkening behind it,
+                        // title/artist need their own small assist to
+                        // stay legible over brighter album art, the same
+                        // way iOS's own Lock Screen text sits on a
+                        // shadow/gradient rather than raw content.
                         Text(info.title)
                             .font(.system(size: titleFontSize, weight: .semibold))
                             .foregroundStyle(.white)
+                            .shadow(color: .black.opacity(0.5), radius: 3, y: 1)
                             .lineLimit(1)
                         Text(info.artist)
                             .font(.system(size: artistFontSize))
                             .foregroundStyle(.white.opacity(0.7))
+                            .shadow(color: .black.opacity(0.4), radius: 2, y: 1)
                             .lineLimit(1)
                     }
                     Spacer(minLength: 0)
+
+                    // Only in the expanded state -- the collapsed 72pt-tall
+                    // card is already tight with just artwork+text (see
+                    // the type doc's note on why it stays a fixed,
+                    // non-interpolated corner radius/compact size), and
+                    // ExpandedPlayerView/PillPlayerView both reserve the
+                    // waveform its own breathing room rather than
+                    // shoehorning it into an already-cramped row.
+                    if isExpanded {
+                        WaveformView(
+                            isPlaying: info.isPlaying,
+                            color: artworkColor.color,
+                            height: artworkSize * 0.6,
+                            levels: audioTap.isRunning ? audioTap.levels : nil
+                        )
+                    }
                 }
 
                 ScrubberView(duration: info.duration, elapsed: info.elapsed, onSeek: onSeek)
@@ -167,13 +201,27 @@ private struct BlurredArtworkBackground: View {
                         .resizable()
                         .aspectRatio(contentMode: .fill)
                         .frame(width: geo.size.width, height: geo.size.height)
-                        .blur(radius: 36)
+                        // Blur raised 36->44 and the darkening overlay
+                        // below dropped 0.4->0.26 per direct feedback
+                        // ("more liquid glass like, more transparent
+                        // ish") -- more of the artwork's own color/light
+                        // reads through, which is what makes glass read
+                        // as glass rather than a dark tinted panel, while
+                        // staying the same "glass built from content"
+                        // technique the type doc documents (not a switch
+                        // to system .glassEffect(), which would be
+                        // glass-on-glass over the real wallpaper this
+                        // window sits above). Saturation left alone --
+                        // pushing that up further alongside more
+                        // transparency risked the background reading as
+                        // garish rather than airy.
+                        .blur(radius: 44)
                         .saturation(1.4)
                 } else {
                     Color.black
                 }
             }
-            .overlay(Color.black.opacity(0.4))
+            .overlay(Color.black.opacity(0.26))
         }
         .task(id: url) {
             image = nil
