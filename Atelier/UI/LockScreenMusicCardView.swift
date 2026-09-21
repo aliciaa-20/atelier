@@ -242,8 +242,10 @@ struct LockScreenMusicCardView: View {
 /// material underneath; that private-API layer is deliberately dropped
 /// here -- see `LockScreenMusicCardView`'s own doc comment on why a
 /// second glass material stacked on the artwork blur would be glass-on-
-/// glass. Purely additive color, `allowsHitTesting(false)`, sits above the
-/// artwork blur and below the card's text/controls.
+/// glass, and [ADR 0013](../../docs/decisions/0013-lock-screen-card-gesture-and-glass.md)
+/// for the full public-API-vs-private-API reasoning. Purely additive
+/// color, `allowsHitTesting(false)`, sits above the artwork blur and below
+/// the card's text/controls.
 private struct GlassHighlightOverlay: View {
     let cornerRadius: CGFloat
 

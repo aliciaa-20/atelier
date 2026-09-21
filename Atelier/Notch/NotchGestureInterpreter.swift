@@ -69,7 +69,8 @@ enum NotchGestureInterpreter {
     /// on-device-tuned values but are caller-overridable -- added so the
     /// lock-screen card (`LockScreenMusicCardView`) can ask for a quicker,
     /// smaller-swipe trigger of its own without retuning (and risking
-    /// regressing) the notch panel's already-confirmed feel.
+    /// regressing) the notch panel's already-confirmed feel. See
+    /// [ADR 0013](../../docs/decisions/0013-lock-screen-card-gesture-and-glass.md).
     static func reduce(
         _ state: NotchGestureTrackingState,
         delta: NotchGestureDelta,
