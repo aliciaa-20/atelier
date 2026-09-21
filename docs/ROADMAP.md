@@ -56,21 +56,29 @@ Still undecided: whether/how to pursue a fix for the AirPods crash.
 **Phase 10 (System alerts) started**: screen recording is the first alert
 source shipped — see Phase 10's entry below. Working through the remaining
 alerts in order: Focus mode, Wi-Fi/VPN, Bluetooth.
-**Phase 11's lock-screen now-playing widget is code-complete** on
-`worktree-lockscreen-nowplaying-widget` (6 SDD tasks, 107 tests passing),
-iterated through two rounds of on-device visual fixes (positioning, glass
-background, hover-morph smoothness, corner-radius consistency, compactness)
-— see Phase 11's entry below. Not yet merged to `main`; the full manual
-on-device checklist and the merge are still open.
-**Since then, merged to `main`:** the visual-identity/tab-bar rebuild (PR
-#10 — dot-based tab bar, compacted Idle Home, iOS Control Center-style
-player sizing, a `ui-review-tahoe` accessibility/depth/press-feedback pass),
-the peek-flash bug fix (PR #11), the real-time audio visualizer (PR #12 —
-whole-system CoreAudio process tap, confirmed AirPods-safe, see
+**Phase 11's lock-screen now-playing widget shipped and is merged to
+`main`** (PR #9, 6 SDD tasks, 107 tests passing at the time), after two
+rounds of on-device visual fixes (positioning, glass background,
+hover-morph smoothness, corner-radius consistency, compactness) — see
+Phase 11's entry below. **Since then, merged to `main`:** the
+visual-identity/tab-bar rebuild (PR #10 — dot-based tab bar, compacted
+Idle Home, iOS Control Center-style player sizing, a `ui-review-tahoe`
+accessibility/depth/press-feedback pass), the peek-flash bug fix (PR #11),
+the real-time audio visualizer (PR #12 — whole-system CoreAudio process
+tap, confirmed AirPods-safe, see
 [ADR 0012](decisions/0012-whole-system-audio-tap.md)), and a README rewrite
-(PR #13). Phase 9's shelf drag-out preview fix and Phase 10's Wi-Fi/VPN
-source are both mid-flight as uncommitted stashes on `main`, not yet
-resolved.
+(PR #13). **A further lock-screen widget pass is code-complete on
+`worktree-agent-aeef08cc3cfe370e8`, not yet merged**: graceful fade/slide
+lock/unlock transitions, a real waveform sharing the notch panel's single
+`AudioTap` instance, `MarqueeText` for title/artist, swipe-to-skip (reusing
+`NotchGestureInterpreter`/`NotchGestureModifier`, now parameterized so this
+card can use its own quicker threshold without affecting the notch panel's
+tuned feel — see [ADR 0013](decisions/0013-lock-screen-card-gesture-and-glass.md)),
+and a stronger glass treatment adapted from cshariq/Sapphire's public-API
+gradient technique (same ADR). Confirmed on-device this session; the full
+manual checklist and the merge are still open.
+Phase 9's shelf drag-out preview fix and Phase 10's Wi-Fi/VPN source are
+both mid-flight as uncommitted stashes on `main`, not yet resolved.
 
 ---
 
@@ -609,10 +617,21 @@ surface scope gated on a feasibility spike.*
       per-state constants. Expanded size cut from 340×200 to 300×148 and
       the transport row went from edge-pinned buttons with a dead gap in
       the middle to a tight centered cluster, matching how compact both
-      reference apps keep the expanded state. **Still open**: the full
+      reference apps keep the expanded state. Merged to `main` via PR #9.
+      **Follow-on pass** (code-complete on `worktree-agent-aeef08cc3cfe370e8`,
+      not yet merged): graceful `NSAnimationContext` fade/slide on
+      lock/unlock instead of an instant `orderOut`; the expanded card now
+      shows a real waveform sharing `NotchController`'s single `AudioTap`
+      rather than a second CoreAudio process tap; title/artist switched to
+      `MarqueeText`; swipe-to-skip added via the notch panel's own
+      `NotchGestureInterpreter`/`NotchGestureModifier`; and a stronger
+      glass treatment (diagonal sheen, corner highlight/dark pool, gradient
+      rim) adapted from cshariq/Sapphire's public-API technique — see
+      [ADR 0013](decisions/0013-lock-screen-card-gesture-and-glass.md) for
+      both the gesture-tuning and glass decisions. **Still open**: the full
       on-device manual-verification checklist (repeated lock/unlock for
       duplicate-window/crash checks, confirming no overlap with the actual
-      Touch ID prompt, not just the password field) and merging the
+      Touch ID prompt, not just the password field) and merging this
       worktree branch back to `main`.
 
 See [FEATURES.md §1](FEATURES.md#1-now-playing--live-activity-core).
