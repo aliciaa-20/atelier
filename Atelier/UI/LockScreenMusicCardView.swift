@@ -74,6 +74,11 @@ struct LockScreenMusicCardView: View {
     private var artistFontSize: CGFloat { isExpanded ? 12 : 11 }
     private var headerSpacing: CGFloat { isExpanded ? 3 : 2 }
     private var cardSize: CGSize { isExpanded ? Self.expandedSize : Self.collapsedSize }
+    /// Explicit, not measured -- see `MarqueeText`'s own doc comment on
+    /// why its container width is always caller-supplied. Narrower when
+    /// expanded because that state also reserves room for the waveform
+    /// (see `content(for:)`'s trailing `HStack` member).
+    private var marqueeWidth: CGFloat { isExpanded ? 130 : 160 }
 
     var body: some View {
         Group {
@@ -91,11 +96,32 @@ struct LockScreenMusicCardView: View {
         }
         .onAppear { artworkColor.load(from: nowPlaying.current?.artworkURL) }
         .onChange(of: nowPlaying.current?.artworkURL) { _, url in artworkColor.load(from: url) }
+        // Swipe left/right to skip tracks, same pure `NotchGestureInterpreter`
+        // + `NotchGestureModifier` pair the main notch panel uses -- both are
+        // already generic over "whichever window this is attached to" (the
+        // modifier reads its own view's screen rect, not the notch's), so
+        // this window just needs its own capabilities: no open/close here,
+        // this card has no expand-by-gesture state of its own (hover does
+        // that already), only skip.
+        .modifier(NotchGestureModifier(
+            capabilities: NotchGestureCapabilities(canOpen: false, canClose: false, canSkip: true),
+            // Quicker than the notch panel's own 60pt/1.2x -- this card is a
+            // much smaller, single-purpose target (skip only, no open/close
+            // to disambiguate against), so it can afford to commit to a
+            // swipe sooner without the notch's cross-axis-confusion risk.
+            threshold: 32,
+            dominanceMultiplier: 1.1,
+            onOpen: {},
+            onClose: {},
+            onSkipForward: onNext,
+            onSkipBackward: onPrevious
+        ))
     }
 
     private func content(for info: NowPlayingInfo) -> some View {
         ZStack {
             BlurredArtworkBackground(url: info.artworkURL)
+            GlassHighlightOverlay(cornerRadius: Self.cardCornerRadius)
 
             VStack(spacing: isExpanded ? 10 : 0) {
                 HStack(spacing: 10) {
@@ -110,16 +136,15 @@ struct LockScreenMusicCardView: View {
                         // stay legible over brighter album art, the same
                         // way iOS's own Lock Screen text sits on a
                         // shadow/gradient rather than raw content.
-                        Text(info.title)
-                            .font(.system(size: titleFontSize, weight: .semibold))
-                            .foregroundStyle(.white)
+                        // `MarqueeText` (not a plain truncating `Text`,
+                        // matching `ExpandedPlayerView`/`PeekPlayerView`)
+                        // so a long title scrolls instead of clipping with
+                        // "…" -- same `TimelineView`-driven, zero-cost-when-
+                        // it-fits mechanism, see its own doc comment.
+                        MarqueeText(text: info.title, font: .system(size: titleFontSize, weight: .semibold), color: .white, width: marqueeWidth, height: 16)
                             .shadow(color: .black.opacity(0.5), radius: 3, y: 1)
-                            .lineLimit(1)
-                        Text(info.artist)
-                            .font(.system(size: artistFontSize))
-                            .foregroundStyle(.white.opacity(0.7))
+                        MarqueeText(text: info.artist, font: .system(size: artistFontSize), color: .white.opacity(0.7), width: marqueeWidth, height: 14)
                             .shadow(color: .black.opacity(0.4), radius: 2, y: 1)
-                            .lineLimit(1)
                     }
                     Spacer(minLength: 0)
 
@@ -155,8 +180,32 @@ struct LockScreenMusicCardView: View {
         .frame(width: cardSize.width, height: cardSize.height)
         .clipShape(RoundedRectangle(cornerRadius: Self.cardCornerRadius, style: .continuous))
         .overlay(
+            // A gradient rim, not the previous flat `Color.white.opacity`
+            // stroke -- brighter along the top-left edge, dimmer along
+            // the bottom-right, so it reads as an edge actually catching
+            // light rather than a uniform outline. Adapted from
+            // cshariq/Sapphire's `LockScreenWidgetSurface.glassHighlightLayer`
+            // (read via `gh api`), minus its private-API `NSGlassEffectView`
+            // path -- this card's own doc comment already rejects stacking
+            // system glass on top of the artwork blur, so only the public,
+            // gradient-only half of Sapphire's technique applies here.
+            // Rim brightened and thickened (0.34/0.08/0.18 @ 0.8pt ->
+            // 0.5/0.1/0.24 @ 1pt) alongside the highlight boost above --
+            // a subtle rim reads as a printed border, a brighter one
+            // reads as an actual edge catching light.
             RoundedRectangle(cornerRadius: Self.cardCornerRadius, style: .continuous)
-                .strokeBorder(Color.white.opacity(0.16), lineWidth: 0.8)
+                .strokeBorder(
+                    LinearGradient(
+                        colors: [
+                            Color.white.opacity(0.5),
+                            Color.white.opacity(0.1),
+                            Color.white.opacity(0.24),
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 1
+                )
         )
         .shadow(color: .black.opacity(0.4), radius: 24, y: 10)
     }
@@ -182,6 +231,65 @@ struct LockScreenMusicCardView: View {
         }
         .buttonStyle(.plain)
         .foregroundStyle(.white)
+    }
+}
+
+/// A specular sheen over the artwork blur -- a soft diagonal gradient plus
+/// a brighter highlight pooled in the top-left corner, like light catching
+/// a curved pane of glass. Adapted from cshariq/Sapphire's
+/// `LockScreenWidgetSurface` (`glassHighlightLayer`, read via `gh api`),
+/// which pairs this same highlight with an `NSGlassEffectView`-backed
+/// material underneath; that private-API layer is deliberately dropped
+/// here -- see `LockScreenMusicCardView`'s own doc comment on why a
+/// second glass material stacked on the artwork blur would be glass-on-
+/// glass. Purely additive color, `allowsHitTesting(false)`, sits above the
+/// artwork blur and below the card's text/controls.
+private struct GlassHighlightOverlay: View {
+    let cornerRadius: CGFloat
+
+    var body: some View {
+        ZStack {
+            // Boosted per direct feedback ("more glass-like") --
+            // 0.10/0.02/0.05 -> 0.18/0.03/0.08 and the top-left pool
+            // 0.14 -> 0.24 with a wider radius, so the sheen and the
+            // corner highlight both read clearly instead of nearly
+            // disappearing into the artwork blur underneath.
+            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            Color.white.opacity(0.18),
+                            Color.white.opacity(0.03),
+                            Color.white.opacity(0.08),
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                .fill(
+                    RadialGradient(
+                        colors: [Color.white.opacity(0.24), .clear],
+                        center: .topLeading,
+                        startRadius: 0,
+                        endRadius: 160
+                    )
+                )
+            // A faint, opposite-corner dark pool -- real glass doesn't just
+            // brighten where light hits, it darkens away from it. Without
+            // this the sheen alone reads as a flat white wash rather than
+            // a curved surface.
+            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                .fill(
+                    RadialGradient(
+                        colors: [Color.black.opacity(0.16), .clear],
+                        center: .bottomTrailing,
+                        startRadius: 0,
+                        endRadius: 150
+                    )
+                )
+        }
+        .allowsHitTesting(false)
     }
 }
 
@@ -211,12 +319,12 @@ private struct BlurredArtworkBackground: View {
                         // technique the type doc documents (not a switch
                         // to system .glassEffect(), which would be
                         // glass-on-glass over the real wallpaper this
-                        // window sits above). Saturation left alone --
-                        // pushing that up further alongside more
-                        // transparency risked the background reading as
-                        // garish rather than airy.
+                        // window sits above). Saturation nudged 1.4->1.5
+                        // alongside the `GlassHighlightOverlay` boost --
+                        // together they push this past "blurred photo"
+                        // toward "colored light diffusing through glass".
                         .blur(radius: 44)
-                        .saturation(1.4)
+                        .saturation(1.5)
                 } else {
                     Color.black
                 }
