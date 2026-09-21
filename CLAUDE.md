@@ -145,9 +145,12 @@ usually do X," look at their actual source before hand-deriving it:
   mechanics), [monuk7735/mew-notch](https://github.com/monuk7735/mew-notch)
   (alternative geometry/hover implementation),
   [Clayton630/QuartzNotch](https://github.com/Clayton630/QuartzNotch) (a
-  boring.notch fork taken further), and
+  boring.notch fork taken further),
   [coaxel2/NotchIA](https://github.com/coaxel2/NotchIA) (media player +
-  shelf + focus + clipboard, on-device Apple Intelligence).
+  shelf + focus + clipboard, on-device Apple Intelligence), and
+  [cshariq/Sapphire](https://github.com/cshariq/Sapphire) (another elaborate
+  notch app — worth checking for system-monitor/widget/live-activity
+  patterns given the in-progress CPU/mem monitor and widget work).
 
 Further sources for specific future features (backlog items, not v1),
 credited via [Ebullioscopic/Atoll's own README](https://github.com/Ebullioscopic/Atoll/blob/dev/ReadMe.md#acknowledgments):
