@@ -15,6 +15,10 @@ import AppKit
 /// only -- no real trackpad in CI, same treatment as `AppleScriptRunner`.
 struct NotchGestureModifier: ViewModifier {
     let capabilities: NotchGestureCapabilities
+    /// See `NotchGestureInterpreter.reduce`'s own doc comment -- `nil`
+    /// keeps the notch panel's on-device-tuned defaults.
+    var threshold: CGFloat? = nil
+    var dominanceMultiplier: CGFloat? = nil
     let onOpen: () -> Void
     let onClose: () -> Void
     let onSkipForward: () -> Void
@@ -24,6 +28,8 @@ struct NotchGestureModifier: ViewModifier {
         content.background(
             NotchGestureMonitorRepresentable(
                 capabilities: capabilities,
+                threshold: threshold,
+                dominanceMultiplier: dominanceMultiplier,
                 onOpen: onOpen,
                 onClose: onClose,
                 onSkipForward: onSkipForward,
@@ -35,6 +41,8 @@ struct NotchGestureModifier: ViewModifier {
 
 private struct NotchGestureMonitorRepresentable: NSViewRepresentable {
     let capabilities: NotchGestureCapabilities
+    let threshold: CGFloat?
+    let dominanceMultiplier: CGFloat?
     let onOpen: () -> Void
     let onClose: () -> Void
     let onSkipForward: () -> Void
@@ -44,6 +52,8 @@ private struct NotchGestureMonitorRepresentable: NSViewRepresentable {
         let view = NotchGestureMonitorView()
         view.update(
             capabilities: capabilities,
+            threshold: threshold,
+            dominanceMultiplier: dominanceMultiplier,
             onOpen: onOpen,
             onClose: onClose,
             onSkipForward: onSkipForward,
@@ -55,6 +65,8 @@ private struct NotchGestureMonitorRepresentable: NSViewRepresentable {
     func updateNSView(_ nsView: NotchGestureMonitorView, context: Context) {
         nsView.update(
             capabilities: capabilities,
+            threshold: threshold,
+            dominanceMultiplier: dominanceMultiplier,
             onOpen: onOpen,
             onClose: onClose,
             onSkipForward: onSkipForward,
@@ -72,6 +84,8 @@ private struct NotchGestureMonitorRepresentable: NSViewRepresentable {
     private var globalMonitor: Any?
 
     private var capabilities = NotchGestureCapabilities(canOpen: false, canClose: false, canSkip: false)
+    private var threshold: CGFloat?
+    private var dominanceMultiplier: CGFloat?
     private var onOpen: (() -> Void)?
     private var onClose: (() -> Void)?
     private var onSkipForward: (() -> Void)?
@@ -101,12 +115,16 @@ private struct NotchGestureMonitorRepresentable: NSViewRepresentable {
 
     func update(
         capabilities: NotchGestureCapabilities,
+        threshold: CGFloat?,
+        dominanceMultiplier: CGFloat?,
         onOpen: @escaping () -> Void,
         onClose: @escaping () -> Void,
         onSkipForward: @escaping () -> Void,
         onSkipBackward: @escaping () -> Void
     ) {
         self.capabilities = capabilities
+        self.threshold = threshold
+        self.dominanceMultiplier = dominanceMultiplier
         self.onOpen = onOpen
         self.onClose = onClose
         self.onSkipForward = onSkipForward
@@ -178,7 +196,13 @@ private extension NotchGestureMonitorView {
             isMomentum: !event.momentumPhase.isEmpty
         )
 
-        let result = NotchGestureInterpreter.reduce(trackingState, delta: delta, capabilities: capabilities)
+        let result = NotchGestureInterpreter.reduce(
+            trackingState,
+            delta: delta,
+            capabilities: capabilities,
+            threshold: threshold ?? NotchGestureInterpreter.threshold,
+            dominanceMultiplier: dominanceMultiplier ?? NotchGestureInterpreter.dominanceMultiplier
+        )
         trackingState = result.state
 
         // `NSEvent` monitor callbacks (both local and global) already run
