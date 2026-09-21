@@ -65,10 +65,17 @@ enum NotchGestureInterpreter {
     /// `directionDominanceMultiplier`.
     static let dominanceMultiplier: CGFloat = 1.2
 
+    /// `threshold`/`dominanceMultiplier` default to the notch panel's own
+    /// on-device-tuned values but are caller-overridable -- added so the
+    /// lock-screen card (`LockScreenMusicCardView`) can ask for a quicker,
+    /// smaller-swipe trigger of its own without retuning (and risking
+    /// regressing) the notch panel's already-confirmed feel.
     static func reduce(
         _ state: NotchGestureTrackingState,
         delta: NotchGestureDelta,
-        capabilities: NotchGestureCapabilities
+        capabilities: NotchGestureCapabilities,
+        threshold: CGFloat = NotchGestureInterpreter.threshold,
+        dominanceMultiplier: CGFloat = NotchGestureInterpreter.dominanceMultiplier
     ) -> (state: NotchGestureTrackingState, action: NotchGestureAction?, progress: CGFloat) {
         if delta.phase == .ended || delta.phase == .cancelled {
             return (NotchGestureTrackingState(), nil, 0)
@@ -100,9 +107,9 @@ enum NotchGestureInterpreter {
         if next.lockedAxis == nil {
             let dx = abs(next.accumulatedDX)
             let dy = abs(next.accumulatedDY)
-            if dx > dy * Self.dominanceMultiplier {
+            if dx > dy * dominanceMultiplier {
                 next.lockedAxis = .horizontal
-            } else if dy > dx * Self.dominanceMultiplier {
+            } else if dy > dx * dominanceMultiplier {
                 next.lockedAxis = .vertical
             }
         }
@@ -116,8 +123,8 @@ enum NotchGestureInterpreter {
 
         switch axis {
         case .vertical:
-            progress = min(abs(next.accumulatedDY) / Self.threshold, 1)
-            if abs(next.accumulatedDY) >= Self.threshold {
+            progress = min(abs(next.accumulatedDY) / threshold, 1)
+            if abs(next.accumulatedDY) >= threshold {
                 if next.accumulatedDY > 0, capabilities.canOpen {
                     action = .open
                 } else if next.accumulatedDY < 0, capabilities.canClose {
@@ -129,8 +136,8 @@ enum NotchGestureInterpreter {
                 action = nil
             }
         case .horizontal:
-            progress = min(abs(next.accumulatedDX) / Self.threshold, 1)
-            if abs(next.accumulatedDX) >= Self.threshold, capabilities.canSkip {
+            progress = min(abs(next.accumulatedDX) / threshold, 1)
+            if abs(next.accumulatedDX) >= threshold, capabilities.canSkip {
                 action = next.accumulatedDX > 0 ? .skipForward : .skipBackward
             } else {
                 action = nil
