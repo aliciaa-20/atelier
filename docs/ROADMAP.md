@@ -62,6 +62,15 @@ iterated through two rounds of on-device visual fixes (positioning, glass
 background, hover-morph smoothness, corner-radius consistency, compactness)
 — see Phase 11's entry below. Not yet merged to `main`; the full manual
 on-device checklist and the merge are still open.
+**Since then, merged to `main`:** the visual-identity/tab-bar rebuild (PR
+#10 — dot-based tab bar, compacted Idle Home, iOS Control Center-style
+player sizing, a `ui-review-tahoe` accessibility/depth/press-feedback pass),
+the peek-flash bug fix (PR #11), the real-time audio visualizer (PR #12 —
+whole-system CoreAudio process tap, confirmed AirPods-safe, see
+[ADR 0012](decisions/0012-whole-system-audio-tap.md)), and a README rewrite
+(PR #13). Phase 9's shelf drag-out preview fix and Phase 10's Wi-Fi/VPN
+source are both mid-flight as uncommitted stashes on `main`, not yet
+resolved.
 
 ---
 
@@ -683,16 +692,25 @@ Items not part of the Phase 6–16 feature survey (see
   helper that can break on any macOS release. See
   [ADR 0001](decisions/0001-mediaremote-unavailable.md).
 - **Multi-monitor polish** — notchless / external display handling.
-- **iOS-like visual polish for the Home/Shelf tab bar, idle Home, and the
-  now-playing player** — in progress on `worktree-visual-identity-tabbar`
-  (PR #10, not yet merged): dot-based tab bar rework (ADR 0011), Idle Home
-  simplified (battery line dropped, content height 56pt, width 215pt,
-  18pt hero time), and the now-playing player shrunk and re-tuned toward
-  iOS's own Control Center Now Playing module (smaller artwork/fonts,
-  tighter transport row, edge padding and shuffle/output spacing tuned
-  live on-device across several feedback passes). Still queued on that
-  same branch: the marquee/scrubber title-column fix (150pt, cherry-pick
-  from old commit `9527f80`), and a real, unresolved hover-retract
-  reliability bug (onHover on this non-activating panel occasionally
-  fails to close the panel on mouse-away; one fix attempt made it worse
-  and was reverted, root cause not yet found).
+- ~~**iOS-like visual polish for the Home/Shelf tab bar, idle Home, and the
+  now-playing player**~~ **Shipped and merged** (PR #10, `main` commit
+  `d276fdb`): dot-based tab bar rework (ADR 0011), Idle Home simplified
+  (battery line dropped, content height 56pt, width 215pt, 18pt hero
+  time), the now-playing player re-tuned toward iOS Control Center sizing,
+  the marquee/scrubber title-column fix (150pt), and a `ui-review-tahoe`
+  pass (VoiceOver labels, depth shadow, press feedback, best-effort
+  keyboard shortcuts). Alicia confirmed hover-retract was no longer
+  reproducing at merge time, so it shipped — but the root cause was never
+  found; **worth re-verifying if it resurfaces.** See
+  [[visual_identity_tabbar_rebuild]] memory for the full diagnosis if it
+  does.
+- **Volume/brightness scrub bar (`ScrubBarView.swift`) reportedly not
+  visually updating** when adjusting volume/brightness — reported once
+  during the tab-bar rebuild session, never actually investigated.
+- **`worktree-live-activity-architecture`** — an older worktree with 4
+  unpushed commits (a Phase 10 slice: Wi-Fi/Bluetooth connect toasts,
+  retiring the crashy `AirPodsSource`; plus ADRs 0010/0011 and a now-
+  superseded audio-visualizer spec — the shipped visualizer used the v2
+  design in ADR 0012 instead). Never opened as a PR; needs a decision on
+  whether to revive it. A related but distinct `wip: WiFi/VPN sources`
+  stash also sits on `main`, reported broken on-device and never debugged.
