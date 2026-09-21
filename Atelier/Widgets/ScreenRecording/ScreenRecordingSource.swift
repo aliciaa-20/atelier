@@ -40,6 +40,10 @@ private func screenRecordingEventCallback(_ eventType: Int32, _: Int32, _: Int32
 final class ScreenRecordingSource: LiveActivitySource {
     let id = "screenRecording"
     let priority = NotchLiveActivityPriority.screenRecording
+    // A privacy indicator, not a competing surface -- it should never hide
+    // now-playing's pill (confirmed on-device: it was taking over the whole
+    // pill, artwork and all) or block hover-expand/skip while recording.
+    let isBadge = true
 
     private let subject = CurrentValueSubject<LiveActivityContent?, Never>(nil)
     private let notchHeight: CGFloat

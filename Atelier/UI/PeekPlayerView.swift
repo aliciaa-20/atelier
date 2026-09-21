@@ -9,6 +9,7 @@ struct PeekPlayerView: View {
     /// Same reasoning as `ExpandedPlayerView`: the real notch cutout has no
     /// display pixels of its own, so content starts below it.
     let notchHeight: CGFloat
+    @ObservedObject var audioTap: AudioTap
     @StateObject private var artworkColor = ArtworkColorLoader()
 
     var body: some View {
@@ -51,7 +52,14 @@ struct PeekPlayerView: View {
 
             Spacer(minLength: 0)
 
-            WaveformView(isPlaying: info.isPlaying, color: artworkColor.color, barWidth: 2, barSpacing: 1.3, height: 14)
+            WaveformView(
+                isPlaying: info.isPlaying,
+                color: artworkColor.color,
+                barWidth: 2,
+                barSpacing: 1.3,
+                height: 14,
+                levels: audioTap.isRunning ? audioTap.levels : nil
+            )
         }
     }
 }

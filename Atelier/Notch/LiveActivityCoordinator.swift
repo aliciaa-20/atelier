@@ -14,6 +14,11 @@ import SwiftUI
 final class LiveActivityCoordinator: ObservableObject {
     @Published private(set) var topContent: LiveActivityContent?
     @Published private(set) var hasContent = false
+    /// A badge source's content, composited as a small overlay on top of
+    /// whatever `topContent`/`interruptContent` is showing rather than
+    /// replacing it -- see `LiveActivitySource.isBadge`. Only one slot: no
+    /// badge source needs to coexist with another yet.
+    @Published private(set) var badgeContent: LiveActivityContent?
     /// A lower-priority source's content, shown briefly in the pill even
     /// while a higher-priority source (e.g. now-playing) is on top --
     /// otherwise something like Battery would be invisible for as long as
@@ -54,10 +59,12 @@ final class LiveActivityCoordinator: ObservableObject {
     /// compute theirs from shared `SystemHUDOrder` state, which can change
     /// without *that* source publishing new content.
     private var sourcesByID: [String: LiveActivitySource] = [:]
+    private var badgeSourceIDs: Set<String> = []
 
     init(sources: [LiveActivitySource]) {
         for source in sources {
             sourcesByID[source.id] = source
+            if source.isBadge { badgeSourceIDs.insert(source.id) }
             source.contentPublisher
                 .receive(on: RunLoop.main)
                 .sink { [weak self] content in
@@ -68,6 +75,16 @@ final class LiveActivityCoordinator: ObservableObject {
     }
 
     private func handle(sourceID: String, priority: Int, content: LiveActivityContent?) {
+        // Badge sources never enter the priority stack -- see
+        // `LiveActivitySource.isBadge`. `hasContent` still needs to reflect
+        // them, or a recording-only badge (nothing else active) would leave
+        // the panel `.collapsed` and the badge would never actually show.
+        if badgeSourceIDs.contains(sourceID) {
+            badgeContent = content
+            hasContent = topContent != nil || badgeContent != nil
+            return
+        }
+
         if let content {
             latestContent[sourceID] = content
             stack.upsert(id: sourceID, priority: priority)
@@ -112,7 +129,7 @@ final class LiveActivityCoordinator: ObservableObject {
             lastPeekedContentIDBySource[topID] = newContentID
         }
 
-        hasContent = topContent != nil
+        hasContent = topContent != nil || badgeContent != nil
 
         // Briefly interrupt the pill with a lower-priority source's
         // content when it changes, even though it isn't the current top

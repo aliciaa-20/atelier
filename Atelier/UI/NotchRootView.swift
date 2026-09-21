@@ -150,10 +150,17 @@ struct NotchRootView: View {
                 } else if viewModel.state == .pill {
                     // interruptContent (e.g. Battery briefly surfacing
                     // over music) wins while it's set; otherwise the real
-                    // top content shows as usual.
-                    if let content = liveActivity.interruptContent ?? liveActivity.topContent {
-                        content.pillView()
-                            .transition(.opacity)
+                    // top content shows as usual. A badge (e.g. the
+                    // screen-recording dot) composites on top of either --
+                    // it never replaces them, see `isBadge`.
+                    ZStack {
+                        if let content = liveActivity.interruptContent ?? liveActivity.topContent {
+                            content.pillView()
+                                .transition(.opacity)
+                        }
+                        if let badge = liveActivity.badgeContent {
+                            badge.pillView()
+                        }
                     }
                 } else if viewModel.state == .shelf {
                     ShelfView(store: shelfStore, rootDirectory: shelfStore.rootDirectory, notchHeight: viewModel.collapsedSize.height)
@@ -222,7 +229,13 @@ struct NotchRootView: View {
                     capabilities: NotchGestureCapabilities(
                         canOpen: viewModel.state == .collapsed || viewModel.state == .pill,
                         canClose: viewModel.state == .expanded || viewModel.state == .peeking || viewModel.state == .shelf,
-                        canSkip: liveActivity.topContent?.isExpandable == true
+                        // Not `liveActivity.topContent?.isExpandable` --
+                        // `NowPlayingLiveActivitySource` deliberately
+                        // publishes nil while paused (so the pill
+                        // disappears), which silently disabled skip too.
+                        // `nowPlaying.current` stays populated regardless
+                        // of play state, so skipping while paused works.
+                        canSkip: nowPlaying.current != nil
                     ),
                     onOpen: {
                         withAnimation(NotchAnimations.open) {

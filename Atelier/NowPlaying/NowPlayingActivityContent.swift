@@ -20,6 +20,6 @@ struct NowPlayingActivityContent: LiveActivityContent {
     }
 
     func peekView() -> AnyView {
-        AnyView(PeekPlayerView(info: info, notchHeight: notchHeight))
+        AnyView(PeekPlayerView(info: info, notchHeight: notchHeight, audioTap: audioTap))
     }
 }

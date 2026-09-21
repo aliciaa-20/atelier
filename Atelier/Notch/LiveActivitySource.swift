@@ -24,6 +24,17 @@ protocol LiveActivitySource {
     /// `.receive(on: RunLoop.main)` itself, so implementations don't need
     /// to guarantee main-thread delivery on their own.
     var contentPublisher: AnyPublisher<LiveActivityContent?, Never> { get }
+    /// A badge source never competes for `topContent` -- its `priority` is
+    /// ignored, it's composited as a small overlay on top of whatever the
+    /// pill is already showing instead of replacing it, and it can't block
+    /// hover-expand or the skip gesture (both gate on `topContent`, which a
+    /// badge source never becomes). For a source that's genuinely just an
+    /// indicator (e.g. a screen-recording dot), not a competing surface.
+    var isBadge: Bool { get }
+}
+
+extension LiveActivitySource {
+    var isBadge: Bool { false }
 }
 
 /// What a `LiveActivitySource` currently wants shown. UI-layer (may

@@ -13,13 +13,16 @@ struct ScreenRecordingActivityContent: LiveActivityContent {
 
     func pillView() -> AnyView {
         AnyView(
-            HStack(spacing: 0) {
-                Spacer(minLength: 0)
-                Circle()
-                    .fill(Color.red)
-                    .frame(width: 5, height: 5)
-            }
-            .padding(.trailing, 18)
+            // Centered over the waveform flank specifically (13pt trailing
+            // padding + ~17.5pt-wide flank, see `PillPlayerView`), not the
+            // whole pill -- a first attempt pinned it to the pill's very
+            // top-trailing corner, which read as floating off on its own
+            // rather than belonging to that flank.
+            Circle()
+                .fill(Color.red)
+                .frame(width: 5, height: 5)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+                .padding(.trailing, 19)
         )
     }
 
