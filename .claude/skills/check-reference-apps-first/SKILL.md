@@ -79,6 +79,7 @@ Check these, roughly in this order of relevance to Atelier's stack:
 | [omerates760/AgentPulse](https://github.com/omerates760/AgentPulse) | Alternative notch app structure |
 | [Clayton630/QuartzNotch](https://github.com/Clayton630/QuartzNotch) | boring.notch fork taken further — divergent takes on the same mechanics |
 | [coaxel2/NotchIA](https://github.com/coaxel2/NotchIA) | Media player + shelf + focus + clipboard in one notch cockpit, on-device Apple Intelligence integration |
+| [cshariq/Sapphire](https://github.com/cshariq/Sapphire) | Another elaborate notch app — check for system-monitor/widget/live-activity patterns |
 
 Further sources for specific future features (backlog items, not v1),
 credited via [Ebullioscopic/Atoll's own README](https://github.com/Ebullioscopic/Atoll/blob/dev/ReadMe.md#acknowledgments):
