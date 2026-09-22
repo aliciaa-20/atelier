@@ -73,6 +73,11 @@ final class SystemMonitorSource: LiveActivitySource, ObservableObject {
     }
 
     private func poll() {
+        // Skip the Mach syscalls entirely when the feature is off in
+        // Settings, not just the tab's display -- matching how `AudioTap`'s
+        // lifetime is already tied to `isPlaying` rather than merely
+        // pausing its output (CLAUDE.md's lightweight-by-design principle).
+        guard AtelierSettings.systemMonitorEnabled else { return }
         guard let memory = Self.readMemorySample() else { return }
         let memoryPercent = SystemMonitorMath.memoryUsedPercent(memory)
         self.memoryPercent = memoryPercent

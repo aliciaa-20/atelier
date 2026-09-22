@@ -37,21 +37,21 @@ struct NotchTabBar: View {
     /// Read live, not cached -- a settings toggle flipped in the menu bar
     /// takes effect on this view's next natural re-render (a hover, a
     /// track change) rather than needing a dedicated observation bridge
-    /// for a `UserDefaults` value. System Monitor has no settings toggle
-    /// of its own yet (unlike Shelf) -- it's ambient, always-on info like
-    /// Battery's pill icon, so it always gets a tab.
-    private var activePages: [NotchPage] {
+    /// for a `UserDefaults` value.
+    static var activePages: [NotchPage] {
         var pages: [NotchPage] = [.home]
         if AtelierSettings.shelfEnabled {
             pages.append(.shelf)
         }
-        pages.append(.systemMonitor)
+        if AtelierSettings.systemMonitorEnabled {
+            pages.append(.systemMonitor)
+        }
         return pages
     }
 
     var body: some View {
         HStack(spacing: -2) {
-            ForEach(activePages, id: \.self) { page in
+            ForEach(Self.activePages, id: \.self) { page in
                 // A real `Button`, not `.onTapGesture` on a `Capsule` --
                 // VoiceOver doesn't expose a tap-gesture-only view as an
                 // interactive element at all, so the previous version was
@@ -76,7 +76,13 @@ struct NotchTabBar: View {
             }
         }
         .padding(.horizontal, 4)
-        .padding(.vertical, 2)
+        // Split from a symmetric `.padding(.vertical, 2)` -- the top side
+        // still needs its 2pt (stacks with `NotchRootView`'s own
+        // `+5.5` notch clearance above this view), but the bottom side
+        // was pure extra air between the dots and whatever's below
+        // (idle clock, player, tab content) -- direct feedback that it
+        // still read as too loose after the last round of tightening.
+        .padding(.top, 2)
     }
 }
 
