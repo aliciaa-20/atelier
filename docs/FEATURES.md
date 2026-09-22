@@ -105,6 +105,29 @@ architecture than to bolting features on individually.
 |---|---|
 | CPU / GPU / memory / network / disk usage, SMC-based temperature | Atoll (adapted from the "Stats" project), NotchBar |
 
+**Partial slice shipped:** CPU load % and memory-used % only, via the
+public Mach `host_statistics`/`host_statistics64` APIs (`SystemMonitorSource`,
+`Atelier/Widgets/SystemMonitor/`) — no entitlement or private symbol
+needed. GPU, network, disk usage, and SMC-based temperature/IOReport
+frequency sampling remain **not implemented**; those need private/SMC
+access this pass deliberately avoided. Polls every 4s, matching the
+lightweight-by-design principle.
+
+Two access points:
+- **Pill** — lowest priority in the stack (`NotchLiveActivityPriority.systemMonitor`),
+  `peeksOnChange == false` (same ambient-status treatment as Battery). Bare
+  "23% / 61%" in the pill's two ~18pt flanks, only visible when nothing
+  higher-priority (now playing, battery, recording) is occupying the pill.
+- **Tab** — a third `NotchPage.systemMonitor` tab alongside Home/Shelf
+  (`SystemMonitorPageView.swift`), always shown (no settings toggle yet,
+  unlike Shelf). Full-size labeled capsule bars for CPU/Memory, tap to
+  switch via `NotchTabBar`, reflects the live reading regardless of pill
+  priority.
+
+**Not yet manually verified on-device** (build + unit tests pass; whether
+the Mach calls return sane numbers on real hardware, and whether the tab/
+pill actually look right, hasn't been visually confirmed).
+
 ---
 
 ## 8. Dev-agent session monitoring
