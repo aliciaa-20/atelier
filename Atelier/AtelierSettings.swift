@@ -10,6 +10,8 @@ enum AtelierSettings {
     static let shelfEnabledKey = "shelfEnabled"
     static let systemMonitorEnabledKey = "systemMonitorEnabled"
     static let colorPickerEnabledKey = "colorPickerEnabled"
+    static let glassEffectEnabledKey = "glassEffectEnabled"
+    static let glassIntensityKey = "glassIntensity"
 
     static func registerDefaults() {
         UserDefaults.standard.register(defaults: [
@@ -17,7 +19,12 @@ enum AtelierSettings {
             gesturesEnabledKey: true,
             shelfEnabledKey: true,
             systemMonitorEnabledKey: true,
-            colorPickerEnabledKey: true
+            colorPickerEnabledKey: true,
+            // Off by default -- ships conservatively (today's flat-black
+            // look) until a user opts in, rather than changing the
+            // default notch appearance out from under an existing install.
+            glassEffectEnabledKey: false,
+            glassIntensityKey: 0.7
         ])
     }
 
@@ -51,5 +58,24 @@ enum AtelierSettings {
     /// else ever calls `pickColor()` besides that one menu item.
     static var colorPickerEnabled: Bool {
         UserDefaults.standard.bool(forKey: colorPickerEnabledKey)
+    }
+
+    /// Gates `NotchRootView.usesGlassBackground` -- whether `.expanded`/
+    /// `.peeking`/`.shelf` render as Liquid Glass at all, vs. staying flat
+    /// black everywhere (today's look). A user-facing toggle, not just a
+    /// dev flag, since the material has real tradeoffs (see `glassIntensity`)
+    /// some users may not want.
+    static var glassEffectEnabled: Bool {
+        UserDefaults.standard.bool(forKey: glassEffectEnabledKey)
+    }
+
+    /// Applied as a plain `.opacity()` on the glass layer itself (not a
+    /// tint, not a crossfade with anything) -- a continuous render-time
+    /// property, not a transition, so it can't hit the material-mid-resize
+    /// or content-escaping-clip bugs a crossfade did (see `NotchRootView`'s
+    /// own notes on `usesGlassBackground`). 0 reads as fully see-through/
+    /// faint, 1 as the full-strength material.
+    static var glassIntensity: Double {
+        UserDefaults.standard.double(forKey: glassIntensityKey)
     }
 }
