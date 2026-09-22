@@ -45,7 +45,7 @@ struct IdleHomeView: View {
             // Scoped here, not on the shared `ExpandedPlayerView` bottom
             // padding -- that one also governs the transport row's
             // spacing in the playing state, unrelated to this ask.
-            .padding(.bottom, 1)
+            .padding(.bottom, 2.5)
         }
     }
 }
