@@ -79,7 +79,7 @@ Four layers with deliberate seams. The two pure ones carry the test suite.
 | UI | `UI/*.swift` | SwiftUI, driven by `NotchState` |
 | Data | `NowPlaying/*.swift` | `NowPlayingSource` protocol + per-app implementations |
 | System | `System/*.swift` | `MediaKeyInterceptor` (`CGEventTap`), `AccessibilityPermission` — manual-verification only, like `NowPlayingSource`'s AppleScript pieces |
-| Widgets | `Widgets/*/*.swift` | `LiveActivitySource` conformers (Battery, Volume, Brightness, AirPods, ScreenRecording) — one folder per widget, manual-verification only like `System/*.swift` |
+| Widgets | `Widgets/*/*.swift` | `LiveActivitySource` conformers (Battery, Volume, Brightness, AirPods, ScreenRecording, ColorPicker) — one folder per widget, manual-verification only like `System/*.swift` (except `ColorPicker`'s hex-formatting math, which is pure and unit-tested) |
 | Shelf | `Shelf/*.swift` | `ShelfItem` (pure, unit-tested) + `ShelfStore` (file I/O, JSON manifest, lazy expiry sweep — unit-tested against real temp directories, not mocked) |
 | Lock screen | `LockScreen/LockScreenManager.swift`, `LockScreen/LockScreenPanelController.swift`, `System/SkyLightSpaceOperator.swift` | An entirely separate `NSWindow`/lifecycle from `NotchPanel` — macOS hides ordinary user-session windows on lock, so this delegates into a private CGS space (`SkyLightSpaceOperator`, vendored/hardened from Lakr233/SkyLightWindow) instead. Manual-verification only, like `System/*.swift` |
 
