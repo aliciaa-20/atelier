@@ -17,6 +17,11 @@ enum NotchLiveActivityPriority {
     /// Above `nowPlaying` -- a recording indicator is privacy-relevant and
     /// should outrank/interrupt music, not compete with it on equal footing.
     static let screenRecording = 15
+    /// Above `nowPlaying` -- picking a color is a deliberate, brief user
+    /// action and should interrupt whatever's currently showing rather
+    /// than wait its turn behind it, but it's not privacy-relevant like
+    /// `screenRecording`, so it doesn't outrank that.
+    static let colorPicker = 11
     static let nowPlaying = 10
     static let airpods = 6
     static let battery = 5

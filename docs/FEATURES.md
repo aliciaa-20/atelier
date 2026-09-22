@@ -95,7 +95,7 @@ architecture than to bolting features on individually.
 | Calendar / reminders (EventKit) | boring.notch, Atoll, notchify, QuartzNotch, NotchIA |
 | Quick notes | notchify |
 | Timers / Pomodoro | QuartzNotch, NotchIA, Atoll |
-| Color picker | Atoll |
+| Color picker ✅ (`Widgets/ColorPicker/`, `NSColorSampler`) | Atoll |
 
 ---
 

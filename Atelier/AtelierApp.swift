@@ -31,6 +31,7 @@ struct AtelierApp: App {
     @AppStorage(AtelierSettings.gesturesEnabledKey) private var gesturesEnabled = true
     @AppStorage(AtelierSettings.shelfEnabledKey) private var shelfEnabled = true
     @AppStorage(AtelierSettings.systemMonitorEnabledKey) private var systemMonitorEnabled = true
+    @AppStorage(AtelierSettings.colorPickerEnabledKey) private var colorPickerEnabled = true
 
     init() {
         AtelierSettings.registerDefaults()
@@ -47,10 +48,33 @@ struct AtelierApp: App {
 
             Divider()
 
-            Toggle("Peek on Track Change", isOn: $peekOnTrackChangeEnabled)
-            Toggle("Enable Gestures", isOn: $gesturesEnabled)
-            Toggle("Enable File Shelf", isOn: $shelfEnabled)
-            Toggle("Enable System Monitor", isOn: $systemMonitorEnabled)
+            // `Section` (not another bare `Divider()`) so each group gets a
+            // header -- the flat, unlabeled toggle list this replaces read
+            // as one undifferentiated block and buried "Pick a Color..."
+            // among settings toggles with no visual distinction between
+            // "a setting" and "an action to run right now".
+            Section("Behavior") {
+                Toggle("Peek on Track Change", isOn: $peekOnTrackChangeEnabled)
+                Toggle("Enable Gestures", isOn: $gesturesEnabled)
+            }
+
+            Section("Widgets") {
+                Toggle("Enable File Shelf", isOn: $shelfEnabled)
+                Toggle("Enable System Monitor", isOn: $systemMonitorEnabled)
+                Toggle("Enable Color Picker", isOn: $colorPickerEnabled)
+            }
+
+            // Hidden, not just disabled, once turned off -- same "no
+            // leftover way in" reasoning as `shelfEnabled` gating the
+            // Shelf tab's own visibility. No section header here -- a
+            // single button doesn't need one; a bare divider is enough to
+            // separate it from the toggles above.
+            if colorPickerEnabled {
+                Divider()
+                Button("Pick a Color...") {
+                    notchController?.pickColor()
+                }
+            }
 
             // Checked live on every menu open, not cached -- matches how
             // the toggles above already read `AtelierSettings` live.
@@ -58,7 +82,11 @@ struct AtelierApp: App {
             // `CGEventTap`; this is the "visible grant-access path when
             // TCC is denied" the roadmap calls for generally (Phase 16),
             // arriving here out of necessity per the Phase 8 design spec.
+            // Kept out of the sections above -- it's neither a setting nor
+            // a routine action, it's a one-time permission prompt that
+            // should stand out, not blend into either group.
             if !AccessibilityPermission.isGranted {
+                Divider()
                 Button("Grant Accessibility Access...") {
                     AccessibilityPermission.openSystemSettings()
                 }

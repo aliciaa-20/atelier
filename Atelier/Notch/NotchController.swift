@@ -23,6 +23,9 @@ final class NotchController {
     /// `NotchRootView` has a stable instance to bind `NotchPage.systemMonitor`'s
     /// tab content to -- same reasoning as `batterySource` above.
     private let systemMonitorSource: SystemMonitorSource
+    /// Owned here so `pickColor()` below has a stable instance to call
+    /// `.pick()` on -- same reasoning as `volumeSource`.
+    private let colorPickerSource: ColorPickerSource
     /// Installs its `CGEventTap` on creation and tears it down on deinit --
     /// held for exactly that lifetime, same as `panel`/`viewModel`.
     private let mediaKeyInterceptor: MediaKeyInterceptor
@@ -110,10 +113,12 @@ final class NotchController {
             let brightnessSource = BrightnessSource(notchHeight: 0, hudOrder: hudOrder)
             let batterySource = BatterySource(notchHeight: 0)
             let systemMonitorSource = SystemMonitorSource(notchHeight: 0)
+            let colorPickerSource = ColorPickerSource(notchHeight: 0)
             self.volumeSource = volumeSource
             self.brightnessSource = brightnessSource
             self.batterySource = batterySource
             self.systemMonitorSource = systemMonitorSource
+            self.colorPickerSource = colorPickerSource
             let lockScreenManager = LockScreenManager()
             self.lockScreenManager = lockScreenManager
             self.lockScreenPanelController = LockScreenPanelController(
@@ -126,6 +131,7 @@ final class NotchController {
                 NowPlayingLiveActivitySource(coordinator: nowPlayingCoordinator, notchHeight: 0, audioTap: audioTap),
                 batterySource,
                 ScreenRecordingSource(notchHeight: 0),
+                colorPickerSource,
                 volumeSource,
                 brightnessSource,
                 systemMonitorSource
@@ -165,10 +171,12 @@ final class NotchController {
         let brightnessSource = BrightnessSource(notchHeight: collapsedRect.height, hudOrder: hudOrder)
         let batterySource = BatterySource(notchHeight: collapsedRect.height)
         let systemMonitorSource = SystemMonitorSource(notchHeight: collapsedRect.height)
+        let colorPickerSource = ColorPickerSource(notchHeight: collapsedRect.height)
         self.volumeSource = volumeSource
         self.brightnessSource = brightnessSource
         self.batterySource = batterySource
         self.systemMonitorSource = systemMonitorSource
+        self.colorPickerSource = colorPickerSource
         let lockScreenManager = LockScreenManager()
         self.lockScreenManager = lockScreenManager
         self.lockScreenPanelController = LockScreenPanelController(
@@ -181,6 +189,7 @@ final class NotchController {
             NowPlayingLiveActivitySource(coordinator: nowPlayingCoordinator, notchHeight: collapsedRect.height, audioTap: audioTap),
             batterySource,
             ScreenRecordingSource(notchHeight: collapsedRect.height),
+            colorPickerSource,
             volumeSource,
             brightnessSource,
             systemMonitorSource
@@ -343,6 +352,15 @@ final class NotchController {
             }
 
         nowPlayingCoordinator.start()
+    }
+
+    /// Invoked from `AtelierApp`'s "Pick a Color..." menu item. The
+    /// resulting peek/decay all flows through the existing generic
+    /// `identityChanged`/`hasContent` wiring above -- no source-specific
+    /// handling needed here, same as Volume/Brightness needing none either.
+    func pickColor() {
+        guard AtelierSettings.colorPickerEnabled else { return }
+        colorPickerSource.pick()
     }
 
     private func triggerPeek(with event: NotchEvent) {
