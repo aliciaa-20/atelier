@@ -71,27 +71,35 @@ final class NotchController {
     /// `ShelfView`'s own column width. Shorter than `playerContentHeight`
     /// since there's no scrubber/transport row.
     private static let shelfContentHeight: CGFloat = 90
-    /// Narrower and more compact than the full player — a single
-    /// artwork(34)+text(92)+waveform(~18.5) row with 24pt horizontal
-    /// padding (buffer over peeking's 14pt corner radius — see
-    /// `PeekPlayerView`) needs ~169+48=217pt minimum; 222 leaves just
-    /// enough slack for the flexible spacer between text and waveform.
-    private static let peekWidth: CGFloat = 222
+    /// Extra width added on top of the real, measured notch width
+    /// (`collapsedRect.width`, from `NotchGeometry.notchRect` -- 185pt on
+    /// the Atelier MacBook, see `NotchGeometryTests`), not a standalone
+    /// fixed width -- matches `pillExtraWidth`'s own approach. A fixed
+    /// `peekWidth` literal (218, picked without reference to the real
+    /// notch) was the actual cause of the peek pill not lining up flush
+    /// with the notch's own edges/corners on-device (photo evidence): it
+    /// happened to be close to `collapsedRect.width + 33` on this specific
+    /// display, but nothing tied it there, so any drift in the two numbers
+    /// showed up as a visible gap. Deriving it from the real notch width
+    /// the same way the pill already does is what actually guarantees the
+    /// edges match, on this machine or any other.
+    private static let peekExtraWidth: CGFloat = 19.2
     /// `PeekPlayerView`'s own content — a single artwork+title/artist+
     /// waveform row (34, governed by the two-line text block: 16+2+16)
     /// + top/bottom padding (4+9).
-    private static let peekContentHeight: CGFloat = 47
+    private static let peekContentHeight: CGFloat = 46.4
     /// Volume/Brightness's peek has no title/artist text (Phase 8) --
-    /// just an icon + scrub bar, so it doesn't need `peekWidth`/
+    /// just an icon + scrub bar, so it doesn't need `peekExtraWidth`/
     /// `peekContentHeight`'s room for two lines of text. Real macOS's own
     /// OSD is compact for the same reason. Narrower and shorter than the
     /// shared peek size, not a separate window -- see Invariant 3's own
     /// note: the panel itself never resizes, only the SwiftUI content
-    /// frame within it does, same mechanism as every other state.
-    private static let compactPeekWidth: CGFloat = 210
+    /// frame within it does, same mechanism as every other state. Same
+    /// notch-relative reasoning as `peekExtraWidth` above.
+    private static let compactPeekExtraWidth: CGFloat = 13.2
     /// Icon+bar row (~18) + top/bottom padding (2+6), against
     /// `peekContentHeight`'s 47 (sized for two lines of text instead).
-    private static let compactPeekContentHeight: CGFloat = 26
+    private static let compactPeekContentHeight: CGFloat = 25.4
     // Not private: `VolumeSource`/`BrightnessSource` match their own
     // self-clearing decay to this exact duration -- see their own
     // `decayDuration` doc comments for why a shorter, independent timer
@@ -207,11 +215,11 @@ final class NotchController {
             height: collapsedRect.height
         )
         let peekSize = CGSize(
-            width: Self.peekWidth,
+            width: collapsedRect.width + Self.peekExtraWidth,
             height: collapsedRect.height + Self.peekContentHeight
         )
         let compactPeekSize = CGSize(
-            width: Self.compactPeekWidth,
+            width: collapsedRect.width + Self.compactPeekExtraWidth,
             height: collapsedRect.height + Self.compactPeekContentHeight
         )
         let shelfSize = CGSize(
