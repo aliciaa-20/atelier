@@ -648,9 +648,21 @@ widget plugged into Phase 6's architecture.*
 
 See [FEATURES.md §6](FEATURES.md#6-productivity-widgets).
 
-### ⬜ Phase 13 — System resource monitor
+### 🟨 Phase 13 — System resource monitor (partial)
 *Ships: CPU/GPU/memory/network/disk usage and SMC-based temperature.*
 **Depends on Phase 6.**
+
+Only a slice shipped so far: CPU load % and memory-used %, via public
+Mach `host_statistics`/`host_statistics64` (`SystemMonitorSource`,
+`Atelier/Widgets/SystemMonitor/`), lowest pill priority, 4s poll, plus a
+third `NotchPage.systemMonitor` tab (`SystemMonitorPageView.swift`)
+alongside Home/Shelf for a full-size view independent of pill priority.
+GPU, network, disk, and SMC-based temperature (the parts that need
+private/SMC access, per the "Stats" project credit) are **not built**.
+**Manual on-device verification not done** — build and the 129-test unit
+suite pass, but whether the Mach calls read sane numbers on real
+hardware, and whether the pill/tab actually look right, hasn't been
+visually confirmed.
 
 See [FEATURES.md §7](FEATURES.md#7-system-resource-monitor).
 
@@ -684,6 +696,35 @@ here so the feature survey above ships first.)*
       re-trigger the Automation prompt every time.
 
 Claude Code mechanic: custom slash commands; `/code-review`.
+
+---
+
+### ⬜ Phase 17 — Teleprompter / Ghost Mode
+*Ships: a scrolling script tab, screen-share/recording invisibility, and a
+script library. Voice sync and AI coaching are explicitly later slices of
+this same phase, not separate phases — see FEATURES.md §10 for the full
+tier breakdown and why.*
+
+- [ ] **Scrolling script tab** — new `NotchPage`, `ScrollView` +
+      timer-driven auto-scroll, manual pace control.
+- [ ] **Ghost Mode** — `NSWindow.sharingType = .none` on the panel,
+      toggleable from the menu bar; verify it actually excludes the window
+      from a real screen recording/share, not just assume the API works.
+- [ ] **Script library** — folders + search, `ShelfStore`-shaped
+      JSON-manifest storage.
+- [ ] **Voice-synced scrolling** — `SFSpeechRecognizer` streaming pace
+      tracking. Needs its own design pass before starting (real-time audio
+      pipeline, latency/accuracy tuning) — don't fold into the same PR as
+      items above.
+- [ ] *(lower priority)* **AI rehearsal coach** — needs an LLM backend +
+      likely Vision-framework posture analysis. Discuss stack/privacy
+      tradeoffs before scoping; this is a different trust model than the
+      rest of Atelier (network calls).
+- [ ] *(lower priority)* **Live meeting captions** — system audio capture
+      + speech-to-text.
+
+Credited to [CueNotch](https://cuenotch.com) for the product idea (not
+open source, no source pulled — named credit only).
 
 ---
 

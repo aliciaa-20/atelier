@@ -30,6 +30,7 @@ struct AtelierApp: App {
     @AppStorage(AtelierSettings.peekOnTrackChangeKey) private var peekOnTrackChangeEnabled = true
     @AppStorage(AtelierSettings.gesturesEnabledKey) private var gesturesEnabled = true
     @AppStorage(AtelierSettings.shelfEnabledKey) private var shelfEnabled = true
+    @AppStorage(AtelierSettings.systemMonitorEnabledKey) private var systemMonitorEnabled = true
 
     init() {
         AtelierSettings.registerDefaults()
@@ -49,6 +50,7 @@ struct AtelierApp: App {
             Toggle("Peek on Track Change", isOn: $peekOnTrackChangeEnabled)
             Toggle("Enable Gestures", isOn: $gesturesEnabled)
             Toggle("Enable File Shelf", isOn: $shelfEnabled)
+            Toggle("Enable System Monitor", isOn: $systemMonitorEnabled)
 
             // Checked live on every menu open, not cached -- matches how
             // the toggles above already read `AtelierSettings` live.

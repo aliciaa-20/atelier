@@ -105,6 +105,29 @@ architecture than to bolting features on individually.
 |---|---|
 | CPU / GPU / memory / network / disk usage, SMC-based temperature | Atoll (adapted from the "Stats" project), NotchBar |
 
+**Partial slice shipped:** CPU load % and memory-used % only, via the
+public Mach `host_statistics`/`host_statistics64` APIs (`SystemMonitorSource`,
+`Atelier/Widgets/SystemMonitor/`) — no entitlement or private symbol
+needed. GPU, network, disk usage, and SMC-based temperature/IOReport
+frequency sampling remain **not implemented**; those need private/SMC
+access this pass deliberately avoided. Polls every 4s, matching the
+lightweight-by-design principle.
+
+Two access points:
+- **Pill** — lowest priority in the stack (`NotchLiveActivityPriority.systemMonitor`),
+  `peeksOnChange == false` (same ambient-status treatment as Battery). Bare
+  "23% / 61%" in the pill's two ~18pt flanks, only visible when nothing
+  higher-priority (now playing, battery, recording) is occupying the pill.
+- **Tab** — a third `NotchPage.systemMonitor` tab alongside Home/Shelf
+  (`SystemMonitorPageView.swift`), always shown (no settings toggle yet,
+  unlike Shelf). Full-size labeled capsule bars for CPU/Memory, tap to
+  switch via `NotchTabBar`, reflects the live reading regardless of pill
+  priority.
+
+**Not yet manually verified on-device** (build + unit tests pass; whether
+the Mach calls return sane numbers on real hardware, and whether the tab/
+pill actually look right, hasn't been visually confirmed).
+
 ---
 
 ## 8. Dev-agent session monitoring
@@ -133,6 +156,50 @@ Re-added to the backlog. `check-reference-apps-first` still applies: OpenUsage
 and OpenRouter are cited there as adaptable sources, not dependencies to pull
 in directly — CLAUDE.md's no-third-party-dependencies rule still governs the
 implementation.
+
+---
+
+## 10. Teleprompter / Ghost Mode
+
+| Feature | Source(s) |
+|---|---|
+| Script scrolling near the camera/notch, hidden from screen shares and recordings, voice-synced pacing, AI rehearsal coaching, live captions | [CueNotch](https://cuenotch.com) |
+
+Not an open-source repo (commercial app) — credited by name for the product
+idea, not pulled as source. Direct feedback split this into two tiers, in
+priority order:
+
+**Tier 1 (wanted, in order):**
+1. **Scrolling script view** — a `NotchPage` tab, same shape as
+   `SystemMonitorPageView`/`ShelfView`: a `ScrollView` with a timer-driven
+   auto-scroll, manual pace control. No new subsystem.
+2. **Ghost Mode** — `NSWindow.sharingType = .none` excludes a window from
+   screen capture (ScreenCaptureKit, screenshots, Zoom/Meet capture) while
+   staying visible on the real display. Public AppKit API, no entitlement,
+   no private symbol. Atelier already tracks screen-recording state
+   (`ScreenRecordingSource`), so this slots into the existing pattern rather
+   than needing new plumbing.
+3. **Script library** — folders + search, same shape as `ShelfStore`'s
+   existing JSON-manifest + file-storage pattern (`Shelf/ShelfStore.swift`).
+4. **Voice-synced scrolling** — tracks actual speaking pace via
+   `SFSpeechRecognizer` streaming from the mic. A real subsystem (live audio
+   pipeline, latency/accuracy tuning), not a widget-sized addition — the
+   first item in this list that needs its own design pass before starting.
+
+**Tier 2 (wanted, lower priority):**
+5. **AI rehearsal coach** ("Magic Polish", pace/posture feedback) — needs
+   an LLM backend and likely Vision-framework posture analysis from the
+   camera. Runs against CLAUDE.md's no-third-party-dependencies-without-
+   discussion rule and introduces a different trust model (network calls)
+   than anything else in Atelier — needs its own conversation before
+   scoping, not just a design pass.
+6. **Live meeting captions** — system audio capture + speech-to-text,
+   another sizable subsystem on top of #4.
+
+**Feasibility note:** items 1–3 are genuinely small, in-pattern additions.
+Item 4 is a real subsystem on its own. Items 5–6 are close to a second,
+network-connected app living inside Atelier's shell — treat as a separate
+phase with its own plan, not folded into whichever phase ships 1–4.
 
 ---
 

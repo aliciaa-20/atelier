@@ -8,12 +8,14 @@ enum AtelierSettings {
     static let peekOnTrackChangeKey = "peekOnTrackChangeEnabled"
     static let gesturesEnabledKey = "gesturesEnabled"
     static let shelfEnabledKey = "shelfEnabled"
+    static let systemMonitorEnabledKey = "systemMonitorEnabled"
 
     static func registerDefaults() {
         UserDefaults.standard.register(defaults: [
             peekOnTrackChangeKey: true,
             gesturesEnabledKey: true,
-            shelfEnabledKey: true
+            shelfEnabledKey: true,
+            systemMonitorEnabledKey: true
         ])
     }
 
@@ -31,5 +33,13 @@ enum AtelierSettings {
     /// a leftover way in via drag-and-drop just because its tab is hidden.
     static var shelfEnabled: Bool {
         UserDefaults.standard.bool(forKey: shelfEnabledKey)
+    }
+
+    /// Gates the System Monitor tab's visibility and, per the same
+    /// lightweight-by-design reasoning `shelfEnabled`'s own drag-and-drop
+    /// gating documents, `SystemMonitorSource`'s poll loop itself --
+    /// disabled means no Mach syscalls every 4s, not just a hidden tab.
+    static var systemMonitorEnabled: Bool {
+        UserDefaults.standard.bool(forKey: systemMonitorEnabledKey)
     }
 }
