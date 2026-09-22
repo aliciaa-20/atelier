@@ -9,13 +9,15 @@ enum AtelierSettings {
     static let gesturesEnabledKey = "gesturesEnabled"
     static let shelfEnabledKey = "shelfEnabled"
     static let systemMonitorEnabledKey = "systemMonitorEnabled"
+    static let colorPickerEnabledKey = "colorPickerEnabled"
 
     static func registerDefaults() {
         UserDefaults.standard.register(defaults: [
             peekOnTrackChangeKey: true,
             gesturesEnabledKey: true,
             shelfEnabledKey: true,
-            systemMonitorEnabledKey: true
+            systemMonitorEnabledKey: true,
+            colorPickerEnabledKey: true
         ])
     }
 
@@ -41,5 +43,13 @@ enum AtelierSettings {
     /// disabled means no Mach syscalls every 4s, not just a hidden tab.
     static var systemMonitorEnabled: Bool {
         UserDefaults.standard.bool(forKey: systemMonitorEnabledKey)
+    }
+
+    /// Gates both the "Pick a Color..." menu item's visibility and
+    /// `NotchController.pickColor()` itself -- same "no leftover way in
+    /// once disabled" reasoning as `shelfEnabled` above, in case something
+    /// else ever calls `pickColor()` besides that one menu item.
+    static var colorPickerEnabled: Bool {
+        UserDefaults.standard.bool(forKey: colorPickerEnabledKey)
     }
 }
