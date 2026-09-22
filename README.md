@@ -33,7 +33,7 @@ drop-in away.
 
 ## Status
 
-- **120 tests passing**
+- **129 tests passing**
 - Live phase-by-phase progress: [`docs/ROADMAP.md`](docs/ROADMAP.md)
 - Full feature survey: [`docs/FEATURES.md`](docs/FEATURES.md)
 - Known gap: AirPods support is disabled (a crash in Apple's own
