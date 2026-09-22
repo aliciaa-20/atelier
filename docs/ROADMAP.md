@@ -583,6 +583,18 @@ surface scope gated on a feasibility spike.*
       animation only triggers when the tap fails to start at all, not
       when it starts successfully but delivers nothing — worth knowing if
       this ever looks stuck again on a fresh permission grant.
+- [ ] **Known issue, unresolved (2026-09-23):** AirPods' pause/skip media-key
+      control reportedly stopped working after the real-time visualizer
+      landed, specifically when the user hasn't granted the "System Audio
+      Recording Only" TCC permission the whole-system `AudioTap` needs —
+      it worked with the earlier fake/synthetic waveform. The on-device
+      spike above confirmed pause/skip unaffected *with* the permission
+      granted; the no-permission case wasn't covered by that spike and
+      needs its own check. Requested fix: when system audio access isn't
+      granted, fall back to the fake/synthetic waveform entirely (not just
+      show a frozen real one) rather than risk breaking AirPods controls.
+      Not yet implemented — needs the AirPods-without-permission
+      regression reproduced and root-caused first.
 - [ ] Synced lyrics.
 - [x] Lock-screen now-playing widget — spike confirmed feasible via a
       private CGS space (`SkyLightSpaceOperator`, vendored/hardened from
@@ -744,6 +756,47 @@ tier breakdown and why.*
 
 Credited to [CueNotch](https://cuenotch.com) for the product idea (not
 open source, no source pulled — named credit only).
+
+---
+
+### 🟨 Phase 18 — Liquid Glass notch background (partial)
+*Ships: a Liquid Glass (`.glassEffect(.regular)`) background for
+`.expanded`/`.peeking`/`.shelf`, behind a menu-bar toggle.*
+
+`.collapsed`/`.pill` stay flat black regardless (Invariant 7; the pill is
+too thin for glass to read as anything but a compression artifact).
+Untinted per the `liquid-glass` skill's own tint guidance -- an earlier
+full-panel tint read as a colored panel, not clear glass. See
+[ADR 0014](decisions/0014-notch-glass-transitions-are-identity-not-crossfade.md)
+for why every transition here is `.identity` (snap), not a crossfade —
+two real on-device bugs, found by frame-by-frame video. Respects
+Accessibility > Display > Reduce Transparency live. Off by default —
+`AtelierSettings.glassEffectEnabled` — so it doesn't change the existing
+look for anyone who hasn't opted in, plus a `glassIntensity` slider
+(plain `.opacity()` on the glass layer, not a tint/crossfade) in the menu
+bar's Behavior section.
+
+Also landed alongside this: `peekSize`/`compactPeekSize` now derive their
+width from the real, measured notch width (`NotchGeometry`) instead of
+disconnected fixed literals, so the peek pill's edges line up with the
+physical notch; all peek variants share the notch's own sharp top corner
+radius; the close animation was retuned (spring + a brief scale/opacity
+dip) to read as retreating into the notch rather than a flat shrink.
+
+**Known issue, unresolved:** a left-edge visual glitch on close
+specifically when nothing is playing (closes to `.collapsed` rather than
+`.pill`) was still reported after one fix attempt targeting it. Needs an
+on-device video of that specific path to diagnose properly — flagged
+inline in `NotchRootView.swift` rather than guessed at further.
+
+**Menu-bar settings UI is a known placeholder**, not a finished design —
+a redesign of the whole menu-bar settings surface (this toggle/slider
+included) is planned as separate follow-up work, not blocking this from
+landing.
+
+Manually exercised on-device throughout development (build + 129-test
+unit suite pass); the known issue above is the one thing not yet
+confirmed fixed.
 
 ---
 
