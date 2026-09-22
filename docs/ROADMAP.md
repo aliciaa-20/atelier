@@ -636,7 +636,7 @@ surface scope gated on a feasibility spike.*
 
 See [FEATURES.md §1](FEATURES.md#1-now-playing--live-activity-core).
 
-### ⬜ Phase 12 — Productivity widgets
+### 🔜 Phase 12 — Productivity widgets
 *Ships: calendar/reminders, quick notes, timers, color picker — each as a
 widget plugged into Phase 6's architecture.*
 **Depends on Phase 6.**
@@ -644,7 +644,26 @@ widget plugged into Phase 6's architecture.*
 - [ ] Calendar / reminders (EventKit).
 - [ ] Quick notes.
 - [ ] Timers / Pomodoro.
-- [ ] Color picker.
+- [x] Color picker -- `Widgets/ColorPicker/ColorPickerSource.swift` +
+      `ColorPickerActivityContent.swift`. `NSColorSampler` triggered from a
+      new "Pick a Color..." item in `AtelierApp`'s menu bar, publishing a
+      `LiveActivitySource` (priority above `nowPlaying`, below
+      `screenRecording` -- see `NotchLiveActivityPriority.colorPicker`)
+      that pops a peek (swatch + monospaced hex) for ~2.5s (matched to
+      `NotchController.peekDuration`, same reasoning as Volume/Brightness's
+      own decay) and copies the hex string to the clipboard. Gated by a new
+      "Enable Color Picker" menu toggle (`AtelierSettings.colorPickerEnabled`,
+      default on) -- disabling it hides the "Pick a Color..." item entirely
+      and no-ops `NotchController.pickColor()`, same "no leftover way in"
+      pattern as `shelfEnabled`. Hex formatting
+      (`ColorHexFormatting.swift`) is pure and unit-tested; the
+      `NSColorSampler`/`NSPasteboard` glue is not, matching this project's
+      System/Widgets testing discipline. **Verified on-device** -- eyedropper,
+      peek layout, and clipboard copy all confirmed working. Menu bar's
+      settings toggles were also regrouped under labeled `Section`s
+      (Behavior/Widgets) while adding the "Enable Color Picker" toggle, to
+      keep the growing toggle list legible -- flagged as still needing a
+      fuller redesign later (deferred, not blocking this item).
 
 See [FEATURES.md §6](FEATURES.md#6-productivity-widgets).
 
