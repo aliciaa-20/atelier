@@ -48,7 +48,14 @@ struct ExpandedPlayerView: View {
         // gap between the dots and the actual content. This is just the
         // small breathing room between the tab bar and this content,
         // matching ShelfView's own equivalent gap in the same position.
-        .padding(.top, 6)
+        // 6 -> 3 -> 0: the tab bar's own 24pt dot tap targets already
+        // carry ~9pt of invisible padding above/below the visible 6pt
+        // dot, so any additional top padding here stacks on top of that
+        // and reads as too much air -- confirmed on-device across two
+        // rounds of feedback. 0 is the floor; if it's still not tight
+        // enough, the next lever is `IdleHomeView`'s own `VStack(spacing:
+        // 3)` or the tab bar's `+5.5` clearance in `NotchRootView.swift`.
+        .padding(.top, 0)
     }
 
     private func player(for info: NowPlayingInfo) -> some View {

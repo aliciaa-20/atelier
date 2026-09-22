@@ -159,6 +159,50 @@ implementation.
 
 ---
 
+## 10. Teleprompter / Ghost Mode
+
+| Feature | Source(s) |
+|---|---|
+| Script scrolling near the camera/notch, hidden from screen shares and recordings, voice-synced pacing, AI rehearsal coaching, live captions | [CueNotch](https://cuenotch.com) |
+
+Not an open-source repo (commercial app) — credited by name for the product
+idea, not pulled as source. Direct feedback split this into two tiers, in
+priority order:
+
+**Tier 1 (wanted, in order):**
+1. **Scrolling script view** — a `NotchPage` tab, same shape as
+   `SystemMonitorPageView`/`ShelfView`: a `ScrollView` with a timer-driven
+   auto-scroll, manual pace control. No new subsystem.
+2. **Ghost Mode** — `NSWindow.sharingType = .none` excludes a window from
+   screen capture (ScreenCaptureKit, screenshots, Zoom/Meet capture) while
+   staying visible on the real display. Public AppKit API, no entitlement,
+   no private symbol. Atelier already tracks screen-recording state
+   (`ScreenRecordingSource`), so this slots into the existing pattern rather
+   than needing new plumbing.
+3. **Script library** — folders + search, same shape as `ShelfStore`'s
+   existing JSON-manifest + file-storage pattern (`Shelf/ShelfStore.swift`).
+4. **Voice-synced scrolling** — tracks actual speaking pace via
+   `SFSpeechRecognizer` streaming from the mic. A real subsystem (live audio
+   pipeline, latency/accuracy tuning), not a widget-sized addition — the
+   first item in this list that needs its own design pass before starting.
+
+**Tier 2 (wanted, lower priority):**
+5. **AI rehearsal coach** ("Magic Polish", pace/posture feedback) — needs
+   an LLM backend and likely Vision-framework posture analysis from the
+   camera. Runs against CLAUDE.md's no-third-party-dependencies-without-
+   discussion rule and introduces a different trust model (network calls)
+   than anything else in Atelier — needs its own conversation before
+   scoping, not just a design pass.
+6. **Live meeting captions** — system audio capture + speech-to-text,
+   another sizable subsystem on top of #4.
+
+**Feasibility note:** items 1–3 are genuinely small, in-pattern additions.
+Item 4 is a real subsystem on its own. Items 5–6 are close to a second,
+network-connected app living inside Atelier's shell — treat as a separate
+phase with its own plan, not folded into whichever phase ships 1–4.
+
+---
+
 ## Not pulled from the survey
 
 - **Clipboard history** — excluded, user already uses Maccy.

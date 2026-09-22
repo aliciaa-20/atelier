@@ -94,9 +94,10 @@ struct NotchRootView: View {
 
                 if viewModel.state == .expanded {
                     VStack(spacing: 0) {
-                        // Shelf toggled off in Settings leaves only Home --
-                        // no point showing a switcher with one destination.
-                        if AtelierSettings.shelfEnabled {
+                        // Both Shelf and System Monitor toggled off in
+                        // Settings leaves only Home -- no point showing a
+                        // switcher with one destination.
+                        if NotchTabBar.activePages.count > 1 {
                             NotchTabBar(currentPage: viewModel.currentPage) { page in
                                 withAnimation(NotchAnimations.open) {
                                     viewModel.selectPage(page)
@@ -110,16 +111,24 @@ struct NotchRootView: View {
                             // `notchHeight: 0`, having been superseded by
                             // this tab bar) left the whole header reading as
                             // floating in dead space rather than sitting
-                            // flush under the real notch.
-                            .padding(.top, viewModel.collapsedSize.height + 4)
+                            // flush under the real notch. Bumped `+4` to
+                            // `+5.5` -- the dots sat 1.5px into the real
+                            // notch's own dead zone at the physical cutout's
+                            // edge, confirmed on-device. Eased to `+5` on a
+                            // later pass asking for it tighter still -- a
+                            // small nudge, not back toward `+4`, since that
+                            // exact value is what caused the original
+                            // overlap; worth confirming on-device again
+                            // before going lower.
+                            .padding(.top, viewModel.collapsedSize.height + 5)
                         } else {
-                            Color.clear.frame(height: viewModel.collapsedSize.height + 4)
+                            Color.clear.frame(height: viewModel.collapsedSize.height + 5)
                         }
 
                         if AtelierSettings.shelfEnabled, viewModel.currentPage == .shelf {
                             ShelfView(store: shelfStore, rootDirectory: shelfStore.rootDirectory, notchHeight: 0)
                                 .onAppear { shelfStore.sweepExpired() }
-                        } else if viewModel.currentPage == .systemMonitor {
+                        } else if AtelierSettings.systemMonitorEnabled, viewModel.currentPage == .systemMonitor {
                             SystemMonitorPageView(source: systemMonitor)
                         } else {
                             ExpandedPlayerView(
@@ -144,6 +153,22 @@ struct NotchRootView: View {
                             }
                         }
                     }
+                    // Root cause of the idle clock bleeding past the
+                    // bottom rounded corner: this VStack (tab bar +
+                    // content) has no explicit height, so its *natural*
+                    // size is shorter than the ZStack's fixed
+                    // `frameSize.height` whenever the shown content is
+                    // itself compact (e.g. `IdleHomeView`'s two lines) --
+                    // and `ZStack`'s default `.center` alignment then
+                    // centers the whole block vertically in the leftover
+                    // space, pushing it down *in addition to* the tab
+                    // bar's own top clearance. `SystemMonitorPageView`/
+                    // `ShelfView` happened to mask this by already
+                    // declaring their own `maxHeight: .infinity`, but
+                    // `ExpandedPlayerView` doesn't -- fixing it here, at
+                    // the shared wrapper, rather than in each page
+                    // individually, so no future page can reintroduce it.
+                    .frame(maxHeight: .infinity, alignment: .top)
                     .transition(.opacity)
                 } else if viewModel.state == .peeking {
                     if let topContent = liveActivity.topContent ?? lastPeekContent {

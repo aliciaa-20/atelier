@@ -42,6 +42,10 @@ struct IdleHomeView: View {
             }
             .foregroundStyle(.white)
             .frame(maxWidth: .infinity, alignment: .center)
+            // Scoped here, not on the shared `ExpandedPlayerView` bottom
+            // padding -- that one also governs the transport row's
+            // spacing in the playing state, unrelated to this ask.
+            .padding(.bottom, 1)
         }
     }
 }
