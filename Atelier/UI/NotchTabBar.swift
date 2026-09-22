@@ -37,9 +37,16 @@ struct NotchTabBar: View {
     /// Read live, not cached -- a settings toggle flipped in the menu bar
     /// takes effect on this view's next natural re-render (a hover, a
     /// track change) rather than needing a dedicated observation bridge
-    /// for a `UserDefaults` value.
+    /// for a `UserDefaults` value. System Monitor has no settings toggle
+    /// of its own yet (unlike Shelf) -- it's ambient, always-on info like
+    /// Battery's pill icon, so it always gets a tab.
     private var activePages: [NotchPage] {
-        AtelierSettings.shelfEnabled ? NotchPage.allCases : [.home]
+        var pages: [NotchPage] = [.home]
+        if AtelierSettings.shelfEnabled {
+            pages.append(.shelf)
+        }
+        pages.append(.systemMonitor)
+        return pages
     }
 
     var body: some View {
@@ -78,6 +85,7 @@ private extension NotchPage {
         switch self {
         case .home: "Home"
         case .shelf: "Shelf"
+        case .systemMonitor: "System Monitor"
         }
     }
 }

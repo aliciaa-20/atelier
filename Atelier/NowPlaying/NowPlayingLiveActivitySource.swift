@@ -20,6 +20,10 @@ enum NotchLiveActivityPriority {
     static let nowPlaying = 10
     static let airpods = 6
     static let battery = 5
+    /// Lowest of all -- the least urgent ambient signal in the app (see
+    /// `SystemMonitorActivityContent`'s own doc comment). Only reaches the
+    /// pill when nothing else, including Battery, has anything to show.
+    static let systemMonitor = 4
 }
 
 /// Wraps the existing `NowPlayingCoordinator` as a `LiveActivitySource`,

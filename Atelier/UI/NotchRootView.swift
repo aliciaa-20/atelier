@@ -7,6 +7,7 @@ struct NotchRootView: View {
     @ObservedObject var liveActivity: LiveActivityCoordinator
     @ObservedObject var audioTap: AudioTap
     @ObservedObject var shelfStore: ShelfStore
+    @ObservedObject var systemMonitor: SystemMonitorSource
     @StateObject private var artworkColor = ArtworkColorLoader()
     @State private var settleScale: CGFloat = 1
     @State private var outputDevices: [AudioOutputDevice] = []
@@ -118,6 +119,8 @@ struct NotchRootView: View {
                         if AtelierSettings.shelfEnabled, viewModel.currentPage == .shelf {
                             ShelfView(store: shelfStore, rootDirectory: shelfStore.rootDirectory, notchHeight: 0)
                                 .onAppear { shelfStore.sweepExpired() }
+                        } else if viewModel.currentPage == .systemMonitor {
+                            SystemMonitorPageView(source: systemMonitor)
                         } else {
                             ExpandedPlayerView(
                                 info: nowPlaying.current,

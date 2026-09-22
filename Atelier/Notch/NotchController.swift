@@ -19,6 +19,10 @@ final class NotchController {
     private let volumeSource: VolumeSource
     private let brightnessSource: BrightnessSource
     private let batterySource: BatterySource
+    /// Owned here, not just by `liveActivityCoordinator`'s source list, so
+    /// `NotchRootView` has a stable instance to bind `NotchPage.systemMonitor`'s
+    /// tab content to -- same reasoning as `batterySource` above.
+    private let systemMonitorSource: SystemMonitorSource
     /// Installs its `CGEventTap` on creation and tears it down on deinit --
     /// held for exactly that lifetime, same as `panel`/`viewModel`.
     private let mediaKeyInterceptor: MediaKeyInterceptor
@@ -105,9 +109,11 @@ final class NotchController {
             let volumeSource = VolumeSource(notchHeight: 0, hudOrder: hudOrder)
             let brightnessSource = BrightnessSource(notchHeight: 0, hudOrder: hudOrder)
             let batterySource = BatterySource(notchHeight: 0)
+            let systemMonitorSource = SystemMonitorSource(notchHeight: 0)
             self.volumeSource = volumeSource
             self.brightnessSource = brightnessSource
             self.batterySource = batterySource
+            self.systemMonitorSource = systemMonitorSource
             let lockScreenManager = LockScreenManager()
             self.lockScreenManager = lockScreenManager
             self.lockScreenPanelController = LockScreenPanelController(
@@ -121,7 +127,8 @@ final class NotchController {
                 batterySource,
                 ScreenRecordingSource(notchHeight: 0),
                 volumeSource,
-                brightnessSource
+                brightnessSource,
+                systemMonitorSource
                 // AirPodsSource intentionally not registered -- see the
                 // comment at the other call site below.
             ])
@@ -131,7 +138,8 @@ final class NotchController {
                     nowPlaying: nowPlayingCoordinator,
                     liveActivity: liveActivityCoordinator,
                     audioTap: audioTap,
-                    shelfStore: shelfStore
+                    shelfStore: shelfStore,
+                    systemMonitor: systemMonitorSource
                 )
             )
             return
@@ -156,9 +164,11 @@ final class NotchController {
         let volumeSource = VolumeSource(notchHeight: collapsedRect.height, hudOrder: hudOrder)
         let brightnessSource = BrightnessSource(notchHeight: collapsedRect.height, hudOrder: hudOrder)
         let batterySource = BatterySource(notchHeight: collapsedRect.height)
+        let systemMonitorSource = SystemMonitorSource(notchHeight: collapsedRect.height)
         self.volumeSource = volumeSource
         self.brightnessSource = brightnessSource
         self.batterySource = batterySource
+        self.systemMonitorSource = systemMonitorSource
         let lockScreenManager = LockScreenManager()
         self.lockScreenManager = lockScreenManager
         self.lockScreenPanelController = LockScreenPanelController(
@@ -172,7 +182,8 @@ final class NotchController {
             batterySource,
             ScreenRecordingSource(notchHeight: collapsedRect.height),
             volumeSource,
-            brightnessSource
+            brightnessSource,
+            systemMonitorSource
         ])
         let expandedSize = CGSize(
             width: Self.expandedWidth,
@@ -221,7 +232,8 @@ final class NotchController {
                 nowPlaying: nowPlayingCoordinator,
                 liveActivity: liveActivityCoordinator,
                 audioTap: audioTap,
-                shelfStore: shelfStore
+                shelfStore: shelfStore,
+                systemMonitor: systemMonitorSource
             )
         )
         panel.setFrame(maxRect, display: true)

@@ -648,9 +648,21 @@ widget plugged into Phase 6's architecture.*
 
 See [FEATURES.md §6](FEATURES.md#6-productivity-widgets).
 
-### ⬜ Phase 13 — System resource monitor
+### 🟨 Phase 13 — System resource monitor (partial)
 *Ships: CPU/GPU/memory/network/disk usage and SMC-based temperature.*
 **Depends on Phase 6.**
+
+Only a slice shipped so far: CPU load % and memory-used %, via public
+Mach `host_statistics`/`host_statistics64` (`SystemMonitorSource`,
+`Atelier/Widgets/SystemMonitor/`), lowest pill priority, 4s poll, plus a
+third `NotchPage.systemMonitor` tab (`SystemMonitorPageView.swift`)
+alongside Home/Shelf for a full-size view independent of pill priority.
+GPU, network, disk, and SMC-based temperature (the parts that need
+private/SMC access, per the "Stats" project credit) are **not built**.
+**Manual on-device verification not done** — build and the 129-test unit
+suite pass, but whether the Mach calls read sane numbers on real
+hardware, and whether the pill/tab actually look right, hasn't been
+visually confirmed.
 
 See [FEATURES.md §7](FEATURES.md#7-system-resource-monitor).
 
