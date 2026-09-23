@@ -95,6 +95,15 @@ credited via [Ebullioscopic/Atoll's own README](https://github.com/Ebullioscopic
 | [OpenUsage](https://github.com/robinebers/openusage) | LLM usage tracking |
 | [OpenRouter](https://openrouter.ai) | API for automated model pricing |
 
+Additional sources found directly (not via Atoll's acknowledgments):
+
+| Source | Relevant for |
+|---|---|
+| [CueNotch](https://cuenotch.com) | Phase 17 teleprompter/Ghost Mode, primary reference (commercial, idea only) |
+| [jpomykala/NotchPrompter](https://github.com/jpomykala/NotchPrompter) | Ghost Mode mechanism (`NSWindow.sharingType = .none`), open-source, pulled directly |
+| [Avocado](https://avocadonotch.com) | Voice-synced scrolling shape (real speech recognition), Focus Guide idea for Phase 17 |
+| [Aboudjem/Sleepless](https://github.com/Aboudjem/Sleepless) | "Keep awake with lid closed" backlog item — `pmset disablesleep` mechanism, open-source MIT |
+
 This list also lives in the root `CLAUDE.md` — update both if you add a repo.
 
 ## Procedure
