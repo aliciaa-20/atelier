@@ -173,6 +173,24 @@ credited via [Ebullioscopic/Atoll's own README](https://github.com/Ebullioscopic
 - [**OpenRouter**](https://openrouter.ai) — API for automated model
   pricing.
 
+Additional sources found directly (not via Atoll's acknowledgments), for
+specific backlog items:
+- [**CueNotch**](https://cuenotch.com) — primary reference for Phase 17's
+  teleprompter/Ghost Mode; commercial, credited for the product idea only.
+- [**jpomykala/NotchPrompter**](https://github.com/jpomykala/NotchPrompter) —
+  open-source; its `PrompterWindow.swift` is where the Ghost Mode mechanism
+  (`NSWindow.sharingType = .none`) was confirmed for Phase 17.
+- [**Avocado**](https://avocadonotch.com) — commercial teleprompter app;
+  confirms voice-synced scrolling as real on-device speech recognition
+  (not just a mic-level meter) and is the source of the Focus Guide idea
+  (dim read lines, highlight current) in Phase 17's scope.
+- [**Aboudjem/Sleepless**](https://github.com/Aboudjem/Sleepless) —
+  open-source, MIT; the reference for the "keep awake with lid closed"
+  backlog idea. Uses `sudo pmset -a disablesleep 1` (undocumented but
+  real) via a narrowly-scoped, one-time-authorized passwordless sudoers
+  grant — see the feature's own backlog entry in `FEATURES.md` for the
+  safety tradeoffs before building anything from this.
+
 This list is also kept in the `check-reference-apps-first` skill
 (`.claude/skills/check-reference-apps-first/SKILL.md`) — update both if you
 add a repo.
