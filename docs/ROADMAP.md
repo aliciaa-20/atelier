@@ -5,7 +5,11 @@ something runnable, a green test suite, and a commit. Source of truth for the
 overall plan is [the design spec](superpowers/specs/2026-08-31-atelier-notch-design.md);
 this file tracks progress against it.
 
-**Where we are:** Phases 0–8 code-complete, Phases 9 and 10 in progress.
+**Where we are:** Phases 0–12 shipped. Phase 13 (system resource monitor)
+and Phase 18 (Liquid Glass notch background) are both 🟨 partial — see
+their entries below for what's still open (Phase 18 has one known
+unresolved visual bug on close). Phases 9 and 10 detail below is kept as
+historical context from when they were in progress.
 A post-v1 feature request landed out of band from the phase survey — a
 Home/Shelf tab switcher for the expanded notch, plus real idle-Home content
 (date/time + battery %, in its own smaller footprint than the player) —
