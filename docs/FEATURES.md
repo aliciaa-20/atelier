@@ -163,28 +163,37 @@ implementation.
 
 | Feature | Source(s) |
 |---|---|
-| Script scrolling near the camera/notch, hidden from screen shares and recordings, voice-synced pacing, AI rehearsal coaching, live captions | [CueNotch](https://cuenotch.com) |
+| Script scrolling near the camera/notch, hidden from screen shares and recordings, voice-synced pacing, AI rehearsal coaching, live captions | [CueNotch](https://cuenotch.com) (primary reference — closest to what's wanted), [jpomykala/NotchPrompter](https://github.com/jpomykala/NotchPrompter), [Avocado](https://avocadonotch.com) |
 
-Not an open-source repo (commercial app) — credited by name for the product
-idea, not pulled as source. Direct feedback split this into two tiers, in
+CueNotch and Avocado are commercial apps (not open-source) — credited by
+name for the product idea, not pulled as source. NotchPrompter is
+open-source MIT and was pulled directly: its `PrompterWindow.swift`
+confirms the Ghost Mode mechanism below (`window.sharingType = .none`) and
+its `AudioMonitor.swift` is a simple mic-RMS meter, not the voice-synced
+pacing item 4 needs. Direct feedback split this into two tiers, in
 priority order:
 
 **Tier 1 (wanted, in order):**
 1. **Scrolling script view** — a `NotchPage` tab, same shape as
    `SystemMonitorPageView`/`ShelfView`: a `ScrollView` with a timer-driven
-   auto-scroll, manual pace control. No new subsystem.
+   auto-scroll, manual pace control. No new subsystem. **Focus Guide**
+   (Avocado): dim already-read lines, highlight the current line — a small,
+   self-contained addition to this same view, no new subsystem.
 2. **Ghost Mode** — `NSWindow.sharingType = .none` excludes a window from
    screen capture (ScreenCaptureKit, screenshots, Zoom/Meet capture) while
    staying visible on the real display. Public AppKit API, no entitlement,
-   no private symbol. Atelier already tracks screen-recording state
-   (`ScreenRecordingSource`), so this slots into the existing pattern rather
-   than needing new plumbing.
+   no private symbol. Confirmed via NotchPrompter's own use of it. Atelier
+   already tracks screen-recording state (`ScreenRecordingSource`), so this
+   slots into the existing pattern rather than needing new plumbing.
 3. **Script library** — folders + search, same shape as `ShelfStore`'s
    existing JSON-manifest + file-storage pattern (`Shelf/ShelfStore.swift`).
 4. **Voice-synced scrolling** — tracks actual speaking pace via
-   `SFSpeechRecognizer` streaming from the mic. A real subsystem (live audio
-   pipeline, latency/accuracy tuning), not a widget-sized addition — the
-   first item in this list that needs its own design pass before starting.
+   `SFSpeechRecognizer` streaming from the mic. Avocado confirms this is
+   the real shape (on-device speech recognition, adaptive to natural
+   reading pace, not just a volume meter — NotchPrompter's `AudioMonitor`
+   is not this). A real subsystem (live audio pipeline, latency/accuracy
+   tuning), not a widget-sized addition — the first item in this list that
+   needs its own design pass before starting.
 
 **Tier 2 (wanted, lower priority):**
 5. **AI rehearsal coach** ("Magic Polish", pace/posture feedback) — needs
@@ -200,6 +209,46 @@ priority order:
 Item 4 is a real subsystem on its own. Items 5–6 are close to a second,
 network-connected app living inside Atelier's shell — treat as a separate
 phase with its own plan, not folded into whichever phase ships 1–4.
+
+---
+
+## 11. Keep awake with lid closed
+
+| Feature | Source(s) |
+|---|---|
+| Keep the Mac running (agents, builds, downloads) with the lid closed, without needing an external display | [Aboudjem/Sleepless](https://github.com/Aboudjem/Sleepless) (MIT, pulled directly), [Amphetamine](https://apps.apple.com/in/app/amphetamine/id937984704?mt=12), [Never Sleep](https://apps.apple.com/us/app/never-sleep-even-lid-closed/id1574505861?mt=12) |
+
+**User-requested, approved to build — spec written, not yet implemented.**
+See [the design spec](superpowers/specs/2026-09-23-keep-awake-lid-closed-design.md)
+for the full architecture, consent/revoke requirements, and safety nets.
+Motivation: coding agents (Claude Code sessions etc.) should keep running
+unattended when the lid is closed, not just while the screen is open.
+
+**Mechanism (confirmed via Sleepless's source):** ordinary power
+assertions (`caffeinate`-style `IOPMAssertionCreateWithName`) do **not**
+override a physical lid-close sleep event — that needs `sudo pmset -a
+disablesleep 1`, an undocumented-but-real `pmset` flag that sets
+`SleepDisabled=Yes` in IORegistry and blocks idle + lid-close sleep, even
+on battery, with no external display required.
+
+**The real tradeoff, not a technical detail:** this requires root every
+time it toggles. Sleepless's answer is a one-time admin authorization
+(Touch ID/password) that installs a narrowly-scoped `/etc/sudoers.d`
+drop-in — passwordless, but *only* for the exact `pmset -a disablesleep
+[0|1]` invocation. After that one grant, toggling needs no further
+prompts. It's runtime-only (`SleepDisabled` resets to 0 on reboot) and
+the grant itself persists on disk until revoked. This is a materially
+different risk shape than anything else in Atelier — everything else so
+far reads system state or uses public, unprivileged APIs; this one writes
+a standing passwordless-sudo grant to the machine. Needs an explicit
+go/no-go from the user before any implementation, independent of how
+small the actual UI ends up being.
+
+**If approved, safety nets worth carrying over from Sleepless:** an
+auto-off timer, a battery-floor cutoff (never drains to empty), a Low
+Power Mode auto-off, and never re-arming itself after reboot or login —
+none of which add a daemon or persist OS state beyond the one sudoers
+grant.
 
 ---
 
