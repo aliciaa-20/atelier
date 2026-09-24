@@ -43,7 +43,7 @@ drop-in away.
 
 ## Status
 
-- **145 tests passing**
+- **163 tests passing**
 - Live phase-by-phase progress: [`docs/ROADMAP.md`](docs/ROADMAP.md)
 - Full feature survey: [`docs/FEATURES.md`](docs/FEATURES.md)
 - Known gap: AirPods support is disabled (a crash in Apple's own
@@ -65,6 +65,14 @@ Unit tests cover pure logic — geometry, state transitions, gesture
 resolution, parsing, audio normalization. Window/panel focus, hardware
 keys, and the audio tap itself are manual-verification only (see
 `CLAUDE.md`).
+
+## Settings
+
+Click the menu-bar icon → **Settings** (⌘, while the menu is open). Five panes:
+General (launch at login, peek, gestures), Appearance (Liquid Glass), Tabs
+(enable and drag to reorder), Widgets (Calendar / Camera / Color Picker
+options) and Permissions (live status of each permission with a shortcut to
+System Settings). Home can be moved like any tab (but not turned off); the notch opens on whichever tab is first.
 
 ## Permissions
 

@@ -39,20 +39,7 @@ struct NotchTabBar: View {
     /// track change) rather than needing a dedicated observation bridge
     /// for a `UserDefaults` value.
     static var activePages: [NotchPage] {
-        var pages: [NotchPage] = [.home]
-        if AtelierSettings.shelfEnabled {
-            pages.append(.shelf)
-        }
-        if AtelierSettings.systemMonitorEnabled {
-            pages.append(.systemMonitor)
-        }
-        if AtelierSettings.calendarEnabled {
-            pages.append(.calendar)
-        }
-        if AtelierSettings.cameraEnabled {
-            pages.append(.camera)
-        }
-        return pages
+        TabOrder.resolve(stored: AtelierSettings.tabOrder, enabled: AtelierSettings.enabledPages)
     }
 
     var body: some View {

@@ -88,11 +88,12 @@ Four layers with deliberate seams. The two pure ones carry the test suite.
 |---|---|---|
 | App shell | `AtelierApp.swift` | `LSUIElement`, no Dock icon, `NSStatusItem` menu |
 | Window | `Notch/NotchPanel.swift`, `Notch/NotchController.swift` | borderless `NSPanel` over the notch |
-| Pure logic | `Notch/NotchGeometry.swift`, `Notch/NotchState.swift`, `Notch/NotchPage.swift`, `Notch/CameraHoldOpen.swift` | **unit tested**, no AppKit imports |
+| Pure logic | `Notch/NotchGeometry.swift`, `Notch/NotchState.swift`, `Notch/NotchPage.swift`, `Notch/CameraHoldOpen.swift`, `Notch/TabOrder.swift` | **unit tested**, no AppKit imports |
 | UI | `UI/*.swift` | SwiftUI, driven by `NotchState` |
 | Data | `NowPlaying/*.swift` | `NowPlayingSource` protocol + per-app implementations |
 | System | `System/*.swift` | `MediaKeyInterceptor` (`CGEventTap`), `AccessibilityPermission`, `CalendarPermission`, `CalendarAppLauncher` (AppleScript into Calendar.app) — manual-verification only, like `NowPlayingSource`'s AppleScript pieces |
 | Widgets | `Widgets/*/*.swift` | `LiveActivitySource` conformers (Battery, Volume, Brightness, AirPods, ScreenRecording, ColorPicker) plus non-`LiveActivitySource` tab data sources (`Calendar/CalendarSource` — read-only EventKit, `CalendarMath` is pure and testable; `Weather/WeatherSource` — CoreLocation + Open-Meteo, cached 30 min, no poll loop, `WeatherModel` is pure and unit-tested; `Camera/CameraMirrorSource` — `AVCaptureSession` + preview layer, runs only while the mirror is live and tapped on, `System/CameraPermission` is its TCC helper) — one folder per widget, manual-verification only like `System/*.swift` (except `ColorPicker`'s hex-formatting math, which is pure and unit-tested) |
+| Settings | `Settings/*.swift`, `Settings/Panes/*.swift`, `System/LaunchAtLogin.swift` | `SettingsWindowController` (own `NSWindow`, activation-policy flip, ADR 0018) + SwiftUI sidebar panes (General, Appearance, Tabs, Widgets, Permissions). Manual-verification only; `TabOrder` (pure, in `Notch/`) is the tested part |
 | Shelf | `Shelf/*.swift` | `ShelfItem` (pure, unit-tested) + `ShelfStore` (file I/O, JSON manifest, lazy expiry sweep — unit-tested against real temp directories, not mocked) |
 | Lock screen | `LockScreen/LockScreenManager.swift`, `LockScreen/LockScreenPanelController.swift`, `System/SkyLightSpaceOperator.swift` | An entirely separate `NSWindow`/lifecycle from `NotchPanel` — macOS hides ordinary user-session windows on lock, so this delegates into a private CGS space (`SkyLightSpaceOperator`, vendored/hardened from Lakr233/SkyLightWindow) instead. Manual-verification only, like `System/*.swift` |
 
