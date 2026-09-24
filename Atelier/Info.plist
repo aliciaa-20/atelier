@@ -28,6 +28,8 @@
 	<string>Atelier taps system audio to drive the live waveform visualizer that reacts to whatever's actually playing.</string>
 	<key>NSBluetoothAlwaysUsageDescription</key>
 	<string>Atelier watches for your AirPods connecting so it can show a quick peek with the model and battery level in the notch.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Atelier shows a live mirror of your camera in the notch. The camera is only on while the mirror is showing, and nothing is recorded or saved.</string>
 	<key>NSCalendarsFullAccessUsageDescription</key>
 	<string>Atelier reads your calendar to show your week and upcoming events in the notch. It never changes or adds events.</string>
 	<key>NSLocationUsageDescription</key>
