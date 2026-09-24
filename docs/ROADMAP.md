@@ -793,6 +793,9 @@ specifically when nothing is playing (closes to `.collapsed` rather than
 on-device video of that specific path to diagnose properly — flagged
 inline in `NotchRootView.swift` rather than guessed at further.
 
+**Rework parked (2026-09-24):** it reads as transparency, not glass. Research
+and options in [docs/research/liquid-glass-apple-guidance.md](research/liquid-glass-apple-guidance.md).
+
 **Menu-bar settings UI is a known placeholder**, not a finished design —
 a redesign of the whole menu-bar settings surface (this toggle/slider
 included) is planned as separate follow-up work, not blocking this from
