@@ -7,9 +7,9 @@ import CoreGraphics
 enum NotchLayout {
     static let pageHorizontalInset: CGFloat = 26
 
-    /// Idle Home's weather detail card (glyph/temp row, quip, 3-day row).
+    /// Idle Home's weather detail card (glyph/temp row, quip, 5-day row).
     /// Starting value -- tune on-device.
-    static let idleWeatherDetailContentHeight: CGFloat = 132
+    static let idleWeatherDetailContentHeight: CGFloat = 144
 
     // MARK: Calendar page height
     // The page grows with the selected day's events instead of always

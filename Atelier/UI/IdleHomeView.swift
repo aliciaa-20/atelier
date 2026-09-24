@@ -42,7 +42,9 @@ struct IdleHomeView: View {
     var body: some View {
         if showDetail, let snap = weather.visibleSnapshot {
             WeatherDetailView(snapshot: snap, onClose: toggleDetail)
-                .padding(.bottom, 2.5)
+                // Extra bottom room: the panel's rounded bottom corners
+                // swallow the last row otherwise.
+                .padding(.bottom, 10)
                 .transition(.opacity)
         } else {
             clock
