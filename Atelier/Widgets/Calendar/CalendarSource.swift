@@ -41,6 +41,17 @@ final class CalendarSource: ObservableObject {
     @Published private(set) var calendars: [CalendarInfo] = []
     @Published private(set) var weekStart: Date
     @Published var selectedDay: Date
+    /// How far past `selectedDay` the finger is toward the next/previous day
+    /// (-0.5...0.5) during a scroll-style swipe; 0 at rest. Drives the moving
+    /// indicator in `CalendarPageView`.
+    @Published private(set) var scrubFraction: CGFloat = 0
+    /// Set for the duration of a scroll-style swipe: the day it started on.
+    @Published private(set) var scrubBaseDay: Date?
+    var isScrubbing: Bool { scrubBaseDay != nil }
+    /// The day that drives the panel's height. Frozen at the swipe's start
+    /// day while scrubbing -- otherwise the notch would resize on every day
+    /// crossed and jitter -- and released when the finger lifts.
+    var layoutDay: Date { scrubBaseDay ?? selectedDay }
 
     private let store = EKEventStore()
     private var calendar: Calendar { .current }
@@ -88,6 +99,30 @@ final class CalendarSource: ObservableObject {
         selectedDay = today
         weekStart = newWeekStart
         if weekChanged { loadEvents() }
+    }
+
+    /// Called on every update of a scroll-style swipe with the gesture's total
+    /// horizontal distance. Event-driven: only touches EventKit when the
+    /// visible week actually changes.
+    func scrub(totalDX: CGFloat) {
+        if scrubBaseDay == nil { scrubBaseDay = selectedDay }
+        guard let base = scrubBaseDay else { return }
+        let resolved = CalendarScrub.resolve(totalDX: totalDX)
+        let day = calendar.date(byAdding: .day, value: resolved.dayOffset, to: base) ?? base
+        if day != selectedDay {
+            selectedDay = day
+            let newWeekStart = CalendarMath.startOfWeek(containing: day, calendar: calendar)
+            if newWeekStart != weekStart {
+                weekStart = newWeekStart
+                loadEvents()
+            }
+        }
+        scrubFraction = resolved.fraction
+    }
+
+    func endScrub() {
+        scrubBaseDay = nil
+        scrubFraction = 0
     }
 
     func selectDay(_ day: Date) {
