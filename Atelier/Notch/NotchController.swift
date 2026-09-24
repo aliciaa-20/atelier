@@ -73,6 +73,8 @@ final class NotchController {
     /// `ShelfView`'s own column width. Shorter than `playerContentHeight`
     /// since there's no scrubber/transport row.
     private static let shelfContentHeight: CGFloat = 90
+    /// Header + week strip + ~2 agenda rows. Starting guess -- tune on-device.
+    private static let calendarContentHeight: CGFloat = 178
     /// Extra width added on top of the real, measured notch width
     /// (`collapsedRect.width`, from `NotchGeometry.notchRect` -- 185pt on
     /// the Atelier MacBook, see `NotchGeometryTests`), not a standalone
@@ -117,7 +119,7 @@ final class NotchController {
         shelfStore.sweepExpired()
 
         guard let screen = NSScreen.notchedOrMain else {
-            viewModel = NotchViewModel(collapsedSize: .zero, expandedSize: .zero, idleHomeSize: .zero, pillSize: .zero, peekSize: .zero, compactPeekSize: .zero, shelfSize: .zero)
+            viewModel = NotchViewModel(collapsedSize: .zero, expandedSize: .zero, idleHomeSize: .zero, pillSize: .zero, peekSize: .zero, compactPeekSize: .zero, shelfSize: .zero, calendarSize: .zero)
             let hudOrder = SystemHUDOrder()
             let volumeSource = VolumeSource(notchHeight: 0, hudOrder: hudOrder)
             let brightnessSource = BrightnessSource(notchHeight: 0, hudOrder: hudOrder)
@@ -229,6 +231,10 @@ final class NotchController {
             width: Self.expandedWidth,
             height: collapsedRect.height + Self.shelfContentHeight
         )
+        let calendarSize = CGSize(
+            width: Self.expandedWidth,
+            height: collapsedRect.height + Self.calendarContentHeight
+        )
         viewModel = NotchViewModel(
             collapsedSize: collapsedRect.size,
             expandedSize: expandedSize,
@@ -236,14 +242,17 @@ final class NotchController {
             pillSize: pillSize,
             peekSize: peekSize,
             compactPeekSize: compactPeekSize,
-            shelfSize: shelfSize
+            shelfSize: shelfSize,
+            calendarSize: calendarSize
         )
 
+        // Invariant 3: the panel is the maximum footprint of any page.
+        let maxHeight = max(expandedSize.height, calendarSize.height)
         let maxRect = CGRect(
             x: collapsedRect.midX - expandedSize.width / 2,
-            y: collapsedRect.maxY - expandedSize.height,
+            y: collapsedRect.maxY - maxHeight,
             width: expandedSize.width,
-            height: expandedSize.height
+            height: maxHeight
         )
 
         panel.contentView = ClickThroughHostingView(
