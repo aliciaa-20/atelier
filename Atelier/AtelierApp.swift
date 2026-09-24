@@ -32,6 +32,8 @@ struct AtelierApp: App {
     @AppStorage(AtelierSettings.shelfEnabledKey) private var shelfEnabled = true
     @AppStorage(AtelierSettings.systemMonitorEnabledKey) private var systemMonitorEnabled = true
     @AppStorage(AtelierSettings.calendarEnabledKey) private var calendarEnabled = true
+    @AppStorage(AtelierSettings.cameraEnabledKey) private var cameraEnabled = true
+    @AppStorage(AtelierSettings.cameraHoldOpenKey) private var cameraHoldOpen = false
     @AppStorage(AtelierSettings.calendarScrollSwipeKey) private var calendarScrollSwipe = true
     @AppStorage(AtelierSettings.calendarAppBundleIDKey) private var calendarAppBundleID = CalendarAppLauncher.defaultBundleID
     @AppStorage(AtelierSettings.colorPickerEnabledKey) private var colorPickerEnabled = true
@@ -85,6 +87,10 @@ struct AtelierApp: App {
                         Button("Calendar opens in: \(CalendarAppLauncher.displayName(for: calendarAppBundleID))…") {
                             if let id = CalendarAppLauncher.chooseApp() { calendarAppBundleID = id }
                         }
+                    }
+                    Toggle("Enable Camera Mirror", isOn: $cameraEnabled)
+                    if cameraEnabled {
+                        Toggle("Camera: keep notch open while mirror is on", isOn: $cameraHoldOpen)
                     }
                     Toggle("Enable Color Picker", isOn: $colorPickerEnabled)
                 }
