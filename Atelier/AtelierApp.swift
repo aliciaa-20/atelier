@@ -25,42 +25,42 @@ struct AtelierApp: App {
     }
 
     var body: some Scene {
+        // Native `.menu` style: a plain NSMenu (rows, shortcut hints on the
+        // right) like every other menu-bar app. The old `.window` style was
+        // only needed for the glass-intensity `Slider`, which now lives in
+        // the Settings window.
         MenuBarExtra(
             "Atelier",
             systemImage: "rectangle.topthird.inset.filled",
             isInserted: .constant(!Self.isRunningTests)
         ) {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Atelier 0.1.0")
+            Text("Atelier 0.1.0")
 
-                Divider()
+            Divider()
 
-                // ⌘, works while this popover has focus; a global ⌘, would
-                // need a real main menu, which an accessory app doesn't have.
-                Button("Settings…") {
-                    SettingsWindowController.shared.show()
-                }
-                .keyboardShortcut(",")
-
-                // An action, not a setting, so it stays here. Hidden once
-                // turned off (Widgets pane), same "no leftover way in"
-                // reasoning as before.
-                if colorPickerEnabled {
-                    Button("Pick a Color…") {
-                        notchController?.pickColor()
-                    }
-                }
-
-                Divider()
-
-                Button("Quit Atelier") {
-                    NSApplication.shared.terminate(nil)
-                }
-                .keyboardShortcut("q")
+            // ⌘, works while this menu is open; a global ⌘, would need a
+            // real main menu, which an accessory app doesn't have.
+            Button("Settings…") {
+                SettingsWindowController.shared.show()
             }
-            .padding(12)
-            .frame(width: 200)
+            .keyboardShortcut(",")
+
+            // An action, not a setting, so it stays here. Hidden once
+            // turned off (Widgets pane), same "no leftover way in"
+            // reasoning as before.
+            if colorPickerEnabled {
+                Button("Pick a Color…") {
+                    notchController?.pickColor()
+                }
+            }
+
+            Divider()
+
+            Button("Quit Atelier") {
+                NSApplication.shared.terminate(nil)
+            }
+            .keyboardShortcut("q")
         }
-        .menuBarExtraStyle(.window)
+        .menuBarExtraStyle(.menu)
     }
 }
