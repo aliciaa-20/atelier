@@ -8,6 +8,7 @@ enum NotchPage: Hashable, CaseIterable {
     case shelf
     case systemMonitor
     case calendar
+    case camera
 }
 
 /// Decides `NotchPage` alongside `NotchStateMachine.reduce` — kept pure

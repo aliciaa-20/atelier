@@ -43,4 +43,16 @@ struct NotchPageTransitionTests {
 
         #expect(result == .home)
     }
+
+    @Test func collapsedResetsToHomeEvenIfCameraWasSelected() {
+        let result = NotchPageTransition.page(for: .collapsed, currentPage: .camera)
+
+        #expect(result == .home)
+    }
+
+    @Test func expandedPreservesCameraPage() {
+        let result = NotchPageTransition.page(for: .expanded, currentPage: .camera)
+
+        #expect(result == .camera)
+    }
 }
