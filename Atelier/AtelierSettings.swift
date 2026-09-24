@@ -9,6 +9,7 @@ enum AtelierSettings {
     static let gesturesEnabledKey = "gesturesEnabled"
     static let shelfEnabledKey = "shelfEnabled"
     static let systemMonitorEnabledKey = "systemMonitorEnabled"
+    static let calendarEnabledKey = "calendarEnabled"
     static let colorPickerEnabledKey = "colorPickerEnabled"
     static let glassEffectEnabledKey = "glassEffectEnabled"
     static let glassIntensityKey = "glassIntensity"
@@ -19,6 +20,7 @@ enum AtelierSettings {
             gesturesEnabledKey: true,
             shelfEnabledKey: true,
             systemMonitorEnabledKey: true,
+            calendarEnabledKey: true,
             colorPickerEnabledKey: true,
             // Off by default -- ships conservatively (today's flat-black
             // look) until a user opts in, rather than changing the
@@ -50,6 +52,13 @@ enum AtelierSettings {
     /// disabled means no Mach syscalls every 4s, not just a hidden tab.
     static var systemMonitorEnabled: Bool {
         UserDefaults.standard.bool(forKey: systemMonitorEnabledKey)
+    }
+
+    /// Gates the Calendar tab's visibility. Read-only EventKit, so the
+    /// only cost when off is the tab -- no permission prompt is raised
+    /// until the tab is actually opened.
+    static var calendarEnabled: Bool {
+        UserDefaults.standard.bool(forKey: calendarEnabledKey)
     }
 
     /// Gates both the "Pick a Color..." menu item's visibility and

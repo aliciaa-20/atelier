@@ -46,6 +46,9 @@ struct NotchTabBar: View {
         if AtelierSettings.systemMonitorEnabled {
             pages.append(.systemMonitor)
         }
+        if AtelierSettings.calendarEnabled {
+            pages.append(.calendar)
+        }
         return pages
     }
 
@@ -92,6 +95,7 @@ private extension NotchPage {
         case .home: "Home"
         case .shelf: "Shelf"
         case .systemMonitor: "System Monitor"
+        case .calendar: "Calendar"
         }
     }
 }

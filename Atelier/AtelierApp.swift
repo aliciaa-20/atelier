@@ -31,6 +31,7 @@ struct AtelierApp: App {
     @AppStorage(AtelierSettings.gesturesEnabledKey) private var gesturesEnabled = true
     @AppStorage(AtelierSettings.shelfEnabledKey) private var shelfEnabled = true
     @AppStorage(AtelierSettings.systemMonitorEnabledKey) private var systemMonitorEnabled = true
+    @AppStorage(AtelierSettings.calendarEnabledKey) private var calendarEnabled = true
     @AppStorage(AtelierSettings.colorPickerEnabledKey) private var colorPickerEnabled = true
     @AppStorage(AtelierSettings.glassEffectEnabledKey) private var glassEffectEnabled = false
     @AppStorage(AtelierSettings.glassIntensityKey) private var glassIntensity = 0.7
@@ -76,6 +77,7 @@ struct AtelierApp: App {
                 Section("Widgets") {
                     Toggle("Enable File Shelf", isOn: $shelfEnabled)
                     Toggle("Enable System Monitor", isOn: $systemMonitorEnabled)
+                    Toggle("Enable Calendar", isOn: $calendarEnabled)
                     Toggle("Enable Color Picker", isOn: $colorPickerEnabled)
                 }
 
