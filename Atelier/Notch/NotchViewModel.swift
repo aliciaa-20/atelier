@@ -29,6 +29,11 @@ final class NotchViewModel: ObservableObject {
     /// row of items, shorter than the full player since there's no
     /// scrubber/transport row to fit.
     let shelfSize: CGSize
+    /// The Calendar tab's own, taller footprint -- a week strip plus a few
+    /// agenda rows doesn't fit the player's 134pt content height. Only
+    /// `NotchRootView.frameSize` picks it (state alone can't say which page
+    /// is showing); the panel itself is already sized to the tallest of these.
+    let calendarSize: CGSize
 
     /// Bumped each time `NotchController` observes the user landing on a
     /// different Space. There's no public API to detect a three-finger swipe
@@ -39,7 +44,7 @@ final class NotchViewModel: ObservableObject {
     /// moment you arrive, so the fixed position reads as deliberate.
     @Published private(set) var spaceChangeTick: Int = 0
 
-    init(collapsedSize: CGSize, expandedSize: CGSize, idleHomeSize: CGSize, pillSize: CGSize, peekSize: CGSize, compactPeekSize: CGSize, shelfSize: CGSize) {
+    init(collapsedSize: CGSize, expandedSize: CGSize, idleHomeSize: CGSize, pillSize: CGSize, peekSize: CGSize, compactPeekSize: CGSize, shelfSize: CGSize, calendarSize: CGSize) {
         self.collapsedSize = collapsedSize
         self.expandedSize = expandedSize
         self.idleHomeSize = idleHomeSize
@@ -47,6 +52,7 @@ final class NotchViewModel: ObservableObject {
         self.peekSize = peekSize
         self.compactPeekSize = compactPeekSize
         self.shelfSize = shelfSize
+        self.calendarSize = calendarSize
     }
 
     func handle(_ event: NotchEvent) {

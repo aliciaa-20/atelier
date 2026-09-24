@@ -102,6 +102,9 @@ struct NotchRootView: View {
             if viewModel.currentPage == .home, nowPlaying.current == nil {
                 return viewModel.idleHomeSize
             }
+            if AtelierSettings.calendarEnabled, viewModel.currentPage == .calendar {
+                return viewModel.calendarSize
+            }
             return viewModel.currentSize
         case .pill, .collapsed, .shelf:
             return viewModel.currentSize
