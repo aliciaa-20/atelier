@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 /// Calendar tab: a header (month + week chevrons), a 7-day strip with
@@ -15,6 +16,7 @@ struct CalendarPageView: View {
             case .granted:
                 VStack(spacing: 6) {
                     header
+                    quip
                     weekStrip
                     agenda
                 }
@@ -28,9 +30,28 @@ struct CalendarPageView: View {
             }
         }
         .padding(.horizontal, NotchLayout.pageHorizontalInset)
-        .padding(.bottom, 8)
+        .padding(.bottom, 10)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .onAppear { source.activate() }
+        .onAppear {
+            source.resetToToday()
+            source.activate()
+        }
+    }
+
+    // MARK: - Quip
+
+    /// Session salt so the line differs between launches, while staying
+    /// stable across re-renders for a given date.
+    private static let sessionSalt = Int.random(in: 0..<1000)
+
+    private var quip: some View {
+        let seed = (calendar.ordinality(of: .day, in: .era, for: source.selectedDay) ?? 0) &+ Self.sessionSalt
+        return Text(WeekdayQuips.quip(forWeekday: calendar.component(.weekday, from: source.selectedDay), seed: seed))
+            .font(.system(size: 11))
+            .foregroundStyle(.white.opacity(0.5))
+            .lineLimit(2)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .allowsHitTesting(false)
     }
 
     // MARK: - Header
@@ -132,15 +153,23 @@ struct CalendarPageView: View {
         let items = source.events(on: source.selectedDay)
         return Group {
             if items.isEmpty {
-                Text("No events")
-                    .font(.system(size: 11))
-                    .foregroundStyle(.white.opacity(0.4))
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .allowsHitTesting(false)
+                Button { openCalendar() } label: {
+                    Text("No events · open Calendar to add one")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.white.opacity(0.4))
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .focusEffectDisabled()
             } else {
                 ScrollView(.vertical, showsIndicators: false) {
-                    VStack(spacing: 4) {
-                        ForEach(items) { agendaRow($0) }
+                    VStack(spacing: NotchLayout.calendarRowSpacing) {
+                        ForEach(items) { item in
+                            Button { openCalendar() } label: { agendaRow(item) }
+                                .buttonStyle(.plain)
+                                .focusEffectDisabled()
+                        }
                     }
                 }
             }
@@ -151,7 +180,7 @@ struct CalendarPageView: View {
         HStack(spacing: 8) {
             Capsule()
                 .fill(item.color.map { Color(cgColor: $0) } ?? Color.white.opacity(0.5))
-                .frame(width: 3, height: 22)
+                .frame(width: 3, height: NotchLayout.calendarRowHeight - 6)
             VStack(alignment: .leading, spacing: 0) {
                 Text(item.title)
                     .font(.system(size: 12, weight: .medium))
@@ -165,6 +194,13 @@ struct CalendarPageView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .combine)
+    }
+
+    /// Opens Calendar.app on the selected day -- adding/editing happens
+    /// there, so the notch never needs write access or text input.
+    private func openCalendar() {
+        let seconds = source.selectedDay.timeIntervalSinceReferenceDate
+        if let url = URL(string: "calshow:\(seconds)") { NSWorkspace.shared.open(url) }
     }
 
     private func timeText(for item: CalendarEventItem) -> String {

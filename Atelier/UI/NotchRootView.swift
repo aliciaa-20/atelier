@@ -90,6 +90,12 @@ struct NotchRootView: View {
     /// earlier pass gave Volume/Brightness their own narrower notch-width
     /// pill, but on-device that read as too cramped; matching the pill
     /// everything else already uses reads more consistent.
+    /// True while the expanded notch is showing the Calendar tab -- the
+    /// horizontal swipe changes week there rather than skipping a track.
+    private var onCalendarPage: Bool {
+        viewModel.state == .expanded && AtelierSettings.calendarEnabled && viewModel.currentPage == .calendar
+    }
+
     private var frameSize: CGSize {
         switch viewModel.state {
         case .peeking:
@@ -103,7 +109,11 @@ struct NotchRootView: View {
                 return viewModel.idleHomeSize
             }
             if AtelierSettings.calendarEnabled, viewModel.currentPage == .calendar {
-                return viewModel.calendarSize
+                let count = calendar.events(on: calendar.selectedDay).count
+                return CGSize(
+                    width: viewModel.calendarSize.width,
+                    height: viewModel.collapsedSize.height + NotchLayout.calendarContentHeight(eventCount: count)
+                )
             }
             return viewModel.currentSize
         case .pill, .collapsed, .shelf:
@@ -385,7 +395,11 @@ struct NotchRootView: View {
                         // disappears), which silently disabled skip too.
                         // `nowPlaying.current` stays populated regardless
                         // of play state, so skipping while paused works.
-                        canSkip: nowPlaying.current != nil
+                        //
+                        // On the Calendar page a horizontal swipe changes
+                        // week instead (see `onSkipForward` below), so
+                        // it's always enabled there.
+                        canSkip: onCalendarPage || nowPlaying.current != nil
                     ),
                     onOpen: {
                         withAnimation(NotchAnimations.open) {
@@ -398,10 +412,18 @@ struct NotchRootView: View {
                         }
                     },
                     onSkipForward: {
-                        Task { await nowPlaying.next() }
+                        if onCalendarPage {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { calendar.shiftWeek(by: 1) }
+                        } else {
+                            Task { await nowPlaying.next() }
+                        }
                     },
                     onSkipBackward: {
-                        Task { await nowPlaying.previous() }
+                        if onCalendarPage {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { calendar.shiftWeek(by: -1) }
+                        } else {
+                            Task { await nowPlaying.previous() }
+                        }
                     }
                 )
             )
