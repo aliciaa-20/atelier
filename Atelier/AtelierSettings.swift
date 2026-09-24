@@ -11,6 +11,7 @@ enum AtelierSettings {
     static let systemMonitorEnabledKey = "systemMonitorEnabled"
     static let calendarEnabledKey = "calendarEnabled"
     static let hiddenCalendarIDsKey = "hiddenCalendarIDs"
+    static let calendarAppBundleIDKey = "calendarAppBundleID"
     static let colorPickerEnabledKey = "colorPickerEnabled"
     static let glassEffectEnabledKey = "glassEffectEnabled"
     static let glassIntensityKey = "glassIntensity"
@@ -22,6 +23,7 @@ enum AtelierSettings {
             shelfEnabledKey: true,
             systemMonitorEnabledKey: true,
             calendarEnabledKey: true,
+            calendarAppBundleIDKey: CalendarAppLauncher.defaultBundleID,
             colorPickerEnabledKey: true,
             // Off by default -- ships conservatively (today's flat-black
             // look) until a user opts in, rather than changing the
@@ -60,6 +62,11 @@ enum AtelierSettings {
     /// until the tab is actually opened.
     static var calendarEnabled: Bool {
         UserDefaults.standard.bool(forKey: calendarEnabledKey)
+    }
+
+    /// Bundle ID of the app the Calendar tab opens (default Calendar.app).
+    static var calendarAppBundleID: String {
+        UserDefaults.standard.string(forKey: calendarAppBundleIDKey) ?? CalendarAppLauncher.defaultBundleID
     }
 
     /// Calendar IDs the user hid from the Calendar tab. A *hidden* list, not
