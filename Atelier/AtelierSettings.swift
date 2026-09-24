@@ -10,6 +10,7 @@ enum AtelierSettings {
     static let shelfEnabledKey = "shelfEnabled"
     static let systemMonitorEnabledKey = "systemMonitorEnabled"
     static let calendarEnabledKey = "calendarEnabled"
+    static let hiddenCalendarIDsKey = "hiddenCalendarIDs"
     static let colorPickerEnabledKey = "colorPickerEnabled"
     static let glassEffectEnabledKey = "glassEffectEnabled"
     static let glassIntensityKey = "glassIntensity"
@@ -59,6 +60,15 @@ enum AtelierSettings {
     /// until the tab is actually opened.
     static var calendarEnabled: Bool {
         UserDefaults.standard.bool(forKey: calendarEnabledKey)
+    }
+
+    /// Calendar IDs the user hid from the Calendar tab. A *hidden* list, not
+    /// a shown list, so a newly created calendar appears by default.
+    /// EventKit doesn't expose Calendar.app's own sidebar checkboxes, so
+    /// this is Atelier's own filter.
+    static var hiddenCalendarIDs: Set<String> {
+        get { Set(UserDefaults.standard.stringArray(forKey: hiddenCalendarIDsKey) ?? []) }
+        set { UserDefaults.standard.set(Array(newValue), forKey: hiddenCalendarIDsKey) }
     }
 
     /// Gates both the "Pick a Color..." menu item's visibility and
