@@ -17,7 +17,7 @@ struct WidgetsPane: View {
             Section("Calendar") {
                 Toggle("Scroll-style week swipe", isOn: $calendarScrollSwipe)
                 LabeledContent("Opens in") {
-                    Button(CalendarAppLauncher.displayName(for: calendarAppBundleID) + "…") {
+                    Button(CalendarAppLauncher.displayName(for: calendarAppBundleID)) {
                         if let id = CalendarAppLauncher.chooseApp() { calendarAppBundleID = id }
                     }
                 }

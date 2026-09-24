@@ -68,7 +68,7 @@ keys, and the audio tap itself are manual-verification only (see
 
 ## Settings
 
-Click the menu-bar icon → **Settings…** (⌘, while the menu is open). Five panes:
+Click the menu-bar icon → **Settings** (⌘, while the menu is open). Five panes:
 General (launch at login, peek, gestures), Appearance (Liquid Glass), Tabs
 (enable and drag to reorder), Widgets (Calendar / Camera / Color Picker
 options) and Permissions (live status of each permission with a shortcut to
