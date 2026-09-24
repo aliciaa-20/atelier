@@ -12,6 +12,7 @@ enum AtelierSettings {
     static let calendarEnabledKey = "calendarEnabled"
     static let hiddenCalendarIDsKey = "hiddenCalendarIDs"
     static let calendarAppBundleIDKey = "calendarAppBundleID"
+    static let calendarScrollSwipeKey = "calendarScrollSwipe"
     static let colorPickerEnabledKey = "colorPickerEnabled"
     static let glassEffectEnabledKey = "glassEffectEnabled"
     static let glassIntensityKey = "glassIntensity"
@@ -23,6 +24,7 @@ enum AtelierSettings {
             shelfEnabledKey: true,
             systemMonitorEnabledKey: true,
             calendarEnabledKey: true,
+            calendarScrollSwipeKey: true,
             calendarAppBundleIDKey: CalendarAppLauncher.defaultBundleID,
             colorPickerEnabledKey: true,
             // Off by default -- ships conservatively (today's flat-black
@@ -62,6 +64,13 @@ enum AtelierSettings {
     /// until the tab is actually opened.
     static var calendarEnabled: Bool {
         UserDefaults.standard.bool(forKey: calendarEnabledKey)
+    }
+
+    /// Scroll-style week swipe (selection follows the finger day-by-day) vs.
+    /// the original one-swipe-one-week. On by default while it's being tried
+    /// out; off restores the discrete swipe exactly.
+    static var calendarScrollSwipeEnabled: Bool {
+        UserDefaults.standard.bool(forKey: calendarScrollSwipeKey)
     }
 
     /// Bundle ID of the app the Calendar tab opens (default Calendar.app).

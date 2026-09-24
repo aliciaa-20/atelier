@@ -109,7 +109,7 @@ struct NotchRootView: View {
                 return viewModel.idleHomeSize
             }
             if AtelierSettings.calendarEnabled, viewModel.currentPage == .calendar {
-                let count = calendar.events(on: calendar.selectedDay).count
+                let count = calendar.events(on: calendar.layoutDay).count
                 return CGSize(
                     width: viewModel.calendarSize.width,
                     height: viewModel.collapsedSize.height + NotchLayout.calendarContentHeight(eventCount: count)
@@ -399,7 +399,8 @@ struct NotchRootView: View {
                         // On the Calendar page a horizontal swipe changes
                         // week instead (see `onSkipForward` below), so
                         // it's always enabled there.
-                        canSkip: onCalendarPage || nowPlaying.current != nil
+                        canSkip: onCalendarPage ? !AtelierSettings.calendarScrollSwipeEnabled : nowPlaying.current != nil,
+                        canScrub: onCalendarPage && AtelierSettings.calendarScrollSwipeEnabled
                     ),
                     onOpen: {
                         withAnimation(NotchAnimations.open) {
@@ -424,7 +425,9 @@ struct NotchRootView: View {
                         } else {
                             Task { await nowPlaying.previous() }
                         }
-                    }
+                    },
+                    onScrub: { calendar.scrub(totalDX: $0) },
+                    onScrubEnded: { calendar.endScrub() }
                 )
             )
             .modifier(
