@@ -36,8 +36,8 @@ struct SettingsView: View {
             // Temporary: each pane below is replaced by its real view in
             // Tasks 2-4.
             switch selection ?? .general {
-            case .general: Text("General")
-            case .appearance: Text("Appearance")
+            case .general: GeneralPane()
+            case .appearance: AppearancePane()
             case .tabs: Text("Tabs")
             case .widgets: Text("Widgets")
             case .permissions: Text("Permissions")
