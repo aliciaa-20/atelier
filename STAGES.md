@@ -20,3 +20,16 @@ First network call in the app — note in README/ADR.
 - [ ] W3. Docs
 
 Later (separate STAGES): camera mirror (Phase 14) -> Settings (Phase 16) -> teleprompter (Phase 17).
+
+## Ideas parked (try later / maybe a user setting)
+
+- **Scroll-style week swipe (2026-09-24).** Instead of one discrete swipe = one week, the
+  swipe scrolls continuously: the selected day follows the finger day-by-day and the
+  selection indicator stretches/expands (like the tab-bar dot capsule) as it cycles.
+  Needs a continuous-progress path in `NotchGestureModifier` (today it only fires discrete
+  `skipForward/Backward` actions; the interpreter already computes `progress`, but nothing
+  streams it out). Keep the current discrete swipe as the default/fallback; make the new
+  one opt-in via a setting. Keep it AppKit-free in the interpreter (Invariant 8).
+- **Whimsy pass (2026-09-24).** The weekday quips were inspired by Claude Code's own cute
+  status words. Same voice could go in: System Monitor loading state ("Simmering…"),
+  empty states, the weather line. Keep it to a few spots so it stays a quirk, not noise.
