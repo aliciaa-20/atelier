@@ -38,13 +38,16 @@ struct IdleHomeView: View {
                     .font(.system(size: 18, weight: .semibold, design: .rounded))
                     .monospacedDigit()
 
-                Text(Self.dateFormatter.string(from: timeline.date))
-                    .font(.caption2)
-                    .foregroundStyle(.white.opacity(0.6))
-
-                if let snap = weather.visibleSnapshot {
-                    weatherRow(snap)
+                // Date and weather share one secondary line so the card keeps
+                // its two-level hierarchy (time hero, one quiet line below).
+                HStack(spacing: 6) {
+                    Text(Self.dateFormatter.string(from: timeline.date))
+                    if let snap = weather.visibleSnapshot {
+                        weatherGlance(snap)
+                    }
                 }
+                .font(.caption2)
+                .foregroundStyle(.white.opacity(0.6))
             }
             .foregroundStyle(.white)
             .frame(maxWidth: .infinity, alignment: .center)
@@ -56,23 +59,18 @@ struct IdleHomeView: View {
         .onAppear { weather.refreshIfStale() }
     }
 
-    /// One quiet line under the date: glyph, temp, and a quip. Unit comes from
-    /// the snapshot (locale-chosen at fetch time).
-    private func weatherRow(_ snap: WeatherSnapshot) -> some View {
+    /// Glyph + temp only. The quip lives in the hover tooltip so the card
+    /// stays calm; the unit comes from the snapshot (chosen by locale).
+    private func weatherGlance(_ snap: WeatherSnapshot) -> some View {
         let condition = snap.currentCondition
         let temp = "\(Int(snap.currentTemp.rounded()))°"
-        return HStack(spacing: 4) {
+        return HStack(spacing: 6) {
+            Text("·").foregroundStyle(.white.opacity(0.35))
             Image(systemName: condition.symbol)
                 .symbolRenderingMode(.multicolor)
             Text(temp).monospacedDigit()
-            Text("·").foregroundStyle(.white.opacity(0.4))
-            Text(condition.quip)
-                .foregroundStyle(.white.opacity(0.6))
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
         }
-        .font(.caption2)
-        .padding(.top, 2)
+        .help(condition.quip)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(condition.label), \(temp)")
     }

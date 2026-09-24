@@ -16,7 +16,7 @@ Shown as icons in the calendar week strip + a compact row on idle Home. Not on t
 First network call in the app — note in README/ADR.
 
 - [x] W1. `WeatherSource` — CoreLocation + Open-Meteo fetch/cache, Info.plist location key
-- [ ] W2. Calendar week-strip icons + Home row
+- [ ] W2. Home weather glance (date line: glyph + temp). Calendar week-strip icons tried and dropped (too cluttered)
 - [ ] W3. Docs
 
 Later (separate STAGES): camera mirror (Phase 14) -> Settings (Phase 16) -> teleprompter (Phase 17).
