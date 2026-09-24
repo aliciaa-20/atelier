@@ -10,7 +10,9 @@ to open and focus from an accessory app.
 ## Decision
 
 `SettingsWindowController` creates a plain `NSWindow` hosting a SwiftUI
-`NavigationSplitView` (sidebar of panes, grouped `Form`s, instant apply). It
+sidebar `List` beside the selected pane (grouped `Form`s, instant apply). Not
+`NavigationSplitView`: it merges with the window toolbar and adds a blurred
+scroll-edge band that panes scrolled under on load, hiding their first section. It
 sets `NSApp.setActivationPolicy(.regular)` when shown and `.accessory` again
 on close, as boring.notch and Atoll do. The window is created on open and
 released on close, so nothing of it stays in memory while it's shut.

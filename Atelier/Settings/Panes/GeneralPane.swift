@@ -32,7 +32,6 @@ struct GeneralPane: View {
             }
         }
         .formStyle(.grouped)
-        .navigationTitle("General")
         // Re-read the real state when returning from System Settings.
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             launchState = LaunchAtLogin.state

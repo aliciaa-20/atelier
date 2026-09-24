@@ -36,7 +36,6 @@ struct TabsPane: View {
             }
         }
         .formStyle(.grouped)
-        .navigationTitle("Tabs")
     }
 
     private static func savedOrder() -> [NotchPage] {

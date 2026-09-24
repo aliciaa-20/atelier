@@ -24,6 +24,5 @@ struct AppearancePane: View {
             }
         }
         .formStyle(.grouped)
-        .navigationTitle("Appearance")
     }
 }
