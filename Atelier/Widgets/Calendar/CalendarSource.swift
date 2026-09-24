@@ -13,6 +13,13 @@ struct CalendarEventItem: Identifiable, Equatable {
     let color: CGColor?
 }
 
+/// One calendar in the tab's filter menu.
+struct CalendarInfo: Identifiable, Equatable {
+    let id: String
+    let title: String
+    var isEnabled: Bool
+}
+
 /// Read-only EventKit feed for `NotchPage.calendar`. Not a
 /// `LiveActivitySource` -- there is no pill for it (yet), so it just owns
 /// state for the tab, like `ShelfStore`.
@@ -31,6 +38,7 @@ final class CalendarSource: ObservableObject {
 
     @Published private(set) var access: Access = .notDetermined
     @Published private(set) var events: [CalendarEventItem] = []
+    @Published private(set) var calendars: [CalendarInfo] = []
     @Published private(set) var weekStart: Date
     @Published var selectedDay: Date
 
@@ -63,6 +71,13 @@ final class CalendarSource: ObservableObject {
     /// Re-check after the user flips the switch in System Settings.
     func recheckAccess() {
         Task { await resolveAccess() }
+    }
+
+    func setCalendar(_ id: String, enabled: Bool) {
+        var hidden = AtelierSettings.hiddenCalendarIDs
+        if enabled { hidden.remove(id) } else { hidden.insert(id) }
+        AtelierSettings.hiddenCalendarIDs = hidden
+        loadEvents()
     }
 
     func selectDay(_ day: Date) {
@@ -111,7 +126,15 @@ final class CalendarSource: ObservableObject {
     private func loadEvents() {
         guard access == .granted,
               let weekEnd = calendar.date(byAdding: .day, value: 7, to: weekStart) else { return }
-        let predicate = store.predicateForEvents(withStart: weekStart, end: weekEnd, calendars: nil)
+        let hidden = AtelierSettings.hiddenCalendarIDs
+        let all = store.calendars(for: .event)
+        calendars = all
+            .map { CalendarInfo(id: $0.calendarIdentifier, title: $0.title, isEnabled: !hidden.contains($0.calendarIdentifier)) }
+            .sorted { $0.title.localizedStandardCompare($1.title) == .orderedAscending }
+        let enabled = all.filter { !hidden.contains($0.calendarIdentifier) }
+        // Empty array is ambiguous to EventKit (nil means "all"), so short-circuit.
+        guard !enabled.isEmpty else { events = []; return }
+        let predicate = store.predicateForEvents(withStart: weekStart, end: weekEnd, calendars: enabled)
         events = store.events(matching: predicate).map {
             CalendarEventItem(
                 id: $0.eventIdentifier ?? UUID().uuidString,

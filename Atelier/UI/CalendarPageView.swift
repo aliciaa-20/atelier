@@ -27,7 +27,7 @@ struct CalendarPageView: View {
                 }
             }
         }
-        .padding(.horizontal, 14)
+        .padding(.horizontal, NotchLayout.pageHorizontalInset)
         .padding(.bottom, 8)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .onAppear { source.activate() }
@@ -41,9 +41,35 @@ struct CalendarPageView: View {
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(.white)
             Spacer()
+            calendarFilter
             chevron("chevron.left", label: "Previous week") { source.shiftWeek(by: -1) }
             chevron("chevron.right", label: "Next week") { source.shiftWeek(by: 1) }
         }
+    }
+
+    /// Which calendars feed the tab. EventKit can't read Calendar.app's own
+    /// sidebar checkboxes, so this is Atelier's own (persisted) filter.
+    private var calendarFilter: some View {
+        Menu {
+            ForEach(source.calendars) { cal in
+                Toggle(cal.title, isOn: Binding(
+                    get: { cal.isEnabled },
+                    set: { source.setCalendar(cal.id, enabled: $0) }
+                ))
+            }
+        } label: {
+            Image(systemName: "line.3.horizontal.decrease")
+                .font(.system(size: 10, weight: .bold))
+                .foregroundStyle(.white.opacity(0.6))
+                .frame(width: 24, height: 20)
+                .contentShape(Rectangle())
+        }
+        .menuStyle(.button)
+        .buttonStyle(.plain)
+        .menuIndicator(.hidden)
+        .focusEffectDisabled()
+        .fixedSize()
+        .accessibilityLabel("Choose calendars")
     }
 
     private func chevron(_ symbol: String, label: String, action: @escaping () -> Void) -> some View {
