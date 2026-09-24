@@ -63,7 +63,7 @@ final class NotchController {
     /// player. At 76 the content (time+date+top/bottom padding) left a lot
     /// of margin -- shrunk to match `IdleHomeView`'s own smaller time font
     /// (22->18) so the card reads as compact rather than mostly empty.
-    private static let idleHomeContentHeight: CGFloat = 56
+    private static let idleHomeContentHeight: CGFloat = 72
     /// Narrower than `expandedWidth` for the same reason -- a short
     /// time/date block doesn't need the full player's width.
     private static let idleHomeWidth: CGFloat = 215
@@ -161,7 +161,8 @@ final class NotchController {
                     audioTap: audioTap,
                     shelfStore: shelfStore,
                     systemMonitor: systemMonitorSource,
-                    calendar: calendarSource
+                    calendar: calendarSource,
+                    weather: weatherSource
                 )
             )
             return
@@ -266,7 +267,8 @@ final class NotchController {
                 audioTap: audioTap,
                 shelfStore: shelfStore,
                 systemMonitor: systemMonitorSource,
-                calendar: calendarSource
+                calendar: calendarSource,
+                    weather: weatherSource
             )
         )
         panel.setFrame(maxRect, display: true)

@@ -7,6 +7,7 @@ import SwiftUI
 /// that constant still fits.
 struct CalendarPageView: View {
     @ObservedObject var source: CalendarSource
+    @ObservedObject var weather: WeatherSource
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var calendar: Calendar { .current }
@@ -36,6 +37,7 @@ struct CalendarPageView: View {
         .onAppear {
             source.resetToToday()
             source.activate()
+            weather.refreshIfStale()
         }
     }
 
@@ -191,6 +193,7 @@ struct CalendarPageView: View {
         let isSelected = calendar.isDate(day, inSameDayAs: source.selectedDay)
         let isToday = calendar.isDateInToday(day)
         let hasEvents = !source.events(on: day).isEmpty
+        let weatherDay = weather.visibleSnapshot?.day(for: day, calendar: calendar)
         return Button {
             withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                 source.selectDay(day)
@@ -204,16 +207,27 @@ struct CalendarPageView: View {
                     .font(.system(size: 13, weight: isSelected ? .bold : .medium))
                     .foregroundStyle(underIndicator ? Color.black : (isToday ? Color.red : Color.white))
                     .frame(width: Self.indicatorSize, height: Self.indicatorSize)
-                Circle()
-                    .fill(Color.white.opacity(hasEvents ? 0.7 : 0))
-                    .frame(width: 4, height: 4)
+                // Fixed-height row: the weather glyph (when we have a forecast
+                // for this day) sits left of the event dot.
+                HStack(spacing: 2) {
+                    if let w = weatherDay {
+                        Image(systemName: w.condition.symbol)
+                            .symbolRenderingMode(.multicolor)
+                            .font(.system(size: 9))
+                    }
+                    Circle()
+                        .fill(Color.white.opacity(hasEvents ? 0.7 : 0))
+                        .frame(width: 4, height: 4)
+                }
+                .frame(height: 11)
             }
             .frame(maxWidth: .infinity)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .focusEffectDisabled()
-        .accessibilityLabel(day.formatted(.dateTime.weekday(.wide).month().day()) + (hasEvents ? ", has events" : ""))
+        .accessibilityLabel(day.formatted(.dateTime.weekday(.wide).month().day()) + (hasEvents ? ", has events" : "")
+            + (weatherDay.map { ", \($0.condition.label), high \(Int($0.high.rounded())) degrees" } ?? ""))
         .accessibilityAddTraits(isSelected ? .isSelected : [])
         // `simultaneousGesture`, not a second `onTapGesture`: a single tap
         // must still select instantly rather than wait out the double-tap

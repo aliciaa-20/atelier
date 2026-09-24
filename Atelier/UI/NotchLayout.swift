@@ -11,8 +11,9 @@ enum NotchLayout {
     // The page grows with the selected day's events instead of always
     // claiming the tallest footprint. Starting values -- tune on-device.
 
-    /// Tab bar + header + quip line + week strip + bottom padding.
-    static let calendarFixedHeight: CGFloat = 142
+    /// Tab bar + header + quip line + week strip (incl. its weather-icon row,
+    /// always reserved so the panel doesn't jump when weather arrives) + bottom padding.
+    static let calendarFixedHeight: CGFloat = 149
     static let calendarRowHeight: CGFloat = 28
     static let calendarRowSpacing: CGFloat = 4
     /// Rows shown before the agenda scrolls.
