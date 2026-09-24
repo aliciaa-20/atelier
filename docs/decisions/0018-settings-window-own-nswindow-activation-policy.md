@@ -24,7 +24,7 @@ a page added later can't scramble a saved order. Launch at login uses
 
 - A Dock icon appears while Settings is open. Accepted: it's the price of a
   window that reliably takes focus.
-- ⌘, works only while the menu popover has focus; a global ⌘, would need a
+- ⌘, works only while the menu is open; a global ⌘, would need a
   real main menu.
 - A Debug run registers the DerivedData build for launch at login; stable
   signing (ROADMAP Phase 16) is the long-term fix.
