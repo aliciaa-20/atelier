@@ -666,8 +666,10 @@ widget plugged into Phase 6's architecture.*
       (reuses the skip-track gesture, only on this page); panel height fits
       the selected day's events (`NotchLayout`). Tapping opens the user's
       chosen calendar app (menu-bar setting; Calendar.app jumps to the day
-      via AppleScript -- `calshow:` is iOS-only). **Manual verification
-      done on-device** (2026-09-24); scroll-style swipe parked in STAGES.md.
+      via AppleScript -- `calshow:` is iOS-only). **Verified on-device**
+      (2026-09-24): tab, filter, swipe, heights. **Not yet verified:** the
+      Calendar.app jump-to-day (needs a one-time Automation grant).
+      Scroll-style swipe parked in STAGES.md.
 - [ ] Quick notes.
 - [ ] Timers / Pomodoro.
 - [x] Color picker -- `Widgets/ColorPicker/ColorPickerSource.swift` +
