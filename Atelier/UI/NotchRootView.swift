@@ -9,6 +9,7 @@ struct NotchRootView: View {
     @ObservedObject var audioTap: AudioTap
     @ObservedObject var shelfStore: ShelfStore
     @ObservedObject var systemMonitor: SystemMonitorSource
+    @ObservedObject var calendar: CalendarSource
     @StateObject private var artworkColor = ArtworkColorLoader()
     @State private var settleScale: CGFloat = 1
     /// A brief dip-and-recover applied to the *whole already-composited*
@@ -210,7 +211,7 @@ struct NotchRootView: View {
                         } else if AtelierSettings.systemMonitorEnabled, viewModel.currentPage == .systemMonitor {
                             SystemMonitorPageView(source: systemMonitor)
                         } else if AtelierSettings.calendarEnabled, viewModel.currentPage == .calendar {
-                            CalendarPageView()
+                            CalendarPageView(source: calendar)
                         } else {
                             ExpandedPlayerView(
                                 info: nowPlaying.current,
