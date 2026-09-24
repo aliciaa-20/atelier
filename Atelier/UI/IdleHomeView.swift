@@ -17,6 +17,8 @@ import SwiftUI
 /// use, so numerals read consistently across the app), date secondary
 /// below it -- same hierarchy Apple's own Lock Screen uses.
 struct IdleHomeView: View {
+    @ObservedObject var weather: WeatherSource
+
     private static let timeFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "h:mm a"
@@ -39,6 +41,10 @@ struct IdleHomeView: View {
                 Text(Self.dateFormatter.string(from: timeline.date))
                     .font(.caption2)
                     .foregroundStyle(.white.opacity(0.6))
+
+                if let snap = weather.visibleSnapshot {
+                    weatherRow(snap)
+                }
             }
             .foregroundStyle(.white)
             .frame(maxWidth: .infinity, alignment: .center)
@@ -47,5 +53,27 @@ struct IdleHomeView: View {
             // spacing in the playing state, unrelated to this ask.
             .padding(.bottom, 2.5)
         }
+        .onAppear { weather.refreshIfStale() }
+    }
+
+    /// One quiet line under the date: glyph, temp, and a quip. Unit comes from
+    /// the snapshot (locale-chosen at fetch time).
+    private func weatherRow(_ snap: WeatherSnapshot) -> some View {
+        let condition = snap.currentCondition
+        let temp = "\(Int(snap.currentTemp.rounded()))°"
+        return HStack(spacing: 4) {
+            Image(systemName: condition.symbol)
+                .symbolRenderingMode(.multicolor)
+            Text(temp).monospacedDigit()
+            Text("·").foregroundStyle(.white.opacity(0.4))
+            Text(condition.quip)
+                .foregroundStyle(.white.opacity(0.6))
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+        }
+        .font(.caption2)
+        .padding(.top, 2)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(condition.label), \(temp)")
     }
 }
