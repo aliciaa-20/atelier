@@ -24,6 +24,11 @@ struct NotchGestureCapabilities {
     let canOpen: Bool
     let canClose: Bool
     let canSkip: Bool
+    /// When true, a horizontal swipe streams `.scrub` continuously instead
+    /// of firing one `.skipForward`/`.skipBackward` -- used by the Calendar
+    /// page's scroll-style week swipe. Defaulted so existing callers
+    /// (lock-screen card, tests) are unaffected.
+    var canScrub = false
 }
 
 enum NotchGestureAction: Equatable {
@@ -31,6 +36,8 @@ enum NotchGestureAction: Equatable {
     case close
     case skipForward
     case skipBackward
+    /// Total accumulated horizontal distance so far in this gesture.
+    case scrub(CGFloat)
 }
 
 enum NotchGestureAxis {
@@ -138,6 +145,11 @@ enum NotchGestureInterpreter {
             }
         case .horizontal:
             progress = min(abs(next.accumulatedDX) / threshold, 1)
+            if capabilities.canScrub {
+                // Continuous: report every update and never set `hasFired`,
+                // so the gesture keeps streaming until the finger lifts.
+                return (next, .scrub(next.accumulatedDX), progress)
+            }
             if abs(next.accumulatedDX) >= threshold, capabilities.canSkip {
                 action = next.accumulatedDX > 0 ? .skipForward : .skipBackward
             } else {

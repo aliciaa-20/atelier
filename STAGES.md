@@ -37,7 +37,7 @@ Later (separate STAGES): camera mirror (Phase 14) -> Settings (Phase 16) -> tele
 ## Calendar: scroll swipe + double-tap (branch `feat/calendar-widget`)
 
 - [x] S1. Double-tap a date opens the calendar app
-- [ ] S2. Pure `CalendarScrub` + interpreter `.scrub` + modifier callbacks
+- [x] S2. Pure `CalendarScrub` + interpreter `.scrub` + modifier callbacks
 - [ ] S3. `CalendarSource` scrub state + `layoutDay`, wiring, setting + toggle
 - [ ] S4. Moving stretchy indicator, Reduce Motion, tuning
 - [ ] S5. Docs
