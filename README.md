@@ -24,7 +24,7 @@ belongs there, not bolted on.
   with real spring physics
 - **Home, Shelf, System Monitor & Calendar tabs** — an idle view for
   when nothing's playing, a week-strip calendar with a funny line for
-  each day of the week (swipe to change week)
+  each day of the week (scroll through days with a swipe; double-tap to open your calendar app)
 - **Lightweight by design** — animations and pollers run at capped rates
   and idle to nothing when not visible (no continuous redraw for static
   content, no polling when nothing's playing), so a menu-bar accessory
