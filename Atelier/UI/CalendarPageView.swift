@@ -1,12 +1,21 @@
 import SwiftUI
 
-/// Calendar tab. Stage 1 placeholder -- proves the page plumbing (tab dot,
-/// settings toggle, render branch) before any EventKit code exists.
+/// Calendar tab. Stage 2 placeholder -- shows permission state and today's
+/// event count to prove the EventKit source works before the real UI.
 struct CalendarPageView: View {
+    @ObservedObject var source: CalendarSource
+
     var body: some View {
-        Text("Calendar")
-            .font(.system(size: 13, weight: .medium))
-            .foregroundStyle(.white.opacity(0.6))
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        Group {
+            switch source.access {
+            case .notDetermined: Text("Requesting calendar access…")
+            case .denied: Text("Calendar access denied")
+            case .granted: Text("\(source.events(on: source.selectedDay).count) events today")
+            }
+        }
+        .font(.system(size: 13, weight: .medium))
+        .foregroundStyle(.white.opacity(0.6))
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .onAppear { source.activate() }
     }
 }

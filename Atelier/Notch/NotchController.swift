@@ -23,6 +23,8 @@ final class NotchController {
     /// `NotchRootView` has a stable instance to bind `NotchPage.systemMonitor`'s
     /// tab content to -- same reasoning as `batterySource` above.
     private let systemMonitorSource: SystemMonitorSource
+    /// Owned here so `NotchRootView` has a stable instance for the Calendar tab.
+    private let calendarSource = CalendarSource()
     /// Owned here so `pickColor()` below has a stable instance to call
     /// `.pick()` on -- same reasoning as `volumeSource`.
     private let colorPickerSource: ColorPickerSource
@@ -153,7 +155,8 @@ final class NotchController {
                     liveActivity: liveActivityCoordinator,
                     audioTap: audioTap,
                     shelfStore: shelfStore,
-                    systemMonitor: systemMonitorSource
+                    systemMonitor: systemMonitorSource,
+                    calendar: calendarSource
                 )
             )
             return
@@ -250,7 +253,8 @@ final class NotchController {
                 liveActivity: liveActivityCoordinator,
                 audioTap: audioTap,
                 shelfStore: shelfStore,
-                systemMonitor: systemMonitorSource
+                systemMonitor: systemMonitorSource,
+                calendar: calendarSource
             )
         )
         panel.setFrame(maxRect, display: true)
