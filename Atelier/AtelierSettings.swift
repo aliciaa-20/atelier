@@ -10,6 +10,8 @@ enum AtelierSettings {
     static let shelfEnabledKey = "shelfEnabled"
     static let systemMonitorEnabledKey = "systemMonitorEnabled"
     static let calendarEnabledKey = "calendarEnabled"
+    static let cameraEnabledKey = "cameraEnabled"
+    static let cameraHoldOpenKey = "cameraHoldOpen"
     static let hiddenCalendarIDsKey = "hiddenCalendarIDs"
     static let calendarAppBundleIDKey = "calendarAppBundleID"
     static let calendarScrollSwipeKey = "calendarScrollSwipe"
@@ -24,6 +26,7 @@ enum AtelierSettings {
             shelfEnabledKey: true,
             systemMonitorEnabledKey: true,
             calendarEnabledKey: true,
+            cameraEnabledKey: true,
             calendarScrollSwipeKey: true,
             calendarAppBundleIDKey: CalendarAppLauncher.defaultBundleID,
             colorPickerEnabledKey: true,
@@ -69,6 +72,14 @@ enum AtelierSettings {
     /// Scroll-style week swipe (selection follows the finger day-by-day) vs.
     /// the original one-swipe-one-week. On by default while it's being tried
     /// out; off restores the discrete swipe exactly.
+    static var cameraEnabled: Bool {
+        UserDefaults.standard.bool(forKey: cameraEnabledKey)
+    }
+
+    static var cameraHoldOpen: Bool {
+        UserDefaults.standard.bool(forKey: cameraHoldOpenKey)
+    }
+
     static var calendarScrollSwipeEnabled: Bool {
         UserDefaults.standard.bool(forKey: calendarScrollSwipeKey)
     }

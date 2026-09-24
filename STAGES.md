@@ -1,3 +1,17 @@
+# STAGES — Camera mirror (Phase 14)
+
+Branch: `feat/camera-mirror`. Spec: `docs/superpowers/specs/2026-09-24-camera-mirror-design.md`.
+Plan: `docs/superpowers/plans/2026-09-24-camera-mirror.md`.
+
+- [x] 1. Page plumbing — `NotchPage.camera`, tab dot, settings toggles
+- [x] 2. Hold-open decision (pure) + tests
+- [x] 3. Permission + capture source — `CameraPermission`, `CameraMirrorSource`, Info.plist key
+- [x] 4. Camera page UI + notch wiring (hold-open, stop on retract)
+- [x] 5. UI review pass (`ui-review-tahoe`) done; on-device verification pending Alicia
+- [x] 6. Docs — ADR 0016, README, CLAUDE.md, FEATURES §2, ROADMAP Phase 14
+
+---
+
 # STAGES — Calendar widget (Phase 12)
 
 Branch: `feat/calendar-widget`. Plan: week strip + day agenda, read-only EventKit,

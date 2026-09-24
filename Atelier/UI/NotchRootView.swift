@@ -12,6 +12,10 @@ struct NotchRootView: View {
     @ObservedObject var calendar: CalendarSource
     @ObservedObject var weather: WeatherSource
     @StateObject private var artworkColor = ArtworkColorLoader()
+    @StateObject private var camera = CameraMirrorSource()
+    /// Tracked so a hold-open that ends (mirror stopped) knows whether to
+    /// retract now or wait for the pointer to actually leave.
+    @State private var pointerInside = false
     /// Idle Home shows the weather detail card instead of the clock. Reset
     /// whenever the notch leaves `.expanded`.
     @State private var weatherDetailOpen = false
@@ -235,6 +239,16 @@ struct NotchRootView: View {
                             SystemMonitorPageView(source: systemMonitor)
                         } else if AtelierSettings.calendarEnabled, viewModel.currentPage == .calendar {
                             CalendarPageView(source: calendar)
+                        } else if AtelierSettings.cameraEnabled, viewModel.currentPage == .camera {
+                            CameraMirrorPageView(source: camera) {
+                                // Hold-open mode: turning the mirror off
+                                // means you're done, so close the notch now
+                                // instead of waiting for the pointer to leave.
+                                guard AtelierSettings.cameraHoldOpen else { return }
+                                withAnimation(NotchAnimations.close) {
+                                    viewModel.handle(.hoverEnded(isPlaying: liveActivity.hasContent))
+                                }
+                            }
                         } else {
                             ExpandedPlayerView(
                                 info: nowPlaying.current,
@@ -352,6 +366,7 @@ struct NotchRootView: View {
             .opacity(closeFadeOpacity)
             .contentShape(Rectangle())
             .onHover { hovering in
+                pointerInside = hovering
                 // A non-expandable live activity on top (Volume,
                 // Brightness, Battery) has no expanded view of its own --
                 // `.hoverStarted` would still force open
@@ -377,6 +392,14 @@ struct NotchRootView: View {
                         viewModel.handle(.hoverStarted)
                     }
                 } else {
+                    // Camera hold-open: only hover-out is suppressed; swipe-close
+                    // and tab changes still close/stop (see `CameraHoldOpen`).
+                    if CameraHoldOpen.shouldSuppressRetract(
+                        holdOpenEnabled: AtelierSettings.cameraHoldOpen,
+                        mirrorLive: camera.isLive,
+                        currentPage: viewModel.currentPage,
+                        state: viewModel.state
+                    ) { return }
                     // Slower and more damped than the open — closing snapped
                     // shut at the same speed it opened, which read as
                     // abrupt since there's no destination content to draw
@@ -384,6 +407,23 @@ struct NotchRootView: View {
                     withAnimation(NotchAnimations.close) {
                         viewModel.handle(.hoverEnded(isPlaying: liveActivity.hasContent))
                     }
+                }
+            }
+            .onChange(of: viewModel.state) { _, newState in
+                if newState != .expanded { camera.stop() }
+            }
+            .onChange(of: viewModel.currentPage) { _, page in
+                if page != .camera { camera.stop() }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: NSApplication.didResignActiveNotification)) { _ in
+                camera.stop()
+            }
+            // Hold-open ended (mirror stopped) while the pointer is already
+            // outside: do the retract the suppressed hover-out skipped.
+            .onChange(of: camera.isLive) { _, live in
+                guard !live, !pointerInside, viewModel.state == .expanded else { return }
+                withAnimation(NotchAnimations.close) {
+                    viewModel.handle(.hoverEnded(isPlaying: liveActivity.hasContent))
                 }
             }
             // Always wired with the real capabilities/closures — the
