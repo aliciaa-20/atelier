@@ -40,6 +40,7 @@ struct CameraMirrorPageView: View {
         .padding(.bottom, 12)
         .animation(.easeInOut(duration: 0.2), value: source.phase)
         .accessibilityLabel(source.isLive ? "Camera mirror, on" : "Camera mirror, off")
+        .help(source.isLive ? "Turn camera off" : "Turn camera on")
         .accessibilityHint(source.phase == .denied ? "Opens System Settings" : "Toggles the camera mirror")
         .onDisappear { source.stop() }
     }
