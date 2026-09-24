@@ -2,11 +2,10 @@ import Combine
 import Darwin
 import Foundation
 
-/// Polls CPU load and memory pressure via public Mach `host_statistics`
-/// APIs -- `HOST_CPU_LOAD_INFO`/`host_statistics` for CPU tick deltas,
-/// `HOST_VM_INFO64`/`host_statistics64` for page counts. Both are
-/// standard, documented Darwin APIs requiring no entitlement or private
-/// symbol, unlike `ScreenRecordingSource`'s CGS calls -- and deliberately
+/// Polls CPU load and memory usage -- `HOST_CPU_LOAD_INFO`/`host_statistics`
+/// for CPU tick deltas, and the `kern.memorystatus_level` sysctl (the OS's
+/// own free-memory %, see ADR 0017) for memory. Both need no entitlement or
+/// private symbol, unlike `ScreenRecordingSource`'s CGS calls -- and deliberately
 /// scoped to just these two: SMC-based temperature and IOReport frequency
 /// sampling (credited to the "Stats" project in docs/FEATURES.md §7) are
 /// explicitly OUT of scope for this pass.
@@ -78,8 +77,8 @@ final class SystemMonitorSource: LiveActivitySource, ObservableObject {
         // lifetime is already tied to `isPlaying` rather than merely
         // pausing its output (CLAUDE.md's lightweight-by-design principle).
         guard AtelierSettings.systemMonitorEnabled else { return }
-        guard let memory = Self.readMemorySample() else { return }
-        let memoryPercent = SystemMonitorMath.memoryUsedPercent(memory)
+        guard let free = Self.readMemoryFreePercentage() else { return }
+        let memoryPercent = SystemMonitorMath.memoryUsedPercent(freePercentage: free)
         self.memoryPercent = memoryPercent
 
         guard let ticks = Self.readCPUTicks() else { return }
@@ -120,22 +119,12 @@ final class SystemMonitorSource: LiveActivitySource, ObservableObject {
         )
     }
 
-    private static func readMemorySample() -> SystemMonitorMath.MemorySample? {
-        var info = vm_statistics64()
-        var count = mach_msg_type_number_t(MemoryLayout<vm_statistics64_data_t>.stride / MemoryLayout<integer_t>.stride)
-        let result = withUnsafeMutablePointer(to: &info) { pointer -> kern_return_t in
-            pointer.withMemoryRebound(to: integer_t.self, capacity: Int(count)) { reboundPointer in
-                host_statistics64(mach_host_self(), HOST_VM_INFO64, reboundPointer, &count)
-            }
-        }
-        guard result == KERN_SUCCESS else { return nil }
-
-        return SystemMonitorMath.MemorySample(
-            free: UInt64(info.free_count),
-            active: UInt64(info.active_count),
-            inactive: UInt64(info.inactive_count),
-            wired: UInt64(info.wire_count),
-            compressed: UInt64(info.compressor_page_count)
-        )
+    /// The system-wide free-memory percentage (0-100), the same figure
+    /// `memory_pressure` reports. One cheap `sysctl`, no Mach page math.
+    private static func readMemoryFreePercentage() -> Int? {
+        var level: Int32 = 0
+        var size = MemoryLayout<Int32>.size
+        guard sysctlbyname("kern.memorystatus_level", &level, &size, nil, 0) == 0 else { return nil }
+        return Int(level)
     }
 }

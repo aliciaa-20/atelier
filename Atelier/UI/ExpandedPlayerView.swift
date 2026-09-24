@@ -141,16 +141,19 @@ struct ExpandedPlayerView: View {
                         .font(.system(size: 17, weight: .semibold))
                 }
                 .accessibilityLabel("Previous")
+                .help("Previous")
                 Button(action: onPlayPause) {
                     Image(systemName: info.isPlaying ? "pause.fill" : "play.fill")
                         .font(.system(size: 23, weight: .semibold))
                 }
                 .accessibilityLabel(info.isPlaying ? "Pause" : "Play")
+                .help(info.isPlaying ? "Pause" : "Play")
                 Button(action: onNext) {
                     Image(systemName: "forward.fill")
                         .font(.system(size: 17, weight: .semibold))
                 }
                 .accessibilityLabel("Next")
+                .help("Next")
             }
 
             // A background circle (tried per an earlier feedback pass) was
@@ -168,6 +171,7 @@ struct ExpandedPlayerView: View {
                         .frame(width: 24, height: 24)
                 }
                 .accessibilityLabel("Shuffle")
+                .help(info.isShuffling ? "Shuffle: on" : "Shuffle: off")
                 .accessibilityAddTraits(info.isShuffling ? .isSelected : [])
 
                 Spacer(minLength: 0)
@@ -180,6 +184,7 @@ struct ExpandedPlayerView: View {
                 .font(.system(size: 13, weight: .medium))
                 .frame(width: 24, height: 24)
                 .accessibilityLabel("Output device")
+                .help("Output device")
             }
             .padding(.horizontal, 30)
         }
@@ -199,11 +204,13 @@ struct ExpandedPlayerView: View {
 /// slightly). A light scale + opacity dip on press, no animation on
 /// release beyond the implicit spring back to 1.0/1.0.
 private struct PressScaleButtonStyle: ButtonStyle {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .scaleEffect(configuration.isPressed ? 0.88 : 1)
+            .scaleEffect(configuration.isPressed && !reduceMotion ? 0.88 : 1)
             .opacity(configuration.isPressed ? 0.7 : 1)
-            .animation(.spring(response: 0.2, dampingFraction: 0.6), value: configuration.isPressed)
+            .animation(reduceMotion ? nil : .spring(response: 0.2, dampingFraction: 0.6), value: configuration.isPressed)
     }
 }
 
