@@ -10,7 +10,11 @@ struct NotchRootView: View {
     @ObservedObject var shelfStore: ShelfStore
     @ObservedObject var systemMonitor: SystemMonitorSource
     @ObservedObject var calendar: CalendarSource
+    @ObservedObject var weather: WeatherSource
     @StateObject private var artworkColor = ArtworkColorLoader()
+    /// Idle Home shows the weather detail card instead of the clock. Reset
+    /// whenever the notch leaves `.expanded`.
+    @State private var weatherDetailOpen = false
     @State private var settleScale: CGFloat = 1
     /// A brief dip-and-recover applied to the *whole already-composited*
     /// panel on close -- not a per-branch `.opacity`/`.transition` on
@@ -106,6 +110,12 @@ struct NotchRootView: View {
             // footprint -- far less to show than a real player or the
             // shelf grid, so it shouldn't claim the same vertical space.
             if viewModel.currentPage == .home, nowPlaying.current == nil {
+                if weatherDetailOpen, weather.visibleSnapshot != nil {
+                    return CGSize(
+                        width: viewModel.idleHomeSize.width,
+                        height: viewModel.collapsedSize.height + NotchLayout.idleWeatherDetailContentHeight
+                    )
+                }
                 return viewModel.idleHomeSize
             }
             if AtelierSettings.calendarEnabled, viewModel.currentPage == .calendar {
@@ -228,6 +238,8 @@ struct NotchRootView: View {
                         } else {
                             ExpandedPlayerView(
                                 info: nowPlaying.current,
+                                weather: weather,
+                                weatherDetailOpen: $weatherDetailOpen,
                                 waveformColor: artworkColor.color,
                                 audioTap: audioTap,
                                 outputDevices: outputDevices,
@@ -495,6 +507,7 @@ struct NotchRootView: View {
         .onChange(of: viewModel.state) { oldState, newState in
             let wasOpen = oldState == .expanded || oldState == .peeking || oldState == .shelf
             let isNowClosed = newState == .pill || newState == .collapsed
+            if newState != .expanded { weatherDetailOpen = false }
             if wasOpen && isNowClosed {
                 playCloseFadeAnimation()
             }

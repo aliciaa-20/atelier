@@ -93,6 +93,7 @@ architecture than to bolting features on individually.
 | Feature | Source(s) |
 |---|---|
 | Calendar ✅ (`Widgets/Calendar/`, read-only EventKit: week strip + day agenda, swipe/tap; reminders not built) | boring.notch, Atoll, notchify, QuartzNotch, NotchIA |
+| Weather ✅ (`Widgets/Weather/`, Open-Meteo + CoreLocation; glance + detail card on idle Home; [ADR 0015](decisions/0015-weather-open-meteo-corelocation.md)) | Atoll, Sapphire |
 | Quick notes | notchify |
 | Timers / Pomodoro | QuartzNotch, NotchIA, Atoll |
 | Color picker ✅ (`Widgets/ColorPicker/`, `NSColorSampler`) | Atoll |

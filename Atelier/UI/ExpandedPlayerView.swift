@@ -14,6 +14,8 @@ import SwiftUI
 /// deliberate group instead of being stretched across the whole width.
 struct ExpandedPlayerView: View {
     let info: NowPlayingInfo?
+    @ObservedObject var weather: WeatherSource
+    @Binding var weatherDetailOpen: Bool
     let waveformColor: Color
     @ObservedObject var audioTap: AudioTap
     let outputDevices: [AudioOutputDevice]
@@ -187,7 +189,7 @@ struct ExpandedPlayerView: View {
     }
 
     private var emptyState: some View {
-        IdleHomeView()
+        IdleHomeView(weather: weather, showDetail: $weatherDetailOpen)
     }
 }
 
