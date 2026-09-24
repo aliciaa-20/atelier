@@ -181,13 +181,13 @@ private struct PermissionRow: View {
         case .granted:
             EmptyView()
         case .denied:
-            Button("Open System Settings…", action: openSettings)
+            Button("Open System Settings", action: openSettings)
         case .notDetermined:
             if let grant {
                 Button("Grant Access") { Task { await grant() } }
             } else {
                 // Accessibility: no in-app request, only the system prompt.
-                Button("Open System Settings…", action: openSettings)
+                Button("Open System Settings", action: openSettings)
             }
         }
     }

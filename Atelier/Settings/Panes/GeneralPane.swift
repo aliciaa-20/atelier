@@ -15,7 +15,7 @@ struct GeneralPane: View {
                 if launchState == .requiresApproval {
                     Text("Needs approval in System Settings.")
                         .foregroundStyle(.secondary)
-                    Button("Open Login Items…") {
+                    Button("Open Login Items") {
                         LaunchAtLogin.openLoginItemsSettings()
                     }
                 }

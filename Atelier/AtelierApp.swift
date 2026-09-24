@@ -42,7 +42,7 @@ struct AtelierApp: App {
             // turned off (Widgets pane), same "no leftover way in"
             // reasoning as before.
             if colorPickerEnabled {
-                Button("Pick a Color…") {
+                Button("Pick a Color") {
                     notchController?.pickColor()
                 }
 
@@ -51,7 +51,7 @@ struct AtelierApp: App {
 
             // ⌘, works while this menu is open; a global ⌘, would need a
             // real main menu, which an accessory app doesn't have.
-            Button("Settings…") {
+            Button("Settings") {
                 SettingsWindowController.shared.show()
             }
             .keyboardShortcut(",")
