@@ -57,7 +57,13 @@ final class NotchViewModel: ObservableObject {
 
     func handle(_ event: NotchEvent) {
         let newState = NotchStateMachine.reduce(state, on: event)
-        currentPage = NotchPageTransition.page(for: newState, currentPage: currentPage, firstPage: AtelierSettings.firstPage)
+        currentPage = NotchPageTransition.page(
+            for: newState,
+            currentPage: currentPage,
+            firstPage: AtelierSettings.firstPage,
+            previousState: state,
+            enabledPages: AtelierSettings.enabledPages
+        )
         state = newState
     }
 
