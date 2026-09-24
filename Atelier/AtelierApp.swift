@@ -54,6 +54,13 @@ struct AtelierApp: App {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Atelier 0.1.0")
 
+                // ⌘, works while this popover has focus; a global ⌘, would
+                // need a real main menu, which an accessory app doesn't have.
+                Button("Settings…") {
+                    SettingsWindowController.shared.show()
+                }
+                .keyboardShortcut(",")
+
                 Divider()
 
                 // `Section` (not another bare `Divider()`) so each group gets a
