@@ -7,6 +7,7 @@ import SwiftUI
 /// that constant still fits.
 struct CalendarPageView: View {
     @ObservedObject var source: CalendarSource
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var calendar: Calendar { .current }
 
@@ -108,15 +109,68 @@ struct CalendarPageView: View {
 
     // MARK: - Week strip
 
+    private static let indicatorSize: CGFloat = 26
+    /// How much wider than a circle the indicator gets at the midpoint
+    /// between two days. Visual tuning constant.
+    private static let indicatorStretch: CGFloat = 14
+    /// Vertical offset of the date row inside a day cell (below the weekday
+    /// letter). Visual tuning constant.
+    private static let indicatorTopInset: CGFloat = 13
+
+    /// Indicator offset toward the neighbouring day; 0 with Reduce Motion so
+    /// it steps instead of gliding and stretching.
+    private var indicatorFraction: CGFloat { reduceMotion ? 0 : source.scrubFraction }
+
     private var weekStrip: some View {
-        HStack(spacing: 0) {
-            ForEach(CalendarMath.days(inWeekStarting: source.weekStart, calendar: calendar), id: \.self) { day in
-                dayCell(day)
+        let days = CalendarMath.days(inWeekStarting: source.weekStart, calendar: calendar)
+        let selectedIndex = days.firstIndex { calendar.isDate($0, inSameDayAs: source.selectedDay) }
+        return HStack(spacing: 0) {
+            ForEach(Array(days.enumerated()), id: \.element) { index, day in
+                dayCell(day, underIndicator: isUnderIndicator(index, selectedIndex: selectedIndex))
             }
         }
+        .background(alignment: .topLeading) { indicator(selectedIndex: selectedIndex) }
     }
 
-    private func dayCell(_ day: Date) -> some View {
+    /// A day's label turns black while the white indicator covers it: the
+    /// selected day, plus the neighbour it is stretching toward.
+    private func isUnderIndicator(_ index: Int, selectedIndex: Int?) -> Bool {
+        guard let selectedIndex else { return false }
+        if index == selectedIndex { return true }
+        let f = indicatorFraction
+        return abs(f) > 0.3 && index == selectedIndex + (f > 0 ? 1 : -1)
+    }
+
+    /// One white capsule behind the strip instead of a circle per cell, so
+    /// it can slide and stretch between days like the tab bar's dot.
+    private func indicator(selectedIndex: Int?) -> some View {
+        GeometryReader { geo in
+            if let selectedIndex {
+                let columnWidth = geo.size.width / 7
+                let f = indicatorFraction
+                Capsule()
+                    .fill(Color.white)
+                    .frame(width: Self.indicatorSize + Self.indicatorStretch * abs(f) * 2, height: Self.indicatorSize)
+                    .position(
+                        x: (CGFloat(selectedIndex) + 0.5 + f) * columnWidth,
+                        y: Self.indicatorTopInset + Self.indicatorSize / 2
+                    )
+                    // Track the finger directly while scrubbing; spring on
+                    // release and on plain taps.
+                    .animation(
+                        source.isScrubbing || reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.75),
+                        value: f
+                    )
+                    .animation(
+                        source.isScrubbing || reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.75),
+                        value: selectedIndex
+                    )
+            }
+        }
+        .allowsHitTesting(false)
+    }
+
+    private func dayCell(_ day: Date, underIndicator: Bool) -> some View {
         let isSelected = calendar.isDate(day, inSameDayAs: source.selectedDay)
         let isToday = calendar.isDateInToday(day)
         let hasEvents = !source.events(on: day).isEmpty
@@ -131,9 +185,8 @@ struct CalendarPageView: View {
                     .foregroundStyle(.white.opacity(0.45))
                 Text(day, format: .dateTime.day())
                     .font(.system(size: 13, weight: isSelected ? .bold : .medium))
-                    .foregroundStyle(isSelected ? Color.black : (isToday ? Color.red : Color.white))
-                    .frame(width: 26, height: 26)
-                    .background(Circle().fill(isSelected ? Color.white : Color.clear))
+                    .foregroundStyle(underIndicator ? Color.black : (isToday ? Color.red : Color.white))
+                    .frame(width: Self.indicatorSize, height: Self.indicatorSize)
                 Circle()
                     .fill(Color.white.opacity(hasEvents ? 0.7 : 0))
                     .frame(width: 4, height: 4)
