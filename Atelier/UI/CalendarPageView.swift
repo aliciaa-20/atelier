@@ -198,9 +198,9 @@ struct CalendarPageView: View {
 
     /// Opens the user's chosen calendar app (menu bar setting) -- adding and
     /// editing happens there, so the notch never needs write access or text
-    /// input. `calshow:` (open on a date) is iOS-only, so it just launches it.
+    /// input. Calendar.app jumps to the selected day; other apps just launch.
     private func openCalendar() {
-        CalendarAppLauncher.open()
+        CalendarAppLauncher.open(on: source.selectedDay)
     }
 
     private func timeText(for item: CalendarEventItem) -> String {

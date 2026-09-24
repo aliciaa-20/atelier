@@ -657,7 +657,17 @@ See [FEATURES.md §1](FEATURES.md#1-now-playing--live-activity-core).
 widget plugged into Phase 6's architecture.*
 **Depends on Phase 6.**
 
-- [ ] Calendar / reminders (EventKit).
+- [x] Calendar (reminders not built) -- fourth `NotchPage.calendar` tab.
+      `Widgets/Calendar/CalendarSource.swift` (read-only EventKit, refreshes
+      on `.EKEventStoreChanged`, idle until the tab is first opened),
+      `CalendarMath` (pure week math), `WeekdayQuips` (a random funny line
+      per weekday), `UI/CalendarPageView.swift` (week strip + agenda, per-
+      calendar filter menu, opens on today). Horizontal swipe changes week
+      (reuses the skip-track gesture, only on this page); panel height fits
+      the selected day's events (`NotchLayout`). Tapping opens the user's
+      chosen calendar app (menu-bar setting; Calendar.app jumps to the day
+      via AppleScript -- `calshow:` is iOS-only). **Manual verification
+      done on-device** (2026-09-24); scroll-style swipe parked in STAGES.md.
 - [ ] Quick notes.
 - [ ] Timers / Pomodoro.
 - [x] Color picker -- `Widgets/ColorPicker/ColorPickerSource.swift` +
