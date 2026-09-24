@@ -30,6 +30,33 @@ These showed up in practice as the skill firing on every `git push*`
 match regardless of what was being pushed, including plain branch
 cleanup — pure waste, since there's no diff to reconcile docs against.
 
+## Fast path — small pushes whose docs are already in the diff
+
+Added 2026-09-24 to save tokens: on small branches the docs were usually
+updated in the same commits, so re-reading ROADMAP/CLAUDE.md/FEATURES again
+is pure repeat cost. Use the fast path only when **all** of these hold:
+
+- the branch is small (roughly <= 5 commits) and touches no new top-level file
+  under `Atelier/`, no `### Invariants` bullet, no permission / Info.plist key,
+  and no new architectural decision (no ADR needed);
+- `git diff origin/main..HEAD --stat` already shows the relevant doc files
+  (ROADMAP/README/CLAUDE.md/FEATURES/ADR) changed in this branch, or the change
+  is code-only polish with nothing doc-worthy.
+
+Then do only this, and skip steps 4-8 below:
+
+1. `git log origin/<branch>..HEAD --oneline` (step 1).
+2. Debug-print scan (step 2) and the full unit suite (step 3).
+3. `grep -n "tests passing" README.md` -- fix the count if the suite's number
+   changed (the one doc line that drifts on almost every push).
+4. A **2-3 line** chat summary (what shipped, what's deferred) -- step 9, short.
+5. Push.
+
+If any condition fails, or you're unsure, run the full procedure. Pushes that
+add a phase, change the architecture table, add a permission, or record a
+decision are never fast-path. The fast path only changes how much is
+*re-read*; it never skips the tests or the debug scan.
+
 ## Procedure
 
 Run through these in order:
