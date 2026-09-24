@@ -25,6 +25,8 @@ final class NotchController {
     private let systemMonitorSource: SystemMonitorSource
     /// Owned here so `NotchRootView` has a stable instance for the Calendar tab.
     private let calendarSource = CalendarSource()
+    /// Owned here so the Calendar week strip and idle Home share one cache.
+    private let weatherSource = WeatherSource()
     /// Owned here so `pickColor()` below has a stable instance to call
     /// `.pick()` on -- same reasoning as `volumeSource`.
     private let colorPickerSource: ColorPickerSource
@@ -159,7 +161,8 @@ final class NotchController {
                     audioTap: audioTap,
                     shelfStore: shelfStore,
                     systemMonitor: systemMonitorSource,
-                    calendar: calendarSource
+                    calendar: calendarSource,
+                    weather: weatherSource
                 )
             )
             return
@@ -264,7 +267,8 @@ final class NotchController {
                 audioTap: audioTap,
                 shelfStore: shelfStore,
                 systemMonitor: systemMonitorSource,
-                calendar: calendarSource
+                calendar: calendarSource,
+                    weather: weatherSource
             )
         )
         panel.setFrame(maxRect, display: true)

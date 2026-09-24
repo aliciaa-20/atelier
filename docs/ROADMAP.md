@@ -5,7 +5,7 @@ something runnable, a green test suite, and a commit. Source of truth for the
 overall plan is [the design spec](superpowers/specs/2026-08-31-atelier-notch-design.md);
 this file tracks progress against it.
 
-**Where we are:** Phases 0–12 shipped (Phase 12 so far: color picker + Calendar tab; quick notes/timers not started). Phase 13 (system resource monitor)
+**Where we are:** Phases 0–12 shipped (Phase 12 so far: color picker + Calendar tab + weather; quick notes/timers not started). Phase 13 (system resource monitor)
 and Phase 18 (Liquid Glass notch background) are both 🟨 partial — see
 their entries below for what's still open (Phase 18 has one known
 unresolved visual bug on close). Phases 9 and 10 detail below is kept as
@@ -674,6 +674,11 @@ widget plugged into Phase 6's architecture.*
       Calendar.app jump-to-day (needs a one-time Automation grant).
       Scroll swipe and double-tap tried on-device 2026-09-24 (tuned slower
       + crossfade at week rollover).
+- [x] Weather -- `Widgets/Weather/` (`WeatherModel` pure + tested,
+      `WeatherSource` CoreLocation + Open-Meteo, 30 min cache, no poll loop).
+      Glance on idle Home's date line, tap for a detail card (conditions,
+      H | L, quip, next 5 days). Calendar week-strip icons were tried and
+      dropped as too cluttered. First network feature -- ADR 0015.
 - [ ] Quick notes.
 - [ ] Timers / Pomodoro.
 - [x] Color picker -- `Widgets/ColorPicker/ColorPickerSource.swift` +

@@ -30,6 +30,10 @@
 	<string>Atelier watches for your AirPods connecting so it can show a quick peek with the model and battery level in the notch.</string>
 	<key>NSCalendarsFullAccessUsageDescription</key>
 	<string>Atelier reads your calendar to show your week and upcoming events in the notch. It never changes or adds events.</string>
+	<key>NSLocationUsageDescription</key>
+	<string>Atelier uses your approximate location, once in a while, to show the weather in the notch. It is only used to ask a weather service for a forecast.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Atelier uses your approximate location, once in a while, to show the weather in the notch. It is only used to ask a weather service for a forecast.</string>
 	<key>NSHumanReadableCopyright</key>
 	<string></string>
 </dict>

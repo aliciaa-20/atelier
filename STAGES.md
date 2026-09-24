@@ -15,11 +15,17 @@ Open-Meteo (no key), CoreLocation one-time permission, ~30 min cached fetch (no 
 Shown as icons in the calendar week strip + a compact row on idle Home. Not on the pill.
 First network call in the app — note in README/ADR.
 
-- [ ] W1. `WeatherSource` — CoreLocation + Open-Meteo fetch/cache, Info.plist location key
-- [ ] W2. Calendar week-strip icons + Home row
-- [ ] W3. Docs
+- [x] W1. `WeatherSource` — CoreLocation + Open-Meteo fetch/cache, Info.plist location key
+- [x] W2. Home weather glance + tap-for-detail card (5 days). Calendar week-strip icons tried and dropped (too cluttered)
+- [x] W3. Docs (ADR 0015, README, CLAUDE.md, FEATURES, ROADMAP)
 
 Later (separate STAGES): camera mirror (Phase 14) -> Settings (Phase 16) -> teleprompter (Phase 17).
+
+Settings (Phase 16) must include **user-reorderable tabs** (asked 2026-09-24). Notes for that plan:
+`NotchPage` is a fixed `CaseIterable` order today (home, shelf, systemMonitor, calendar), and
+the tab dots + swipe navigation + "always reopens on Home" all assume it -- so the order should
+be a persisted list in `AtelierSettings` (pure, testable), with Home pinned first and disabled
+tabs skipped. Reorder UI = drag-to-reorder list in the Settings window.
 
 ## Ideas parked (try later / maybe a user setting)
 

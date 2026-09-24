@@ -17,6 +17,10 @@ import SwiftUI
 /// use, so numerals read consistently across the app), date secondary
 /// below it -- same hierarchy Apple's own Lock Screen uses.
 struct IdleHomeView: View {
+    @ObservedObject var weather: WeatherSource
+    @Binding var showDetail: Bool
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     private static let timeFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "h:mm a"
@@ -29,16 +33,43 @@ struct IdleHomeView: View {
         return formatter
     }()
 
+    private func toggleDetail() {
+        withAnimation(reduceMotion ? nil : .spring(response: 0.35, dampingFraction: 0.85)) {
+            showDetail.toggle()
+        }
+    }
+
     var body: some View {
+        if showDetail, let snap = weather.visibleSnapshot {
+            WeatherDetailView(snapshot: snap, onClose: toggleDetail)
+                // Extra bottom room: the panel's rounded bottom corners
+                // swallow the last row otherwise.
+                .padding(.bottom, 10)
+                .transition(.opacity)
+        } else {
+            clock
+        }
+    }
+
+    private var clock: some View {
         TimelineView(.periodic(from: .now, by: 60)) { timeline in
             VStack(spacing: 3) {
                 Text(Self.timeFormatter.string(from: timeline.date))
                     .font(.system(size: 18, weight: .semibold, design: .rounded))
                     .monospacedDigit()
 
-                Text(Self.dateFormatter.string(from: timeline.date))
-                    .font(.caption2)
-                    .foregroundStyle(.white.opacity(0.6))
+                // Date and weather share one secondary line so the card keeps
+                // its two-level hierarchy (time hero, one quiet line below).
+                HStack(spacing: 6) {
+                    Text(Self.dateFormatter.string(from: timeline.date))
+                    if let snap = weather.visibleSnapshot {
+                        Button(action: toggleDetail) { weatherGlance(snap) }
+                            .buttonStyle(SoftPressButtonStyle())
+                            .focusEffectDisabled()
+                    }
+                }
+                .font(.caption2)
+                .foregroundStyle(.white.opacity(0.6))
             }
             .foregroundStyle(.white)
             .frame(maxWidth: .infinity, alignment: .center)
@@ -47,5 +78,24 @@ struct IdleHomeView: View {
             // spacing in the playing state, unrelated to this ask.
             .padding(.bottom, 2.5)
         }
+        .onAppear { weather.refreshIfStale() }
+    }
+
+    /// Glyph + temp only. The quip lives in the hover tooltip so the card
+    /// stays calm; the unit comes from the snapshot (chosen by locale).
+    private func weatherGlance(_ snap: WeatherSnapshot) -> some View {
+        let condition = snap.currentCondition
+        let temp = "\(Int(snap.currentTemp.rounded()))°"
+        return HStack(spacing: 6) {
+            Text("·").foregroundStyle(.white.opacity(0.35))
+            Image(systemName: condition.symbol)
+                .symbolRenderingMode(.multicolor)
+            Text(temp).monospacedDigit()
+        }
+        .contentShape(Rectangle())
+        .help(condition.quip)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(condition.label), \(temp)")
+        .accessibilityHint("Shows weather details")
     }
 }
