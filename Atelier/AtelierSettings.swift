@@ -134,6 +134,11 @@ enum AtelierSettings {
         set { UserDefaults.standard.set(newValue, forKey: tabOrderKey) }
     }
 
+    /// The tab the notch opens on: first in the user's order (Home by default).
+    static var firstPage: NotchPage {
+        TabOrder.resolve(stored: tabOrder, enabled: enabledPages).first ?? .home
+    }
+
     /// Home is always enabled; the rest follow their own settings.
     static var enabledPages: Set<NotchPage> {
         var pages: Set<NotchPage> = [.home]

@@ -55,4 +55,28 @@ struct NotchPageTransitionTests {
 
         #expect(result == .camera)
     }
+
+    @Test func collapsedResetsToTheFirstTabWhenHomeIsNotFirst() {
+        let result = NotchPageTransition.page(for: .collapsed, currentPage: .shelf, firstPage: .camera)
+
+        #expect(result == .camera)
+    }
+
+    @Test func pillResetsToTheFirstTabWhenHomeIsNotFirst() {
+        let result = NotchPageTransition.page(for: .pill, currentPage: .home, firstPage: .camera)
+
+        #expect(result == .camera)
+    }
+
+    @Test func expandedStillPreservesTheCurrentPageWhateverTheFirstTab() {
+        let result = NotchPageTransition.page(for: .expanded, currentPage: .shelf, firstPage: .camera)
+
+        #expect(result == .shelf)
+    }
+
+    @Test func shelfStateStillForcesShelfWhateverTheFirstTab() {
+        let result = NotchPageTransition.page(for: .shelf, currentPage: .home, firstPage: .camera)
+
+        #expect(result == .shelf)
+    }
 }

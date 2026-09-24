@@ -16,15 +16,17 @@ enum NotchPage: String, Hashable, CaseIterable {
 enum NotchPageTransition {
     /// `state` is the *new* `NotchState` after `NotchStateMachine.reduce`
     /// has already run; `currentPage` is the page before this transition.
-    static func page(for state: NotchState, currentPage: NotchPage) -> NotchPage {
+    /// `firstPage` is the first tab in the user's order (Home unless they
+    /// moved it), which the notch reopens on.
+    static func page(for state: NotchState, currentPage: NotchPage, firstPage: NotchPage = .home) -> NotchPage {
         switch state {
         case .shelf:
             // A file drag/drop always wins, matching today's behavior.
             return .shelf
         case .collapsed, .pill:
-            // Reset so the notch always opens on Home next time, rather
-            // than remembering a stale Shelf selection.
-            return .home
+            // Reset so the notch always opens on the first tab next time,
+            // rather than remembering a stale Shelf selection.
+            return firstPage
         case .expanded, .peeking:
             // A manual tab tap (handled outside this function, see
             // NotchViewModel.selectPage) persists across peeks/hovers.

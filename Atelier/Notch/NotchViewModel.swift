@@ -8,7 +8,7 @@ import Foundation
 @MainActor
 final class NotchViewModel: ObservableObject {
     @Published private(set) var state: NotchState = .collapsed
-    @Published private(set) var currentPage: NotchPage = .home
+    @Published private(set) var currentPage: NotchPage = AtelierSettings.firstPage
 
     let collapsedSize: CGSize
     let expandedSize: CGSize
@@ -57,7 +57,7 @@ final class NotchViewModel: ObservableObject {
 
     func handle(_ event: NotchEvent) {
         let newState = NotchStateMachine.reduce(state, on: event)
-        currentPage = NotchPageTransition.page(for: newState, currentPage: currentPage)
+        currentPage = NotchPageTransition.page(for: newState, currentPage: currentPage, firstPage: AtelierSettings.firstPage)
         state = newState
     }
 
