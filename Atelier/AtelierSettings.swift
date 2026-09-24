@@ -9,6 +9,10 @@ enum AtelierSettings {
     static let gesturesEnabledKey = "gesturesEnabled"
     static let shelfEnabledKey = "shelfEnabled"
     static let systemMonitorEnabledKey = "systemMonitorEnabled"
+    static let calendarEnabledKey = "calendarEnabled"
+    static let hiddenCalendarIDsKey = "hiddenCalendarIDs"
+    static let calendarAppBundleIDKey = "calendarAppBundleID"
+    static let calendarScrollSwipeKey = "calendarScrollSwipe"
     static let colorPickerEnabledKey = "colorPickerEnabled"
     static let glassEffectEnabledKey = "glassEffectEnabled"
     static let glassIntensityKey = "glassIntensity"
@@ -19,6 +23,9 @@ enum AtelierSettings {
             gesturesEnabledKey: true,
             shelfEnabledKey: true,
             systemMonitorEnabledKey: true,
+            calendarEnabledKey: true,
+            calendarScrollSwipeKey: true,
+            calendarAppBundleIDKey: CalendarAppLauncher.defaultBundleID,
             colorPickerEnabledKey: true,
             // Off by default -- ships conservatively (today's flat-black
             // look) until a user opts in, rather than changing the
@@ -50,6 +57,34 @@ enum AtelierSettings {
     /// disabled means no Mach syscalls every 4s, not just a hidden tab.
     static var systemMonitorEnabled: Bool {
         UserDefaults.standard.bool(forKey: systemMonitorEnabledKey)
+    }
+
+    /// Gates the Calendar tab's visibility. Read-only EventKit, so the
+    /// only cost when off is the tab -- no permission prompt is raised
+    /// until the tab is actually opened.
+    static var calendarEnabled: Bool {
+        UserDefaults.standard.bool(forKey: calendarEnabledKey)
+    }
+
+    /// Scroll-style week swipe (selection follows the finger day-by-day) vs.
+    /// the original one-swipe-one-week. On by default while it's being tried
+    /// out; off restores the discrete swipe exactly.
+    static var calendarScrollSwipeEnabled: Bool {
+        UserDefaults.standard.bool(forKey: calendarScrollSwipeKey)
+    }
+
+    /// Bundle ID of the app the Calendar tab opens (default Calendar.app).
+    static var calendarAppBundleID: String {
+        UserDefaults.standard.string(forKey: calendarAppBundleIDKey) ?? CalendarAppLauncher.defaultBundleID
+    }
+
+    /// Calendar IDs the user hid from the Calendar tab. A *hidden* list, not
+    /// a shown list, so a newly created calendar appears by default.
+    /// EventKit doesn't expose Calendar.app's own sidebar checkboxes, so
+    /// this is Atelier's own filter.
+    static var hiddenCalendarIDs: Set<String> {
+        get { Set(UserDefaults.standard.stringArray(forKey: hiddenCalendarIDsKey) ?? []) }
+        set { UserDefaults.standard.set(Array(newValue), forKey: hiddenCalendarIDsKey) }
     }
 
     /// Gates both the "Pick a Color..." menu item's visibility and
