@@ -62,7 +62,8 @@ keys, and the audio tap itself are manual-verification only (see
 
 | Permission | Why |
 |---|---|
-| Automation | Reads now-playing data from Spotify via Apple Events |
+| Automation | Reads now-playing data from Spotify, and jumps Calendar.app to a day, via Apple Events |
+| Calendars (full access) | Read-only: shows your week and events in the Calendar tab. Atelier never adds or edits events |
 | Accessibility | Intercepts volume/brightness/mute keys for the custom HUD |
 | System Audio Recording Only | Powers the live waveform via a system-wide audio tap ([why not per-app](docs/decisions/0012-whole-system-audio-tap.md)) |
 

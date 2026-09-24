@@ -5,7 +5,7 @@ something runnable, a green test suite, and a commit. Source of truth for the
 overall plan is [the design spec](superpowers/specs/2026-08-31-atelier-notch-design.md);
 this file tracks progress against it.
 
-**Where we are:** Phases 0–12 shipped. Phase 13 (system resource monitor)
+**Where we are:** Phases 0–12 shipped (Phase 12 so far: color picker + Calendar tab; quick notes/timers not started). Phase 13 (system resource monitor)
 and Phase 18 (Liquid Glass notch background) are both 🟨 partial — see
 their entries below for what's still open (Phase 18 has one known
 unresolved visual bug on close). Phases 9 and 10 detail below is kept as
