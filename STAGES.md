@@ -15,7 +15,7 @@ Open-Meteo (no key), CoreLocation one-time permission, ~30 min cached fetch (no 
 Shown as icons in the calendar week strip + a compact row on idle Home. Not on the pill.
 First network call in the app — note in README/ADR.
 
-- [ ] W1. `WeatherSource` — CoreLocation + Open-Meteo fetch/cache, Info.plist location key
+- [x] W1. `WeatherSource` — CoreLocation + Open-Meteo fetch/cache, Info.plist location key
 - [ ] W2. Calendar week-strip icons + Home row
 - [ ] W3. Docs
 
