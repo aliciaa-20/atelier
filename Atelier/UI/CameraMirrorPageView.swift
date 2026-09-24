@@ -6,12 +6,17 @@ import SwiftUI
 /// (spec: "keep it clean"). The live state is video only; tap to stop.
 struct CameraMirrorPageView: View {
     @ObservedObject var source: CameraMirrorSource
+    /// Called only when a tap turned a live mirror off (not on tab change
+    /// or retract), so the host can close the notch in hold-open mode.
+    var onStopTapped: () -> Void = {}
 
     private static let cornerRadius: CGFloat = 16
 
     var body: some View {
         Button {
+            let wasLive = source.isLive
             source.toggle()
+            if wasLive { onStopTapped() }
         } label: {
             ZStack {
                 RoundedRectangle(cornerRadius: Self.cornerRadius, style: .continuous)
