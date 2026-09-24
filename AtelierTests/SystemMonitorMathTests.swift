@@ -48,22 +48,13 @@ struct SystemMonitorMathTests {
         #expect(percent == 0)
     }
 
-    @Test func memoryUsedPercentExcludesOnlyFreePages() {
-        let sample = SystemMonitorMath.MemorySample(free: 100, active: 200, inactive: 50, wired: 50, compressed: 0)
-        // used = 300, total = 400 -> 75%
-        let percent = SystemMonitorMath.memoryUsedPercent(sample)
-        #expect(percent == 75)
+    @Test func memoryUsedPercentIsTheComplementOfSystemFreePercentage() {
+        // `memory_pressure` reporting 46% free on an 8 GB Mac -> 54% used.
+        #expect(SystemMonitorMath.memoryUsedPercent(freePercentage: 46) == 54)
     }
 
-    @Test func memoryUsedPercentIncludesCompressedPages() {
-        let sample = SystemMonitorMath.MemorySample(free: 0, active: 50, inactive: 0, wired: 0, compressed: 50)
-        let percent = SystemMonitorMath.memoryUsedPercent(sample)
-        #expect(percent == 100)
-    }
-
-    @Test func memoryUsedPercentHandlesAllZeroSampleWithoutDividingByZero() {
-        let sample = SystemMonitorMath.MemorySample(free: 0, active: 0, inactive: 0, wired: 0, compressed: 0)
-        let percent = SystemMonitorMath.memoryUsedPercent(sample)
-        #expect(percent == 0)
+    @Test func memoryUsedPercentClampsOutOfRangeReadings() {
+        #expect(SystemMonitorMath.memoryUsedPercent(freePercentage: 140) == 0)
+        #expect(SystemMonitorMath.memoryUsedPercent(freePercentage: -5) == 100)
     }
 }

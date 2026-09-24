@@ -704,6 +704,12 @@ widget plugged into Phase 6's architecture.*
 
 See [FEATURES.md §6](FEATURES.md#6-productivity-widgets).
 
+**Weather follow-up (from the 2026-09-24 UI review):** the notch showed 24° while
+a menu-bar weather app showed 27°C. Cause: our snapshot was 26 min old (30-min
+TTL) plus a different data source. Not a bug. Option if it keeps bugging: drop
+the TTL to 15 min (Open-Meteo's `current` updates every 15 min; requests still
+happen only when the Home tab is viewed).
+
 ### 🟨 Phase 13 — System resource monitor (partial)
 *Ships: CPU/GPU/memory/network/disk usage and SMC-based temperature.*
 **Depends on Phase 6.**
@@ -721,6 +727,13 @@ hardware, and whether the pill/tab actually look right, hasn't been
 visually confirmed.
 
 See [FEATURES.md §7](FEATURES.md#7-system-resource-monitor).
+
+**From the 2026-09-24 UI review:** memory ring showed a permanent 98-99% red on a
+machine with 46% free -- fixed by reading the OS's own free-memory % (see
+[ADR 0017](decisions/0017-memory-ring-uses-os-free-percentage.md)).
+- [x] Memory ring uses `kern.memorystatus_level`
+- [ ] Verify the 70/90 thresholds under real memory pressure on-device
+- [ ] Pill percentages ("12%" / "98%") are ~9pt and hard to read; consider a bit more size
 
 ### ✅ Phase 14 — Camera mirror mode
 *Ships: a camera-preview mirror widget.* Shipped (PR #23, 146 tests pass); verified on-device 2026-09-24: permission
@@ -758,6 +771,21 @@ here so the feature survey above ships first.)*
       re-trigger the Automation prompt every time.
 
 Claude Code mechanic: custom slash commands; `/code-review`.
+
+**Parked from the 2026-09-24 UI review (belong here):**
+- [ ] Menu-bar settings tidy-up: "Camera: keep notch open whil…" is truncated
+      -- shorten labels; indent dependent sub-toggles (Calendar swipe, Camera
+      hold-open) under their parent
+- [ ] Custom template menu-bar icon (currently a generic window SF Symbol)
+
+### ⬜ Native-polish backlog (from ui-review-tahoe, 2026-09-24)
+*Small, independent items; not a numbered phase.*
+- [ ] VoiceOver-adjustable scrubber (`accessibilityValue` + `accessibilityAdjustableAction`)
+- [ ] Trackpad haptics (tab switch, mirror toggle)
+- [ ] Symbol/number morphs (`contentTransition(.numericText())`, `.symbolEffect`)
+- [ ] 9-10pt text bump; concentric corner radii pass
+- [x] Done in the `fix/native-polish-pass` branch: real-minute clock, locale-aware
+      formats, macOS VoiceOver wording, Reduce Motion, tooltips, Shelf empty state
 
 ---
 
@@ -831,6 +859,13 @@ landing.
 Manually exercised on-device throughout development (build + 129-test
 unit suite pass); the known issue above is the one thing not yet
 confirmed fixed.
+
+**Parked from the 2026-09-24 UI review (screenshots):**
+- [ ] Secondary text (white @ 0.55-0.65: dates, artist, time labels) loses
+      contrast on bright wallpapers in glass mode -- raise opacity or add a soft
+      shadow when glass is on
+- [ ] Top corners of the glass panel look faint/ghosted vs. the black panel's
+      crisp inverse curves (the notch-blend illusion weakens)
 
 ---
 

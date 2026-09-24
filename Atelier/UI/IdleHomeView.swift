@@ -21,18 +21,6 @@ struct IdleHomeView: View {
     @Binding var showDetail: Bool
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    private static let timeFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "h:mm a"
-        return formatter
-    }()
-
-    private static let dateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "EEE, MMM d"
-        return formatter
-    }()
-
     private func toggleDetail() {
         withAnimation(reduceMotion ? nil : .spring(response: 0.35, dampingFraction: 0.85)) {
             showDetail.toggle()
@@ -52,16 +40,20 @@ struct IdleHomeView: View {
     }
 
     private var clock: some View {
-        TimelineView(.periodic(from: .now, by: 60)) { timeline in
+        // `.everyMinute` fires on the real minute boundary; the old
+        // `.periodic(from: .now, by: 60)` ticked 60s after appearing, so the
+        // clock could lag by up to a minute. Same cost, correct time.
+        TimelineView(.everyMinute) { timeline in
             VStack(spacing: 3) {
-                Text(Self.timeFormatter.string(from: timeline.date))
+                // Format styles follow the user's 12/24-hour setting and locale.
+                Text(timeline.date, format: .dateTime.hour().minute())
                     .font(.system(size: 18, weight: .semibold, design: .rounded))
                     .monospacedDigit()
 
                 // Date and weather share one secondary line so the card keeps
                 // its two-level hierarchy (time hero, one quiet line below).
                 HStack(spacing: 6) {
-                    Text(Self.dateFormatter.string(from: timeline.date))
+                    Text(timeline.date, format: .dateTime.weekday(.abbreviated).month(.abbreviated).day())
                     if let snap = weather.visibleSnapshot {
                         Button(action: toggleDetail) { weatherGlance(snap) }
                             .buttonStyle(SoftPressButtonStyle())

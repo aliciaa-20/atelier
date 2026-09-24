@@ -9,6 +9,7 @@ import SwiftUI
 private struct Parallax3DModifier: ViewModifier {
     private static let intensity: Double = 6
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var offset: CGSize = .zero
     @State private var isHovering = false
     @State private var viewSize: CGSize = .zero
@@ -25,6 +26,8 @@ private struct Parallax3DModifier: ViewModifier {
                 }
             )
             .onContinuousHover { phase in
+                // Tilt/scale is exactly the kind of motion Reduce Motion asks to drop.
+                guard !reduceMotion else { return }
                 switch phase {
                 case .active(let location):
                     guard viewSize.width > 0, viewSize.height > 0 else { return }

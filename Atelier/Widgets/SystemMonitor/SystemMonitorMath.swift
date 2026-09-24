@@ -24,25 +24,6 @@ enum SystemMonitorMath {
         }
     }
 
-    /// Page counts from one `host_statistics64`/`HOST_VM_INFO64` sample.
-    /// Counts, not bytes -- `memoryUsedPercent` only needs their ratio, so
-    /// the page size never has to cross this pure boundary either.
-    struct MemorySample: Equatable {
-        let free: UInt64
-        let active: UInt64
-        let inactive: UInt64
-        let wired: UInt64
-        let compressed: UInt64
-
-        init(free: UInt64, active: UInt64, inactive: UInt64, wired: UInt64, compressed: UInt64 = 0) {
-            self.free = free
-            self.active = active
-            self.inactive = inactive
-            self.wired = wired
-            self.compressed = compressed
-        }
-    }
-
     /// Percent of CPU busy (user + system + nice against user + system +
     /// nice + idle) between two samples of the same running counter, per
     /// the standard `host_cpu_load_info` delta technique -- a single
@@ -71,16 +52,16 @@ enum SystemMonitorMath {
         return min(100, max(0, Double(busy) / Double(total) * 100))
     }
 
-    /// Percent of physical memory in active use. Free pages are the only
-    /// ones excluded from "used" -- inactive pages are still resident and
-    /// reclaimable, but until actually reclaimed they represent real
-    /// memory pressure, matching how Activity Monitor's own "Memory Used"
-    /// figure reads (not just wired+active). Compressed pages count as
-    /// used for the same reason.
-    static func memoryUsedPercent(_ sample: MemorySample) -> Double {
-        let used = sample.active + sample.inactive + sample.wired + sample.compressed
-        let total = used + sample.free
-        guard total > 0 else { return 0 }
-        return min(100, max(0, Double(used) / Double(total) * 100))
+    /// Percent of memory "in use", as the complement of the system's own
+    /// free-memory percentage (`kern.memorystatus_level`, the number
+    /// `memory_pressure` prints as "System-wide memory free percentage").
+    ///
+    /// Not summed from raw Mach page counts: counting inactive (cache-like)
+    /// and compressor pages as "used" made every Mac read ~95-99% and the
+    /// ring sat permanently red -- on an 8 GB machine reporting 46% free it
+    /// showed 99%. The OS's own figure already accounts for reclaimable
+    /// pages, so it tracks real memory pressure. See ADR 0017.
+    static func memoryUsedPercent(freePercentage: Int) -> Double {
+        100 - Double(min(100, max(0, freePercentage)))
     }
 }

@@ -13,10 +13,24 @@ struct ShelfView: View {
     var body: some View {
         Group {
             if store.items.isEmpty {
-                Text("Drop files here")
-                    .font(.subheadline)
-                    .foregroundStyle(.white.opacity(0.6))
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                // Same empty-state style as the Camera tab's placeholder: a
+                // soft card, one icon, one short line. Purely visual, so it
+                // never swallows the drop (Invariant 4).
+                VStack(spacing: 6) {
+                    Image(systemName: "tray.and.arrow.down")
+                        .font(.system(size: 22, weight: .regular))
+                    Text("Drop files here")
+                        .font(.system(size: 12, weight: .medium))
+                }
+                .foregroundStyle(.white.opacity(0.5))
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(Color.white.opacity(0.06))
+                )
+                .padding(.horizontal, NotchLayout.pageHorizontalInset)
+                .padding(.bottom, 12)
+                .allowsHitTesting(false)
             } else {
                 ScrollView(.horizontal, showsIndicators: false) {
                     LazyHGrid(rows: columns, spacing: 12) {
