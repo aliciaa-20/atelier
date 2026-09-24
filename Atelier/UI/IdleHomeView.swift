@@ -18,6 +18,8 @@ import SwiftUI
 /// below it -- same hierarchy Apple's own Lock Screen uses.
 struct IdleHomeView: View {
     @ObservedObject var weather: WeatherSource
+    @Binding var showDetail: Bool
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private static let timeFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -31,7 +33,23 @@ struct IdleHomeView: View {
         return formatter
     }()
 
+    private func toggleDetail() {
+        withAnimation(reduceMotion ? nil : .spring(response: 0.35, dampingFraction: 0.85)) {
+            showDetail.toggle()
+        }
+    }
+
     var body: some View {
+        if showDetail, let snap = weather.visibleSnapshot {
+            WeatherDetailView(snapshot: snap, onClose: toggleDetail)
+                .padding(.bottom, 2.5)
+                .transition(.opacity)
+        } else {
+            clock
+        }
+    }
+
+    private var clock: some View {
         TimelineView(.periodic(from: .now, by: 60)) { timeline in
             VStack(spacing: 3) {
                 Text(Self.timeFormatter.string(from: timeline.date))
@@ -43,7 +61,9 @@ struct IdleHomeView: View {
                 HStack(spacing: 6) {
                     Text(Self.dateFormatter.string(from: timeline.date))
                     if let snap = weather.visibleSnapshot {
-                        weatherGlance(snap)
+                        Button(action: toggleDetail) { weatherGlance(snap) }
+                            .buttonStyle(SoftPressButtonStyle())
+                            .focusEffectDisabled()
                     }
                 }
                 .font(.caption2)
@@ -70,8 +90,10 @@ struct IdleHomeView: View {
                 .symbolRenderingMode(.multicolor)
             Text(temp).monospacedDigit()
         }
+        .contentShape(Rectangle())
         .help(condition.quip)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(condition.label), \(temp)")
+        .accessibilityHint("Shows weather details")
     }
 }
