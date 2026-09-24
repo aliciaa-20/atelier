@@ -33,14 +33,12 @@ struct SettingsView: View {
             }
             .navigationSplitViewColumnWidth(min: 160, ideal: 180, max: 220)
         } detail: {
-            // Temporary: each pane below is replaced by its real view in
-            // Tasks 2-4.
             switch selection ?? .general {
             case .general: GeneralPane()
             case .appearance: AppearancePane()
             case .tabs: TabsPane()
-            case .widgets: Text("Widgets")
-            case .permissions: Text("Permissions")
+            case .widgets: WidgetsPane()
+            case .permissions: PermissionsPane()
             }
         }
         .frame(minWidth: 620, minHeight: 420)
