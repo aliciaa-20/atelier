@@ -5,8 +5,8 @@ something runnable, a green test suite, and a commit. Source of truth for the
 overall plan is [the design spec](superpowers/specs/2026-08-31-atelier-notch-design.md);
 this file tracks progress against it.
 
-**Where we are:** Phases 0–12 and 14 (camera mirror) shipped (Phase 12 so far: color picker + Calendar tab + weather; quick notes/timers not started). Phase 13 (system resource monitor)
-and Phase 18 (Liquid Glass notch background) are both 🟨 partial — see
+**Where we are:** Phases 0–12 and 14 (camera mirror) shipped, Phase 16 (Settings window) mostly shipped (Phase 12 so far: color picker + Calendar tab + weather; quick notes/timers not started). Phase 13 (system resource monitor),
+Phase 16 (Automation UX, stable signing, menu-bar icon still open), and Phase 18 (Liquid Glass notch background) are all 🟨 partial — see
 their entries below for what's still open (Phase 18 has one known
 unresolved visual bug on close). Phases 9 and 10 detail below is kept as
 historical context from when they were in progress.
@@ -759,13 +759,13 @@ and highest-effort item in the backlog.*
 
 See [FEATURES.md §8](FEATURES.md#8-dev-agent-session-monitoring).
 
-### ⬜ Phase 16 — Settings + launch at login
+### 🟨 Phase 16 — Settings + launch at login (partial)
 *Ships: a Settings window and launch-at-login. (Originally Phase 6; moved
 here so the feature survey above ships first.)*
 
-- [ ] **Settings window** — surfaced from the `NSStatusItem` menu.
-- [ ] **Launch at login** via `SMAppService`.
-- [ ] **Automation-permission UX** — a visible "grant access" path when TCC is
+- [x] **Settings window** — surfaced from the `NSStatusItem` menu.
+- [x] **Launch at login** via `SMAppService`.
+- [ ] **Automation-permission UX** (Permissions pane shipped for Accessibility/Calendar/Camera/Location; Spotify Automation deferred — TCC only reveals it by trying) — a visible "grant access" path when TCC is
       denied, re-checkable from Settings.
 - [ ] Stable signing identity (free Apple Personal Team) so rebuilds don't
       re-trigger the Automation prompt every time.
@@ -773,9 +773,14 @@ here so the feature survey above ships first.)*
 Claude Code mechanic: custom slash commands; `/code-review`.
 
 **Parked from the 2026-09-24 UI review (belong here):**
-- [ ] Menu-bar settings tidy-up: "Camera: keep notch open whil…" is truncated
+- [x] Menu-bar settings tidy-up: "Camera: keep notch open whil…" is truncated
       -- shorten labels; indent dependent sub-toggles (Calendar swipe, Camera
       hold-open) under their parent
+- [ ] Permissions pane: after turning Camera off then on in System Settings, the row can stay
+      "Denied" until Atelier relaunches (seen on-device 2026-09-24; probably macOS caching the
+      camera answer per process). Parked -- add a "may need a relaunch" note or re-read differently.
+- [ ] Minor review leftovers (see ledger): Grant All keeps showing while Accessibility is off;
+      no window frame autosave; focus not returned after Settings closes; sidebar can lose highlight
 - [ ] Custom template menu-bar icon (currently a generic window SF Symbol)
 
 ### ⬜ Native-polish backlog (from ui-review-tahoe, 2026-09-24)

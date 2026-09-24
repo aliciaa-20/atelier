@@ -8,8 +8,53 @@ enum LocationPermission {
         CLLocationManager().authorizationStatus
     }
 
+    /// Asks for When-In-Use access and returns once the user has answered.
+    /// A separate manager from `WeatherSource`'s: authorization is per app,
+    /// not per manager, so answering here answers it there too.
+    @MainActor
+    static func requestAccess() async {
+        await LocationAuthorizationRequest().run()
+    }
+
     static func openSystemSettings() {
         guard let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_LocationServices") else { return }
         NSWorkspace.shared.open(url)
+    }
+}
+
+/// Bridges `CLLocationManager`'s delegate callback to `async`. Lives only for
+/// the duration of one `run()`.
+@MainActor
+private final class LocationAuthorizationRequest: NSObject, CLLocationManagerDelegate {
+    private let manager = CLLocationManager()
+    private var continuation: CheckedContinuation<Void, Never>?
+
+    func run() async {
+        guard manager.authorizationStatus == .notDetermined else { return }
+        manager.delegate = self
+        await withCheckedContinuation { continuation in
+            self.continuation = continuation
+            manager.requestWhenInUseAuthorization()
+            // If the prompt never resolves (Location Services off system-wide,
+            // dialog never shown), don't hold the caller -- and this object --
+            // forever.
+            Task { [weak self] in
+                try? await Task.sleep(for: .seconds(120))
+                self?.finish()
+            }
+        }
+    }
+
+    private func finish() {
+        continuation?.resume()
+        continuation = nil
+    }
+
+    nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        Task { @MainActor in
+            // Also fires once when the delegate is set, still undetermined.
+            guard self.manager.authorizationStatus != .notDetermined else { return }
+            self.finish()
+        }
     }
 }

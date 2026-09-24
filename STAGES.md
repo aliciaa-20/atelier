@@ -1,4 +1,18 @@
-# STAGES — Native polish pass (from ui-review-tahoe, 2026-09-24)
+# STAGES — Settings window (Phase 16)
+
+Branch: `feat/settings-window`. Spec: `docs/superpowers/specs/2026-09-24-settings-window-design.md`.
+Plan: `docs/superpowers/plans/2026-09-24-settings-window.md`.
+
+- [x] 1. Window shell + `Settings…` menu item (`SettingsWindowController`, sidebar)
+- [x] 2. General + Appearance panes, launch at login (`SMAppService`)
+- [x] 3. Tab order: pure `TabOrder` + tests, `activePages` wiring, Tabs pane
+- [x] 4. Widgets + Permissions panes, slim the menu
+- [x] 5. Reorderable Home — notch reopens on the first tab in the user's order (design (a), approved 2026-09-24)
+- [ ] 6. Docs: ADR 0018, README, FEATURES, ROADMAP Phase 16, CLAUDE.md
+
+---
+
+(Previous, merged) # STAGES — Native polish pass (from ui-review-tahoe, 2026-09-24)
 
 Branch: `fix/native-polish-pass`.
 
