@@ -154,7 +154,7 @@ struct CalendarPageView: View {
         return Group {
             if items.isEmpty {
                 Button { openCalendar() } label: {
-                    Text("No events · open Calendar to add one")
+                    Text("Nothing planned · tap to add something")
                         .font(.system(size: 11))
                         .foregroundStyle(.white.opacity(0.4))
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -196,11 +196,11 @@ struct CalendarPageView: View {
         .accessibilityElement(children: .combine)
     }
 
-    /// Opens Calendar.app on the selected day -- adding/editing happens
-    /// there, so the notch never needs write access or text input.
+    /// Opens the user's chosen calendar app (menu bar setting) -- adding and
+    /// editing happens there, so the notch never needs write access or text
+    /// input. `calshow:` (open on a date) is iOS-only, so it just launches it.
     private func openCalendar() {
-        let seconds = source.selectedDay.timeIntervalSinceReferenceDate
-        if let url = URL(string: "calshow:\(seconds)") { NSWorkspace.shared.open(url) }
+        CalendarAppLauncher.open()
     }
 
     private func timeText(for item: CalendarEventItem) -> String {

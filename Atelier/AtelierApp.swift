@@ -32,6 +32,7 @@ struct AtelierApp: App {
     @AppStorage(AtelierSettings.shelfEnabledKey) private var shelfEnabled = true
     @AppStorage(AtelierSettings.systemMonitorEnabledKey) private var systemMonitorEnabled = true
     @AppStorage(AtelierSettings.calendarEnabledKey) private var calendarEnabled = true
+    @AppStorage(AtelierSettings.calendarAppBundleIDKey) private var calendarAppBundleID = CalendarAppLauncher.defaultBundleID
     @AppStorage(AtelierSettings.colorPickerEnabledKey) private var colorPickerEnabled = true
     @AppStorage(AtelierSettings.glassEffectEnabledKey) private var glassEffectEnabled = false
     @AppStorage(AtelierSettings.glassIntensityKey) private var glassIntensity = 0.7
@@ -78,6 +79,11 @@ struct AtelierApp: App {
                     Toggle("Enable File Shelf", isOn: $shelfEnabled)
                     Toggle("Enable System Monitor", isOn: $systemMonitorEnabled)
                     Toggle("Enable Calendar", isOn: $calendarEnabled)
+                    if calendarEnabled {
+                        Button("Calendar opens in: \(CalendarAppLauncher.displayName(for: calendarAppBundleID))…") {
+                            if let id = CalendarAppLauncher.chooseApp() { calendarAppBundleID = id }
+                        }
+                    }
                     Toggle("Enable Color Picker", isOn: $colorPickerEnabled)
                 }
 
