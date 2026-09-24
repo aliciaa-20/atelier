@@ -5,7 +5,7 @@ something runnable, a green test suite, and a commit. Source of truth for the
 overall plan is [the design spec](superpowers/specs/2026-08-31-atelier-notch-design.md);
 this file tracks progress against it.
 
-**Where we are:** Phase 14 (camera mirror) is built and awaiting on-device verification. Phases 0–12 shipped (Phase 12 so far: color picker + Calendar tab + weather; quick notes/timers not started). Phase 13 (system resource monitor)
+**Where we are:** Phases 0–12 and 14 (camera mirror) shipped (Phase 12 so far: color picker + Calendar tab + weather; quick notes/timers not started). Phase 13 (system resource monitor)
 and Phase 18 (Liquid Glass notch background) are both 🟨 partial — see
 their entries below for what's still open (Phase 18 has one known
 unresolved visual bug on close). Phases 9 and 10 detail below is kept as
@@ -722,15 +722,14 @@ visually confirmed.
 
 See [FEATURES.md §7](FEATURES.md#7-system-resource-monitor).
 
-### 🟨 Phase 14 — Camera mirror mode
-*Ships: a camera-preview mirror widget.* Built on `feat/camera-mirror`
-(146 tests pass); **awaiting on-device verification** of the permission
+### ✅ Phase 14 — Camera mirror mode
+*Ships: a camera-preview mirror widget.* Shipped (PR #23, 146 tests pass); verified on-device 2026-09-24: permission
 prompt, live mirroring, stop-on-retract and the hold-open setting. See
 [ADR 0016](decisions/0016-camera-mirror-preview-layer-tap-to-start.md).
 
 - [x] Camera tab, tap-to-start, denied / no-camera states
 - [x] Optional hold-open setting
-- [ ] Verified on-device
+- [x] Verified on-device
 
 See [FEATURES.md §2](FEATURES.md#2-interaction--feel).
 

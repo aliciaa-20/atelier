@@ -47,7 +47,7 @@ Implemented the same way; see `docs/ROADMAP.md`'s Phase 11 entry.
 |---|---|
 | Gesture controls — swipe to open/close, horizontal swipe to seek/skip | Atoll, dynamicnotch |
 | Physics-based spring/"jelly" morph animation mimicking real iOS Dynamic Island motion | dynamicnotch |
-| Camera mirror mode — *built (Phase 14, ADR 0016), awaiting on-device check* | boring.notch, notchify, QuartzNotch |
+| Camera mirror mode — *shipped (Phase 14, ADR 0016)* | boring.notch, notchify, QuartzNotch |
 
 ---
 

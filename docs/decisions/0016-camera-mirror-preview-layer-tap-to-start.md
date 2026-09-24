@@ -1,6 +1,6 @@
 # ADR 0016 — camera mirror: preview layer, tap to start, opt-in hold-open
 
-- **Status:** Accepted (built; on-device verification pending)
+- **Status:** Accepted (verified on-device 2026-09-24)
 - **Date:** 2026-09-24
 
 ## Context
