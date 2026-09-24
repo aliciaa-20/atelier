@@ -12,6 +12,15 @@ enum AccessibilityPermission {
         AXIsProcessTrusted()
     }
 
+    /// Shows the system's own "Atelier would like to control this computer"
+    /// prompt (with an Open System Settings button). Accessibility can't be
+    /// granted in-app; the user still has to flip the switch. The key is the
+    /// literal value of `kAXTrustedCheckOptionPrompt`, which Swift 6 won't
+    /// let us reference as a mutable global.
+    static func requestPrompt() {
+        _ = AXIsProcessTrustedWithOptions(["AXTrustedCheckOptionPrompt": true] as CFDictionary)
+    }
+
     static func openSystemSettings() {
         guard let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") else { return }
         NSWorkspace.shared.open(url)

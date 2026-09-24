@@ -10,6 +10,10 @@ enum CalendarPermission {
         EKEventStore.authorizationStatus(for: .event)
     }
 
+    static func requestAccess() async -> Bool {
+        (try? await EKEventStore().requestFullAccessToEvents()) ?? false
+    }
+
     static func openSystemSettings() {
         guard let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Calendars") else { return }
         NSWorkspace.shared.open(url)

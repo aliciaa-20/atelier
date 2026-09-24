@@ -64,9 +64,26 @@ private struct PermissionSnapshot {
 
 struct PermissionsPane: View {
     @State private var snapshot = PermissionSnapshot.current()
+    @State private var isGrantingAll = false
+
+    private var needsAnything: Bool {
+        snapshot.accessibility != .granted || snapshot.calendar == .notDetermined
+            || snapshot.camera == .notDetermined || snapshot.location == .notDetermined
+    }
 
     var body: some View {
         Form {
+            if needsAnything {
+                Section {
+                    LabeledContent("Set up everything Atelier uses") {
+                        Button("Grant All") { Task { await grantAll() } }
+                            .disabled(isGrantingAll)
+                    }
+                } footer: {
+                    Text("macOS shows one prompt per permission; this asks for each in turn. Accessibility can only be switched on in System Settings.")
+                }
+            }
+
             Section {
                 PermissionRow(
                     title: "Accessibility",
@@ -78,7 +95,10 @@ struct PermissionsPane: View {
                     title: "Calendar",
                     detail: "Events in the Calendar tab",
                     state: snapshot.calendar,
-                    notAskedHint: "Open the Calendar tab to be asked.",
+                    grant: {
+                        _ = await CalendarPermission.requestAccess()
+                        snapshot = .current()
+                    },
                     openSettings: CalendarPermission.openSystemSettings
                 )
                 PermissionRow(
@@ -95,7 +115,10 @@ struct PermissionsPane: View {
                     title: "Location",
                     detail: "Local weather",
                     state: snapshot.location,
-                    notAskedHint: "Open the Weather view on Home to be asked.",
+                    grant: {
+                        await LocationPermission.requestAccess()
+                        snapshot = .current()
+                    },
                     openSettings: LocationPermission.openSystemSettings
                 )
             } footer: {
@@ -110,13 +133,28 @@ struct PermissionsPane: View {
     }
 }
 
+extension PermissionsPane {
+    /// One prompt after another, skipping anything already answered.
+    /// Accessibility goes last: its prompt points the user at System
+    /// Settings, so nothing useful can follow it.
+    @MainActor
+    fileprivate func grantAll() async {
+        isGrantingAll = true
+        defer { isGrantingAll = false }
+
+        if snapshot.camera == .notDetermined { _ = await CameraPermission.requestAccess() }
+        if snapshot.calendar == .notDetermined { _ = await CalendarPermission.requestAccess() }
+        if snapshot.location == .notDetermined { await LocationPermission.requestAccess() }
+        snapshot = .current()
+
+        if snapshot.accessibility != .granted { AccessibilityPermission.requestPrompt() }
+    }
+}
+
 private struct PermissionRow: View {
     let title: String
     let detail: String
     let state: PermissionState
-    /// Shown in place of a button when there's no in-app way to trigger the
-    /// system prompt from here (only Camera has a ready request helper).
-    var notAskedHint: String?
     var grant: (() async -> Void)?
     let openSettings: () -> Void
 
@@ -148,10 +186,9 @@ private struct PermissionRow: View {
         case .notDetermined:
             if let grant {
                 Button("Grant Access") { Task { await grant() } }
-            } else if let notAskedHint {
-                Text(notAskedHint)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+            } else {
+                // Accessibility: no in-app request, only the system prompt.
+                Button("Open System Settings…", action: openSettings)
             }
         }
     }
