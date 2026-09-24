@@ -24,6 +24,11 @@ a page added later can't scramble a saved order. Launch at login uses
 
 ## Consequences
 
+- The Tabs pane is a `List`, not a grouped `Form` like the other panes:
+  `.onMove` drag-to-reorder doesn't work in a macOS `Form` (confirmed
+  on-device). It also carries Move Up/Down accessibility actions and a
+  context menu, since dragging is mouse-only.
+
 - Home is movable like any tab but can't be disabled; "always reopens on
   Home" became "reopens on the first tab in the user's order"
   (`NotchPageTransition`'s `firstPage`). An order saved before Home was
