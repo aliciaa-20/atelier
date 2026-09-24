@@ -80,6 +80,16 @@ final class CalendarSource: ObservableObject {
         loadEvents()
     }
 
+    /// The tab always opens on today's date, not wherever it was left.
+    func resetToToday() {
+        let today = calendar.startOfDay(for: Date())
+        let newWeekStart = CalendarMath.startOfWeek(containing: today, calendar: calendar)
+        let weekChanged = newWeekStart != weekStart
+        selectedDay = today
+        weekStart = newWeekStart
+        if weekChanged { loadEvents() }
+    }
+
     func selectDay(_ day: Date) {
         selectedDay = calendar.startOfDay(for: day)
     }

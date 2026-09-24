@@ -73,8 +73,9 @@ final class NotchController {
     /// `ShelfView`'s own column width. Shorter than `playerContentHeight`
     /// since there's no scrubber/transport row.
     private static let shelfContentHeight: CGFloat = 90
-    /// Header + week strip + ~2 agenda rows. Starting guess -- tune on-device.
-    private static let calendarContentHeight: CGFloat = 178
+    /// Tallest the Calendar page gets (`NotchLayout.calendarMaxRows` events);
+    /// `NotchRootView` shrinks below this for emptier days.
+    private static let calendarContentHeight = NotchLayout.calendarContentHeight(eventCount: NotchLayout.calendarMaxRows)
     /// Extra width added on top of the real, measured notch width
     /// (`collapsedRect.width`, from `NotchGeometry.notchRect` -- 185pt on
     /// the Atelier MacBook, see `NotchGeometryTests`), not a standalone
