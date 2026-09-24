@@ -26,3 +26,6 @@ xcuserdata/
 # Secrets / local config
 *.local.xcconfig
 .env
+
+# Scratch workspace from superpowers skills
+.superpowers/
