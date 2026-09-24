@@ -34,6 +34,5 @@ struct WidgetsPane: View {
             }
         }
         .formStyle(.grouped)
-        .navigationTitle("Widgets")
     }
 }

@@ -22,31 +22,36 @@ enum SettingsPane: String, CaseIterable, Identifiable {
 
 /// Apple's Settings layout: a sidebar of panes, each pane a grouped `Form`
 /// that applies changes instantly (no Save button).
+///
+/// A plain sidebar `List` beside the pane, not `NavigationSplitView`: that
+/// merges with the window toolbar and adds a blurred scroll-edge band that
+/// panes scrolled underneath on load, hiding their first section. With no
+/// toolbar there is no band, so nothing can hide.
 struct SettingsView: View {
     @State private var selection: SettingsPane? = .general
-    /// Initial focus goes to the sidebar. Otherwise AppKit focuses the first
-    /// toggle in the pane and scrolls it up under the toolbar, hiding the
-    /// pane's first section.
-    @FocusState private var sidebarFocused: Bool
 
     var body: some View {
-        NavigationSplitView {
+        HStack(spacing: 0) {
             List(SettingsPane.allCases, selection: $selection) { pane in
                 Label(pane.rawValue, systemImage: pane.systemImage)
                     .tag(pane)
             }
-            .focused($sidebarFocused)
-            .navigationSplitViewColumnWidth(min: 160, ideal: 180, max: 220)
-        } detail: {
-            switch selection ?? .general {
-            case .general: GeneralPane()
-            case .appearance: AppearancePane()
-            case .tabs: TabsPane()
-            case .widgets: WidgetsPane()
-            case .permissions: PermissionsPane()
+            .listStyle(.sidebar)
+            .frame(width: 190)
+
+            Divider()
+
+            Group {
+                switch selection ?? .general {
+                case .general: GeneralPane()
+                case .appearance: AppearancePane()
+                case .tabs: TabsPane()
+                case .widgets: WidgetsPane()
+                case .permissions: PermissionsPane()
+                }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .defaultFocus($sidebarFocused, true)
         .frame(minWidth: 620, minHeight: 420)
     }
 }

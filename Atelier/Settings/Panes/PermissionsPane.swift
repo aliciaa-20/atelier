@@ -126,7 +126,6 @@ struct PermissionsPane: View {
             }
         }
         .formStyle(.grouped)
-        .navigationTitle("Permissions")
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             snapshot = .current()
         }

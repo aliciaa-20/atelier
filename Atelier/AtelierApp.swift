@@ -38,13 +38,6 @@ struct AtelierApp: App {
 
             Divider()
 
-            // ⌘, works while this menu is open; a global ⌘, would need a
-            // real main menu, which an accessory app doesn't have.
-            Button("Settings…") {
-                SettingsWindowController.shared.show()
-            }
-            .keyboardShortcut(",")
-
             // An action, not a setting, so it stays here. Hidden once
             // turned off (Widgets pane), same "no leftover way in"
             // reasoning as before.
@@ -52,9 +45,16 @@ struct AtelierApp: App {
                 Button("Pick a Color…") {
                     notchController?.pickColor()
                 }
+
+                Divider()
             }
 
-            Divider()
+            // ⌘, works while this menu is open; a global ⌘, would need a
+            // real main menu, which an accessory app doesn't have.
+            Button("Settings…") {
+                SettingsWindowController.shared.show()
+            }
+            .keyboardShortcut(",")
 
             Button("Quit Atelier") {
                 NSApplication.shared.terminate(nil)
