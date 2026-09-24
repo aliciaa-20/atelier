@@ -7,6 +7,10 @@ Branch: `fix/native-polish-pass`.
 - [x] macOS VoiceOver wording ("Press", not "Double tap")
 - [x] Reduce Motion: notch open/close/settle, press feedback, parallax, System Monitor transitions
 - [x] `.help()` tooltips on icon-only controls (transport, shuffle, output, tab dots, camera)
+- [x] Memory ring: OS free-memory % instead of summed page counts (ADR 0017)
+- [x] Shelf empty state in the Camera style; Calendar tooltips
+- [ ] **Parked (see ROADMAP):** Phase 16 menu-label tidy + menu-bar icon; Phase 18 glass contrast/corners;
+      Phase 13 threshold check + pill text size; Weather TTL option
 - [ ] **Parked:** VoiceOver-adjustable scrubber (`ScrubberView` is a raw drag gesture; needs
       `accessibilityValue` + `accessibilityAdjustableAction`). Not built yet, by choice.
 - [ ] **Not picked up:** haptics, symbol/number morphs, 9-10pt text, concentric corner radii.
