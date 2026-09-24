@@ -92,6 +92,7 @@ struct CalendarPageView: View {
         .focusEffectDisabled()
         .fixedSize()
         .accessibilityLabel("Choose calendars")
+        .help("Choose calendars")
     }
 
     private func chevron(_ symbol: String, label: String, action: @escaping () -> Void) -> some View {
@@ -105,6 +106,7 @@ struct CalendarPageView: View {
         .buttonStyle(.plain)
         .focusEffectDisabled()
         .accessibilityLabel(label)
+        .help(label)
     }
 
     // MARK: - Week strip

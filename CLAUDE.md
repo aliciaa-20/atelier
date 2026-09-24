@@ -46,6 +46,19 @@ asked misses them. Whenever touching any SwiftUI view under `Atelier/UI/`
   prefer surfacing a batch of findings in one pass over reacting to one
   screenshot at a time.
 
+### Lessons from the 2026-09-24 screenshot review
+
+- Ask for on-device screenshots of **every tab** after visual work; the biggest
+  bug found (memory ring stuck at 99% red) was invisible to code review and tests.
+- Verify any system metric against the OS's own tool (`memory_pressure`,
+  Activity Monitor) before shipping, and never attach an alarming label
+  ("Overloaded") to a number that hasn't been sanity-checked. See ADR 0017.
+- Use locale-aware format styles (`.dateTime`) and `TimelineView(.everyMinute)`,
+  not hard-coded `dateFormat` strings or `.periodic(from: .now, by: 60)`.
+- Icon-only controls get `.help()` tooltips; anything bouncy or parallax honors
+  Reduce Motion (`NotchAnimations` reads it live).
+- Empty states share one style: soft card, one SF Symbol, one short line.
+
 ## Performance — lightweight by design, proactively
 
 Alicia has told me directly this is a differentiator, not a nice-to-have:
