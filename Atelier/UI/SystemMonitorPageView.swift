@@ -32,10 +32,11 @@ import SwiftUI
 struct SystemMonitorPageView: View {
     @ObservedObject var source: SystemMonitorSource
     @State private var showingDetail = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         Button {
-            withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+            withAnimation(reduceMotion ? .easeInOut(duration: 0.15) : .spring(response: 0.35, dampingFraction: 0.85)) {
                 showingDetail.toggle()
             }
         } label: {
@@ -51,7 +52,7 @@ struct SystemMonitorPageView: View {
                             percent: source.memoryPercent
                         )
                     }
-                    .transition(.opacity.combined(with: .scale(scale: 0.97)))
+                    .transition(reduceMotion ? .opacity : .opacity.combined(with: .scale(scale: 0.97)))
                 } else {
                     HStack(spacing: 28) {
                         RingGauge(
@@ -65,7 +66,7 @@ struct SystemMonitorPageView: View {
                             percent: source.memoryPercent
                         )
                     }
-                    .transition(.opacity.combined(with: .scale(scale: 1.03)))
+                    .transition(reduceMotion ? .opacity : .opacity.combined(with: .scale(scale: 1.03)))
                 }
             }
             .contentShape(Rectangle())
@@ -73,7 +74,7 @@ struct SystemMonitorPageView: View {
         .buttonStyle(.plain)
         .focusEffectDisabled()
         .accessibilityLabel(showingDetail ? "System status detail" : "System status rings")
-        .accessibilityHint(showingDetail ? "Double tap to show gauges" : "Double tap for a plain-language status")
+        .accessibilityHint(showingDetail ? "Press to show gauges" : "Press for a plain-language status")
         .padding(.horizontal, NotchLayout.pageHorizontalInset)
         .padding(.top, 6)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)

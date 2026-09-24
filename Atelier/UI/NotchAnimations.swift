@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 /// The notch's open/close/peek/settle transition curves, named and
@@ -25,14 +26,27 @@ import SwiftUI
 /// the separate peek curves read as a visibly different, less smooth
 /// close than hovering).
 enum NotchAnimations {
-    static let open: Animation = .spring(response: 0.35, dampingFraction: 0.65)
+    /// With Reduce Motion on, the springs (overshoot, bounce) become short
+    /// eased fades -- Apple's guidance for bouncy/parallax motion. Read live
+    /// so toggling the setting takes effect on the next animation.
+    private static var reduceMotion: Bool {
+        NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+    }
+
+    static var open: Animation {
+        reduceMotion ? .easeInOut(duration: 0.2) : .spring(response: 0.35, dampingFraction: 0.65)
+    }
     /// `response`/`dampingFraction` retuned again after content switched to
     /// `.transition(.identity)` (see `NotchRootView`) -- with content no
     /// longer fading independently, this spring is now the *entire* close
     /// motion, so its own smoothness matters more than before. Slightly
     /// higher damping than the previous 0.88 softens the tail of the
     /// shrink; a starting point for further tuning, not asserted as final.
-    static let close: Animation = .spring(response: 0.6, dampingFraction: 0.94)
+    static var close: Animation {
+        reduceMotion ? .easeInOut(duration: 0.25) : .spring(response: 0.6, dampingFraction: 0.94)
+    }
     static let settleTuck: Animation = .easeOut(duration: 0.12)
-    static let settleSpringBack: Animation = .spring(response: 0.35, dampingFraction: 0.5)
+    static var settleSpringBack: Animation {
+        reduceMotion ? .easeOut(duration: 0.12) : .spring(response: 0.35, dampingFraction: 0.5)
+    }
 }

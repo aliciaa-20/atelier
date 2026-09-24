@@ -1,3 +1,18 @@
+# STAGES — Native polish pass (from ui-review-tahoe, 2026-09-24)
+
+Branch: `fix/native-polish-pass`.
+
+- [x] Home clock ticks on the real minute (`TimelineView(.everyMinute)`)
+- [x] Clock/date use locale-aware format styles (12/24h, date order)
+- [x] macOS VoiceOver wording ("Press", not "Double tap")
+- [x] Reduce Motion: notch open/close/settle, press feedback, parallax, System Monitor transitions
+- [x] `.help()` tooltips on icon-only controls (transport, shuffle, output, tab dots, camera)
+- [ ] **Parked:** VoiceOver-adjustable scrubber (`ScrubberView` is a raw drag gesture; needs
+      `accessibilityValue` + `accessibilityAdjustableAction`). Not built yet, by choice.
+- [ ] **Not picked up:** haptics, symbol/number morphs, 9-10pt text, concentric corner radii.
+
+---
+
 # STAGES — Camera mirror (Phase 14)
 
 Branch: `feat/camera-mirror`. Spec: `docs/superpowers/specs/2026-09-24-camera-mirror-design.md`.

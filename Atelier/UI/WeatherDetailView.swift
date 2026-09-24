@@ -101,7 +101,7 @@ struct WeatherDetailView: View {
         .buttonStyle(SoftPressButtonStyle())
         .focusEffectDisabled()
         .accessibilityLabel("Weather, \(condition.label), \(degrees(snapshot.currentTemp)). \(condition.quip)")
-        .accessibilityHint("Double-tap to go back to the clock")
+        .accessibilityHint("Press to go back to the clock")
     }
 
     private func weekday(_ day: DayWeather) -> String {
