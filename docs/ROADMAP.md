@@ -5,7 +5,7 @@ something runnable, a green test suite, and a commit. Source of truth for the
 overall plan is [the design spec](superpowers/specs/2026-08-31-atelier-notch-design.md);
 this file tracks progress against it.
 
-**Where we are:** Phases 0–12 shipped. Phase 13 (system resource monitor)
+**Where we are:** Phases 0–12 shipped (Phase 12 so far: color picker + Calendar tab; quick notes/timers not started). Phase 13 (system resource monitor)
 and Phase 18 (Liquid Glass notch background) are both 🟨 partial — see
 their entries below for what's still open (Phase 18 has one known
 unresolved visual bug on close). Phases 9 and 10 detail below is kept as
@@ -657,7 +657,23 @@ See [FEATURES.md §1](FEATURES.md#1-now-playing--live-activity-core).
 widget plugged into Phase 6's architecture.*
 **Depends on Phase 6.**
 
-- [ ] Calendar / reminders (EventKit).
+- [x] Calendar (reminders not built) -- fourth `NotchPage.calendar` tab.
+      `Widgets/Calendar/CalendarSource.swift` (read-only EventKit, refreshes
+      on `.EKEventStoreChanged`, idle until the tab is first opened),
+      `CalendarMath` (pure week math), `WeekdayQuips` (a random funny line
+      per weekday), `UI/CalendarPageView.swift` (week strip + agenda, per-
+      calendar filter menu, opens on today). Horizontal swipe scrolls
+      day-by-day with a stretchy selection indicator (`CalendarScrub` +
+      interpreter `.scrub` action; menu-bar toggle "scroll-style swipe" off
+      restores one-swipe-per-week via the skip gesture); double-tap a date
+      opens the calendar app; panel height fits
+      the selected day's events (`NotchLayout`). Tapping opens the user's
+      chosen calendar app (menu-bar setting; Calendar.app jumps to the day
+      via AppleScript -- `calshow:` is iOS-only). **Verified on-device**
+      (2026-09-24): tab, filter, swipe, heights. **Not yet verified:** the
+      Calendar.app jump-to-day (needs a one-time Automation grant).
+      Scroll swipe and double-tap tried on-device 2026-09-24 (tuned slower
+      + crossfade at week rollover).
 - [ ] Quick notes.
 - [ ] Timers / Pomodoro.
 - [x] Color picker -- `Widgets/ColorPicker/ColorPickerSource.swift` +
@@ -792,6 +808,9 @@ specifically when nothing is playing (closes to `.collapsed` rather than
 `.pill`) was still reported after one fix attempt targeting it. Needs an
 on-device video of that specific path to diagnose properly — flagged
 inline in `NotchRootView.swift` rather than guessed at further.
+
+**Rework parked (2026-09-24):** it reads as transparency, not glass. Research
+and options in [docs/research/liquid-glass-apple-guidance.md](research/liquid-glass-apple-guidance.md).
 
 **Menu-bar settings UI is a known placeholder**, not a finished design —
 a redesign of the whole menu-bar settings surface (this toggle/slider

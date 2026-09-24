@@ -23,6 +23,10 @@ struct NotchGestureModifier: ViewModifier {
     let onClose: () -> Void
     let onSkipForward: () -> Void
     let onSkipBackward: () -> Void
+    /// Only used when `capabilities.canScrub` -- streams the gesture's
+    /// total horizontal distance, then signals when the finger lifts.
+    var onScrub: ((CGFloat) -> Void)? = nil
+    var onScrubEnded: (() -> Void)? = nil
 
     func body(content: Content) -> some View {
         content.background(
@@ -33,7 +37,9 @@ struct NotchGestureModifier: ViewModifier {
                 onOpen: onOpen,
                 onClose: onClose,
                 onSkipForward: onSkipForward,
-                onSkipBackward: onSkipBackward
+                onSkipBackward: onSkipBackward,
+                onScrub: onScrub,
+                onScrubEnded: onScrubEnded
             )
         )
     }
@@ -47,6 +53,8 @@ private struct NotchGestureMonitorRepresentable: NSViewRepresentable {
     let onClose: () -> Void
     let onSkipForward: () -> Void
     let onSkipBackward: () -> Void
+    let onScrub: ((CGFloat) -> Void)?
+    let onScrubEnded: (() -> Void)?
 
     func makeNSView(context: Context) -> NotchGestureMonitorView {
         let view = NotchGestureMonitorView()
@@ -57,7 +65,9 @@ private struct NotchGestureMonitorRepresentable: NSViewRepresentable {
             onOpen: onOpen,
             onClose: onClose,
             onSkipForward: onSkipForward,
-            onSkipBackward: onSkipBackward
+            onSkipBackward: onSkipBackward,
+            onScrub: onScrub,
+            onScrubEnded: onScrubEnded
         )
         return view
     }
@@ -70,7 +80,9 @@ private struct NotchGestureMonitorRepresentable: NSViewRepresentable {
             onOpen: onOpen,
             onClose: onClose,
             onSkipForward: onSkipForward,
-            onSkipBackward: onSkipBackward
+            onSkipBackward: onSkipBackward,
+            onScrub: onScrub,
+            onScrubEnded: onScrubEnded
         )
     }
 
@@ -90,9 +102,12 @@ private struct NotchGestureMonitorRepresentable: NSViewRepresentable {
     private var onClose: (() -> Void)?
     private var onSkipForward: (() -> Void)?
     private var onSkipBackward: (() -> Void)?
+    private var onScrub: ((CGFloat) -> Void)?
+    private var onScrubEnded: (() -> Void)?
 
     private var trackingState = NotchGestureTrackingState()
     private var isTracking = false
+    private var isScrubbing = false
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
@@ -120,7 +135,9 @@ private struct NotchGestureMonitorRepresentable: NSViewRepresentable {
         onOpen: @escaping () -> Void,
         onClose: @escaping () -> Void,
         onSkipForward: @escaping () -> Void,
-        onSkipBackward: @escaping () -> Void
+        onSkipBackward: @escaping () -> Void,
+        onScrub: ((CGFloat) -> Void)?,
+        onScrubEnded: (() -> Void)?
     ) {
         self.capabilities = capabilities
         self.threshold = threshold
@@ -129,6 +146,8 @@ private struct NotchGestureMonitorRepresentable: NSViewRepresentable {
         self.onClose = onClose
         self.onSkipForward = onSkipForward
         self.onSkipBackward = onSkipBackward
+        self.onScrub = onScrub
+        self.onScrubEnded = onScrubEnded
     }
 
     func stopMonitoring() {
@@ -177,6 +196,7 @@ private extension NotchGestureMonitorView {
         guard let screenLocation, let screenRect = currentScreenRect() else { return }
 
         if event.phase.contains(.began) || event.phase.contains(.mayBegin) {
+            endScrubIfNeeded()
             isTracking = screenRect.contains(screenLocation)
             trackingState = NotchGestureTrackingState()
             return
@@ -217,6 +237,9 @@ private extension NotchGestureMonitorView {
             onSkipForward?()
         case .skipBackward:
             onSkipBackward?()
+        case .scrub(let totalDX):
+            isScrubbing = true
+            onScrub?(totalDX)
         case nil:
             break
         }
@@ -228,7 +251,14 @@ private extension NotchGestureMonitorView {
         return window.convertToScreen(rectInWindow)
     }
 
+    func endScrubIfNeeded() {
+        guard isScrubbing else { return }
+        isScrubbing = false
+        onScrubEnded?()
+    }
+
     func resetTracking() {
+        endScrubIfNeeded()
         isTracking = false
         trackingState = NotchGestureTrackingState()
     }

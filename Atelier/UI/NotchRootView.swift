@@ -9,6 +9,7 @@ struct NotchRootView: View {
     @ObservedObject var audioTap: AudioTap
     @ObservedObject var shelfStore: ShelfStore
     @ObservedObject var systemMonitor: SystemMonitorSource
+    @ObservedObject var calendar: CalendarSource
     @StateObject private var artworkColor = ArtworkColorLoader()
     @State private var settleScale: CGFloat = 1
     /// A brief dip-and-recover applied to the *whole already-composited*
@@ -89,6 +90,12 @@ struct NotchRootView: View {
     /// earlier pass gave Volume/Brightness their own narrower notch-width
     /// pill, but on-device that read as too cramped; matching the pill
     /// everything else already uses reads more consistent.
+    /// True while the expanded notch is showing the Calendar tab -- the
+    /// horizontal swipe changes week there rather than skipping a track.
+    private var onCalendarPage: Bool {
+        viewModel.state == .expanded && AtelierSettings.calendarEnabled && viewModel.currentPage == .calendar
+    }
+
     private var frameSize: CGSize {
         switch viewModel.state {
         case .peeking:
@@ -100,6 +107,13 @@ struct NotchRootView: View {
             // shelf grid, so it shouldn't claim the same vertical space.
             if viewModel.currentPage == .home, nowPlaying.current == nil {
                 return viewModel.idleHomeSize
+            }
+            if AtelierSettings.calendarEnabled, viewModel.currentPage == .calendar {
+                let count = calendar.events(on: calendar.layoutDay).count
+                return CGSize(
+                    width: viewModel.calendarSize.width,
+                    height: viewModel.collapsedSize.height + NotchLayout.calendarContentHeight(eventCount: count)
+                )
             }
             return viewModel.currentSize
         case .pill, .collapsed, .shelf:
@@ -209,6 +223,8 @@ struct NotchRootView: View {
                                 .onAppear { shelfStore.sweepExpired() }
                         } else if AtelierSettings.systemMonitorEnabled, viewModel.currentPage == .systemMonitor {
                             SystemMonitorPageView(source: systemMonitor)
+                        } else if AtelierSettings.calendarEnabled, viewModel.currentPage == .calendar {
+                            CalendarPageView(source: calendar)
                         } else {
                             ExpandedPlayerView(
                                 info: nowPlaying.current,
@@ -379,7 +395,12 @@ struct NotchRootView: View {
                         // disappears), which silently disabled skip too.
                         // `nowPlaying.current` stays populated regardless
                         // of play state, so skipping while paused works.
-                        canSkip: nowPlaying.current != nil
+                        //
+                        // On the Calendar page a horizontal swipe changes
+                        // week instead (see `onSkipForward` below), so
+                        // it's always enabled there.
+                        canSkip: onCalendarPage ? !AtelierSettings.calendarScrollSwipeEnabled : nowPlaying.current != nil,
+                        canScrub: onCalendarPage && AtelierSettings.calendarScrollSwipeEnabled
                     ),
                     onOpen: {
                         withAnimation(NotchAnimations.open) {
@@ -392,11 +413,21 @@ struct NotchRootView: View {
                         }
                     },
                     onSkipForward: {
-                        Task { await nowPlaying.next() }
+                        if onCalendarPage {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { calendar.shiftWeek(by: 1) }
+                        } else {
+                            Task { await nowPlaying.next() }
+                        }
                     },
                     onSkipBackward: {
-                        Task { await nowPlaying.previous() }
-                    }
+                        if onCalendarPage {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { calendar.shiftWeek(by: -1) }
+                        } else {
+                            Task { await nowPlaying.previous() }
+                        }
+                    },
+                    onScrub: { calendar.scrub(totalDX: $0) },
+                    onScrubEnded: { calendar.endScrub() }
                 )
             )
             .modifier(

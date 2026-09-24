@@ -23,6 +23,8 @@ final class NotchController {
     /// `NotchRootView` has a stable instance to bind `NotchPage.systemMonitor`'s
     /// tab content to -- same reasoning as `batterySource` above.
     private let systemMonitorSource: SystemMonitorSource
+    /// Owned here so `NotchRootView` has a stable instance for the Calendar tab.
+    private let calendarSource = CalendarSource()
     /// Owned here so `pickColor()` below has a stable instance to call
     /// `.pick()` on -- same reasoning as `volumeSource`.
     private let colorPickerSource: ColorPickerSource
@@ -71,6 +73,9 @@ final class NotchController {
     /// `ShelfView`'s own column width. Shorter than `playerContentHeight`
     /// since there's no scrubber/transport row.
     private static let shelfContentHeight: CGFloat = 90
+    /// Tallest the Calendar page gets (`NotchLayout.calendarMaxRows` events);
+    /// `NotchRootView` shrinks below this for emptier days.
+    private static let calendarContentHeight = NotchLayout.calendarContentHeight(eventCount: NotchLayout.calendarMaxRows)
     /// Extra width added on top of the real, measured notch width
     /// (`collapsedRect.width`, from `NotchGeometry.notchRect` -- 185pt on
     /// the Atelier MacBook, see `NotchGeometryTests`), not a standalone
@@ -115,7 +120,7 @@ final class NotchController {
         shelfStore.sweepExpired()
 
         guard let screen = NSScreen.notchedOrMain else {
-            viewModel = NotchViewModel(collapsedSize: .zero, expandedSize: .zero, idleHomeSize: .zero, pillSize: .zero, peekSize: .zero, compactPeekSize: .zero, shelfSize: .zero)
+            viewModel = NotchViewModel(collapsedSize: .zero, expandedSize: .zero, idleHomeSize: .zero, pillSize: .zero, peekSize: .zero, compactPeekSize: .zero, shelfSize: .zero, calendarSize: .zero)
             let hudOrder = SystemHUDOrder()
             let volumeSource = VolumeSource(notchHeight: 0, hudOrder: hudOrder)
             let brightnessSource = BrightnessSource(notchHeight: 0, hudOrder: hudOrder)
@@ -153,7 +158,8 @@ final class NotchController {
                     liveActivity: liveActivityCoordinator,
                     audioTap: audioTap,
                     shelfStore: shelfStore,
-                    systemMonitor: systemMonitorSource
+                    systemMonitor: systemMonitorSource,
+                    calendar: calendarSource
                 )
             )
             return
@@ -226,6 +232,10 @@ final class NotchController {
             width: Self.expandedWidth,
             height: collapsedRect.height + Self.shelfContentHeight
         )
+        let calendarSize = CGSize(
+            width: Self.expandedWidth,
+            height: collapsedRect.height + Self.calendarContentHeight
+        )
         viewModel = NotchViewModel(
             collapsedSize: collapsedRect.size,
             expandedSize: expandedSize,
@@ -233,14 +243,17 @@ final class NotchController {
             pillSize: pillSize,
             peekSize: peekSize,
             compactPeekSize: compactPeekSize,
-            shelfSize: shelfSize
+            shelfSize: shelfSize,
+            calendarSize: calendarSize
         )
 
+        // Invariant 3: the panel is the maximum footprint of any page.
+        let maxHeight = max(expandedSize.height, calendarSize.height)
         let maxRect = CGRect(
             x: collapsedRect.midX - expandedSize.width / 2,
-            y: collapsedRect.maxY - expandedSize.height,
+            y: collapsedRect.maxY - maxHeight,
             width: expandedSize.width,
-            height: expandedSize.height
+            height: maxHeight
         )
 
         panel.contentView = ClickThroughHostingView(
@@ -250,7 +263,8 @@ final class NotchController {
                 liveActivity: liveActivityCoordinator,
                 audioTap: audioTap,
                 shelfStore: shelfStore,
-                systemMonitor: systemMonitorSource
+                systemMonitor: systemMonitorSource,
+                calendar: calendarSource
             )
         )
         panel.setFrame(maxRect, display: true)

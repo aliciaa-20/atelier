@@ -33,9 +33,9 @@ struct ExpandedPlayerView: View {
                 emptyState
             }
         }
-        // Horizontal padding widened (20->26) per direct feedback that
-        // content sat too close to the panel's rounded corners.
-        .padding(.horizontal, 26)
+        // Shared inset (widened 20->26 per direct feedback that content sat
+        // too close to the panel's rounded corners) -- see `NotchLayout`.
+        .padding(.horizontal, NotchLayout.pageHorizontalInset)
         // Widened (10->16) so the transport row clears the bottom edge
         // with real breathing room instead of reading as pinned to it --
         // same direct feedback pass as the horizontal padding above.
