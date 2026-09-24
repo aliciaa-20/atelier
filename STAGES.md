@@ -8,7 +8,7 @@ Plan: `docs/superpowers/plans/2026-09-24-camera-mirror.md`.
 - [x] 3. Permission + capture source — `CameraPermission`, `CameraMirrorSource`, Info.plist key
 - [x] 4. Camera page UI + notch wiring (hold-open, stop on retract)
 - [x] 5. UI review pass (`ui-review-tahoe`) done; on-device verification pending Alicia
-- [ ] 6. Docs — ADR 0016, README, CLAUDE.md, FEATURES §2, ROADMAP Phase 14
+- [x] 6. Docs — ADR 0016, README, CLAUDE.md, FEATURES §2, ROADMAP Phase 14
 
 ---
 

@@ -22,6 +22,10 @@ belongs there, not bolted on.
   the lock screen itself
 - **Gesture-driven** — swipe to open, close, or skip tracks, tuned
   with real spring physics
+- **Camera tab** — a live, mirrored self-view of your camera for a quick
+  check before a call. Tap to start; the camera is only on while the mirror is
+  showing and nothing is recorded. Optional setting keeps the notch open while
+  the mirror is on.
 - **Home, Shelf, System Monitor & Calendar tabs** — an idle view for
   when nothing's playing, a week-strip calendar with a funny line for
   each day of the week (scroll through days with a swipe; double-tap to open your calendar app)
@@ -68,6 +72,7 @@ keys, and the audio tap itself are manual-verification only (see
 |---|---|
 | Automation | Reads now-playing data from Spotify, and jumps Calendar.app to a day, via Apple Events |
 | Calendars (full access) | Read-only: shows your week and events in the Calendar tab. Atelier never adds or edits events |
+| Camera | Shows the live mirror in the Camera tab. Only requested on your first tap; if denied, the tab offers a shortcut to System Settings |
 | Location (While Using) | Approximate location, one-shot, to fetch the forecast for the Home weather glance. If denied, weather is simply hidden |
 | Accessibility | Intercepts volume/brightness/mute keys for the custom HUD |
 | System Audio Recording Only | Powers the live waveform via a system-wide audio tap ([why not per-app](docs/decisions/0012-whole-system-audio-tap.md)) |
