@@ -46,6 +46,7 @@ struct CameraMirrorPageView: View {
                 .font(.system(size: 22, weight: .regular))
             Text(caption)
                 .font(.system(size: 12, weight: .medium))
+                .multilineTextAlignment(.center)
         }
         .foregroundStyle(.white.opacity(0.5))
         .allowsHitTesting(false)
