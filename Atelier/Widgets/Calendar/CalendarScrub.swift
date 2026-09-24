@@ -6,7 +6,7 @@ import CoreGraphics
 /// like `CalendarMath` -- no AppKit, no `NSEvent`.
 enum CalendarScrub {
     /// Points of drag per day. A starting value -- tune on-device.
-    static let defaultStep: CGFloat = 30
+    static let defaultStep: CGFloat = 46
 
     /// `dayOffset` is the whole number of days moved (positive = later);
     /// `fraction` is how far past that day the finger is, in -0.5...0.5.

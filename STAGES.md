@@ -40,4 +40,4 @@ Later (separate STAGES): camera mirror (Phase 14) -> Settings (Phase 16) -> tele
 - [x] S2. Pure `CalendarScrub` + interpreter `.scrub` + modifier callbacks
 - [x] S3. `CalendarSource` scrub state + `layoutDay`, wiring, setting + toggle
 - [x] S4. Moving stretchy indicator, Reduce Motion, tuning
-- [ ] S5. Docs
+- [x] S5. Docs

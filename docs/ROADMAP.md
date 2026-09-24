@@ -662,14 +662,18 @@ widget plugged into Phase 6's architecture.*
       on `.EKEventStoreChanged`, idle until the tab is first opened),
       `CalendarMath` (pure week math), `WeekdayQuips` (a random funny line
       per weekday), `UI/CalendarPageView.swift` (week strip + agenda, per-
-      calendar filter menu, opens on today). Horizontal swipe changes week
-      (reuses the skip-track gesture, only on this page); panel height fits
+      calendar filter menu, opens on today). Horizontal swipe scrolls
+      day-by-day with a stretchy selection indicator (`CalendarScrub` +
+      interpreter `.scrub` action; menu-bar toggle "scroll-style swipe" off
+      restores one-swipe-per-week via the skip gesture); double-tap a date
+      opens the calendar app; panel height fits
       the selected day's events (`NotchLayout`). Tapping opens the user's
       chosen calendar app (menu-bar setting; Calendar.app jumps to the day
       via AppleScript -- `calshow:` is iOS-only). **Verified on-device**
       (2026-09-24): tab, filter, swipe, heights. **Not yet verified:** the
       Calendar.app jump-to-day (needs a one-time Automation grant).
-      Scroll-style swipe parked in STAGES.md.
+      Scroll swipe and double-tap tried on-device 2026-09-24 (tuned slower
+      + crossfade at week rollover).
 - [ ] Quick notes.
 - [ ] Timers / Pomodoro.
 - [x] Color picker -- `Widgets/ColorPicker/ColorPickerSource.swift` +

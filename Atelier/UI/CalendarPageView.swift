@@ -124,12 +124,30 @@ struct CalendarPageView: View {
     private var weekStrip: some View {
         let days = CalendarMath.days(inWeekStarting: source.weekStart, calendar: calendar)
         let selectedIndex = days.firstIndex { calendar.isDate($0, inSameDayAs: source.selectedDay) }
-        return HStack(spacing: 0) {
-            ForEach(Array(days.enumerated()), id: \.element) { index, day in
-                dayCell(day, underIndicator: isUnderIndicator(index, selectedIndex: selectedIndex))
+        // `.id(weekStart)` + a crossfade: when the swipe rolls into another
+        // week the whole strip (dates and indicator) softly swaps instead of
+        // the dates snapping and the indicator flying across six columns.
+        return ZStack {
+            HStack(spacing: 0) {
+                ForEach(Array(days.enumerated()), id: \.element) { index, day in
+                    dayCell(day, underIndicator: isUnderIndicator(index, selectedIndex: selectedIndex))
+                }
             }
+            .background(alignment: .topLeading) { indicator(selectedIndex: selectedIndex) }
+            .id(source.weekStart)
+            .transition(.opacity)
         }
-        .background(alignment: .topLeading) { indicator(selectedIndex: selectedIndex) }
+        .animation(reduceMotion ? nil : .easeInOut(duration: 0.22), value: source.weekStart)
+    }
+
+    /// While the finger is down: a light interactive spring, so the capsule
+    /// eases toward the finger instead of snapping 1:1 (graceful, not jittery).
+    /// After release and on taps: a softer spring settle.
+    private var indicatorAnimation: Animation? {
+        if reduceMotion { return nil }
+        return source.isScrubbing
+            ? .interactiveSpring(response: 0.22, dampingFraction: 0.9)
+            : .spring(response: 0.35, dampingFraction: 0.8)
     }
 
     /// A day's label turns black while the white indicator covers it: the
@@ -155,16 +173,8 @@ struct CalendarPageView: View {
                         x: (CGFloat(selectedIndex) + 0.5 + f) * columnWidth,
                         y: Self.indicatorTopInset + Self.indicatorSize / 2
                     )
-                    // Track the finger directly while scrubbing; spring on
-                    // release and on plain taps.
-                    .animation(
-                        source.isScrubbing || reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.75),
-                        value: f
-                    )
-                    .animation(
-                        source.isScrubbing || reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.75),
-                        value: selectedIndex
-                    )
+                    .animation(indicatorAnimation, value: f)
+                    .animation(indicatorAnimation, value: selectedIndex)
             }
         }
         .allowsHitTesting(false)
