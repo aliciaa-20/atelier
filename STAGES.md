@@ -21,6 +21,12 @@ First network call in the app — note in README/ADR.
 
 Later (separate STAGES): camera mirror (Phase 14) -> Settings (Phase 16) -> teleprompter (Phase 17).
 
+Settings (Phase 16) must include **user-reorderable tabs** (asked 2026-09-24). Notes for that plan:
+`NotchPage` is a fixed `CaseIterable` order today (home, shelf, systemMonitor, calendar), and
+the tab dots + swipe navigation + "always reopens on Home" all assume it -- so the order should
+be a persisted list in `AtelierSettings` (pure, testable), with Home pinned first and disabled
+tabs skipped. Reorder UI = drag-to-reorder list in the Settings window.
+
 ## Ideas parked (try later / maybe a user setting)
 
 - **Scroll-style week swipe (2026-09-24) — IN PROGRESS, see plan stages S1-S5 below.** Instead of one discrete swipe = one week, the
