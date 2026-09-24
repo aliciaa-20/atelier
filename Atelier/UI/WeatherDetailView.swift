@@ -3,7 +3,7 @@ import SwiftUI
 /// Idle Home's weather detail card: shown in place of the clock when the
 /// weather glance is tapped, and tap anywhere on it to go back. Current
 /// conditions + today's high/low, the quip (which the glance only shows as a
-/// tooltip), and the next three days. Sized by
+/// tooltip), and the next five days. Sized by
 /// `NotchLayout.idleWeatherDetailContentHeight`.
 struct WeatherDetailView: View {
     let snapshot: WeatherSnapshot
@@ -25,10 +25,10 @@ struct WeatherDetailView: View {
     private var condition: WeatherCondition { snapshot.currentCondition }
     private var today: DayWeather? { snapshot.day(for: .now) }
 
-    /// The three days after today that the forecast covers.
+    /// The five days after today that the forecast covers.
     private var upcoming: [DayWeather] {
         let todayKey = WeatherMath.dayKey(for: .now)
-        return Array(snapshot.days.filter { $0.dayKey > todayKey }.prefix(3))
+        return Array(snapshot.days.filter { $0.dayKey > todayKey }.prefix(5))
     }
 
     private func degrees(_ value: Double) -> String { "\(Int(value.rounded()))°" }
@@ -79,6 +79,9 @@ struct WeatherDetailView: View {
                                 Image(systemName: day.condition.symbol)
                                     .symbolRenderingMode(.multicolor)
                                     .font(.system(size: 12))
+                                    // Fixed height so every temp sits on one
+                                    // baseline (glyphs differ in height).
+                                    .frame(height: 16)
                                 Text(degrees(day.high))
                                     .font(.system(size: 10))
                                     .foregroundStyle(.white.opacity(0.75))
