@@ -7,7 +7,7 @@ swipe changes week, click opens Calendar.app.
 - [x] 2. Permission + EventKit source — `CalendarPermission`, `CalendarSource`, Info.plist key
 - [x] 3. Week strip + agenda UI — `CalendarPageView`, panel height for the page
 - [x] 4. Swipe to change week + tap-to-open Calendar.app
-- [ ] 5. Docs — FEATURES §6, ROADMAP Phase 12, CLAUDE.md architecture row, README
+- [x] 5. Docs — FEATURES §6, ROADMAP Phase 12, CLAUDE.md architecture row, README
 
 ## Weather (follow-on, after calendar)
 

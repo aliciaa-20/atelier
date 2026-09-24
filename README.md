@@ -22,7 +22,9 @@ belongs there, not bolted on.
   the lock screen itself
 - **Gesture-driven** — swipe to open, close, or skip tracks, tuned
   with real spring physics
-- **Home & Shelf tabs** — an idle view for when nothing's playing
+- **Home, Shelf, System Monitor & Calendar tabs** — an idle view for
+  when nothing's playing, a week-strip calendar with a funny line for
+  each day of the week (swipe to change week)
 - **Lightweight by design** — animations and pollers run at capped rates
   and idle to nothing when not visible (no continuous redraw for static
   content, no polling when nothing's playing), so a menu-bar accessory

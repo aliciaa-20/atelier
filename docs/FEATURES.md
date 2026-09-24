@@ -92,7 +92,7 @@ architecture than to bolting features on individually.
 
 | Feature | Source(s) |
 |---|---|
-| Calendar / reminders (EventKit) | boring.notch, Atoll, notchify, QuartzNotch, NotchIA |
+| Calendar ✅ (`Widgets/Calendar/`, read-only EventKit: week strip + day agenda, swipe/tap; reminders not built) | boring.notch, Atoll, notchify, QuartzNotch, NotchIA |
 | Quick notes | notchify |
 | Timers / Pomodoro | QuartzNotch, NotchIA, Atoll |
 | Color picker ✅ (`Widgets/ColorPicker/`, `NSColorSampler`) | Atoll |
