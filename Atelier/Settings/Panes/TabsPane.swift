@@ -8,8 +8,10 @@ struct TabsPane: View {
     /// Every page, Home included, in the saved order.
     @State private var order: [NotchPage] = TabsPane.savedOrder()
 
+    /// A `List`, not the grouped `Form` the other panes use: `.onMove`
+    /// drag-to-reorder doesn't work in a macOS `Form` (confirmed on-device).
     var body: some View {
-        Form {
+        List {
             Section {
                 ForEach(order, id: \.self) { page in
                     Group {
@@ -38,7 +40,8 @@ struct TabsPane: View {
                 Text("The notch opens on the first tab.")
             }
         }
-        .formStyle(.grouped)
+        .listStyle(.inset)
+        .scrollContentBackground(.hidden)
     }
 
     private func move(_ page: NotchPage, by offset: Int) {
@@ -85,9 +88,13 @@ private struct ToggleTabRow: View {
     }
 
     var body: some View {
+        // `.switch` explicitly: a `List` (needed for drag-to-reorder) would
+        // otherwise render these as checkboxes.
         Toggle(isOn: $isEnabled) {
             TabLabel(page: page)
         }
+        .toggleStyle(.switch)
+        .padding(.vertical, 4)
     }
 }
 
@@ -99,6 +106,7 @@ private struct HomeTabRow: View {
             Image(systemName: "lock.fill")
                 .accessibilityHidden(true)
         }
+        .padding(.vertical, 4)
         .foregroundStyle(.secondary)
         .help("Home can be moved but not turned off")
         .accessibilityElement(children: .combine)
