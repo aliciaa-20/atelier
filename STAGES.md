@@ -4,7 +4,7 @@ Branch: `feat/camera-mirror`. Spec: `docs/superpowers/specs/2026-09-24-camera-mi
 Plan: `docs/superpowers/plans/2026-09-24-camera-mirror.md`.
 
 - [x] 1. Page plumbing — `NotchPage.camera`, tab dot, settings toggles
-- [ ] 2. Hold-open decision (pure) + tests
+- [x] 2. Hold-open decision (pure) + tests
 - [ ] 3. Permission + capture source — `CameraPermission`, `CameraMirrorSource`, Info.plist key
 - [ ] 4. Camera page UI + notch wiring (hold-open, stop on retract)
 - [ ] 5. UI review pass (`ui-review-tahoe`) + on-device verification
