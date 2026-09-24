@@ -1,14 +1,19 @@
 # STAGES — Settings window (Phase 16)
 
-Branch: `feat/settings-window`. Spec: `docs/superpowers/specs/2026-09-24-settings-window-design.md`.
+Branch: `feat/settings-window` (merged). Spec: `docs/superpowers/specs/2026-09-24-settings-window-design.md`.
 Plan: `docs/superpowers/plans/2026-09-24-settings-window.md`.
 
-- [x] 1. Window shell + `Settings…` menu item (`SettingsWindowController`, sidebar)
+- [x] 1. Window shell + `Settings` menu item (`SettingsWindowController`, sidebar)
 - [x] 2. General + Appearance panes, launch at login (`SMAppService`)
 - [x] 3. Tab order: pure `TabOrder` + tests, `activePages` wiring, Tabs pane
 - [x] 4. Widgets + Permissions panes, slim the menu
-- [x] 5. Reorderable Home — notch reopens on the first tab in the user's order (design (a), approved 2026-09-24)
-- [ ] 6. Docs: ADR 0018, README, FEATURES, ROADMAP Phase 16, CLAUDE.md
+- [x] 4b. Grant All permissions button (per-row Grant for Calendar/Location)
+- [x] 5. Reorderable Home — notch reopens on the first tab in the user's order
+- [x] 6. Docs: ADR 0018, README, FEATURES, ROADMAP Phase 16, CLAUDE.md
+- [x] Final review fixes: page chosen on open, bounded Location wait, VoiceOver Move Up/Down
+- [x] Plain sidebar instead of `NavigationSplitView`; native `.menu` menu-bar menu; Tabs pane as a `List`
+
+**Done — merged as PR #26.** Parked in ROADMAP Phase 16: Camera permission row refresh, Spotify Automation UX, stable signing, template menu-bar icon.
 
 ---
 
