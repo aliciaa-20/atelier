@@ -12,15 +12,25 @@ struct TabsPane: View {
         Form {
             Section {
                 ForEach(order, id: \.self) { page in
-                    if let key = page.enabledKey {
-                        ToggleTabRow(page: page, enabledKey: key)
-                    } else {
-                        HomeTabRow()
+                    Group {
+                        if let key = page.enabledKey {
+                            ToggleTabRow(page: page, enabledKey: key)
+                        } else {
+                            HomeTabRow()
+                        }
+                    }
+                    // Dragging is mouse-only; these give VoiceOver and the
+                    // keyboard (and a right-click) a way to reorder too.
+                    .accessibilityAction(named: "Move Up") { move(page, by: -1) }
+                    .accessibilityAction(named: "Move Down") { move(page, by: 1) }
+                    .contextMenu {
+                        Button("Move Up") { move(page, by: -1) }
+                        Button("Move Down") { move(page, by: 1) }
                     }
                 }
                 .onMove { source, destination in
                     order.move(fromOffsets: source, toOffset: destination)
-                    AtelierSettings.tabOrder = order.map(\.rawValue)
+                    save()
                 }
             } header: {
                 Text("Drag to reorder")
@@ -29,6 +39,18 @@ struct TabsPane: View {
             }
         }
         .formStyle(.grouped)
+    }
+
+    private func move(_ page: NotchPage, by offset: Int) {
+        guard let index = order.firstIndex(of: page) else { return }
+        let target = index + offset
+        guard order.indices.contains(target) else { return }
+        order.swapAt(index, target)
+        save()
+    }
+
+    private func save() {
+        AtelierSettings.tabOrder = order.map(\.rawValue)
     }
 
     private static func savedOrder() -> [NotchPage] {
