@@ -31,7 +31,8 @@ light), so the choices that affect battery and privacy are recorded here.
   suppressed, via the pure `CameraHoldOpen.shouldSuppressRetract`;
   `NotchStateMachine` is unchanged (Invariant 1). When the mirror stops while
   the pointer is outside, `NotchRootView` performs the retract the suppressed
-  hover-out skipped. Swipe-close and tab changes always close/stop.
+  hover-out skipped. In hold-open mode, tapping the mirror off also closes
+  the notch immediately (only that tap, not a tab change). Swipe-close and tab changes always close/stop.
 - **No entitlement:** the app is not sandboxed and hardened runtime is off, so
   only `NSCameraUsageDescription` is needed.
 

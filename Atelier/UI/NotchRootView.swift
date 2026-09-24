@@ -240,7 +240,15 @@ struct NotchRootView: View {
                         } else if AtelierSettings.calendarEnabled, viewModel.currentPage == .calendar {
                             CalendarPageView(source: calendar)
                         } else if AtelierSettings.cameraEnabled, viewModel.currentPage == .camera {
-                            CameraMirrorPageView(source: camera)
+                            CameraMirrorPageView(source: camera) {
+                                // Hold-open mode: turning the mirror off
+                                // means you're done, so close the notch now
+                                // instead of waiting for the pointer to leave.
+                                guard AtelierSettings.cameraHoldOpen else { return }
+                                withAnimation(NotchAnimations.close) {
+                                    viewModel.handle(.hoverEnded(isPlaying: liveActivity.hasContent))
+                                }
+                            }
                         } else {
                             ExpandedPlayerView(
                                 info: nowPlaying.current,
