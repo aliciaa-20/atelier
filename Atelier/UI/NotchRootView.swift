@@ -209,6 +209,8 @@ struct NotchRootView: View {
                                 .onAppear { shelfStore.sweepExpired() }
                         } else if AtelierSettings.systemMonitorEnabled, viewModel.currentPage == .systemMonitor {
                             SystemMonitorPageView(source: systemMonitor)
+                        } else if AtelierSettings.calendarEnabled, viewModel.currentPage == .calendar {
+                            CalendarPageView()
                         } else {
                             ExpandedPlayerView(
                                 info: nowPlaying.current,
