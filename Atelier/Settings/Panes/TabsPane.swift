@@ -11,9 +11,17 @@ struct TabsPane: View {
     var body: some View {
         Form {
             Section {
-                Label("Home", systemImage: NotchPage.home.symbol)
-                    .badge(Text(Image(systemName: "lock.fill")))
-                    .foregroundStyle(.secondary)
+                HStack(spacing: 8) {
+                    Image(systemName: NotchPage.home.symbol)
+                        .frame(width: 22)
+                        .accessibilityHidden(true)
+                    Text("Home")
+                    Spacer()
+                    Image(systemName: "lock.fill")
+                        .accessibilityHidden(true)
+                }
+                .foregroundStyle(.secondary)
+                .accessibilityElement(children: .combine)
                     .help("Home is always first and can't be turned off")
             }
 
@@ -50,7 +58,13 @@ private struct TabRow: View {
 
     var body: some View {
         Toggle(isOn: $isEnabled) {
-            Label(page.title, systemImage: page.symbol)
+            HStack(spacing: 8) {
+                // Fixed width so titles line up whatever the symbol's width.
+                Image(systemName: page.symbol)
+                    .frame(width: 22)
+                    .accessibilityHidden(true)
+                Text(page.title)
+            }
         }
     }
 }

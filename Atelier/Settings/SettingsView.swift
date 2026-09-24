@@ -24,6 +24,10 @@ enum SettingsPane: String, CaseIterable, Identifiable {
 /// that applies changes instantly (no Save button).
 struct SettingsView: View {
     @State private var selection: SettingsPane? = .general
+    /// Initial focus goes to the sidebar. Otherwise AppKit focuses the first
+    /// toggle in the pane and scrolls it up under the toolbar, hiding the
+    /// pane's first section.
+    @FocusState private var sidebarFocused: Bool
 
     var body: some View {
         NavigationSplitView {
@@ -31,6 +35,7 @@ struct SettingsView: View {
                 Label(pane.rawValue, systemImage: pane.systemImage)
                     .tag(pane)
             }
+            .focused($sidebarFocused)
             .navigationSplitViewColumnWidth(min: 160, ideal: 180, max: 220)
         } detail: {
             switch selection ?? .general {
@@ -41,6 +46,7 @@ struct SettingsView: View {
             case .permissions: PermissionsPane()
             }
         }
+        .defaultFocus($sidebarFocused, true)
         .frame(minWidth: 620, minHeight: 420)
     }
 }

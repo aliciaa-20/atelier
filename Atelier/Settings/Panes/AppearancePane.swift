@@ -15,6 +15,9 @@ struct AppearancePane: View {
                     Slider(value: $glassIntensity, in: 0...1) {
                         Text("Glass transparency")
                     }
+                    // The label is for VoiceOver; the row's own label already
+                    // shows "Transparency".
+                    .labelsHidden()
                     .frame(maxWidth: 220)
                 }
                 .disabled(!glassEffectEnabled)
