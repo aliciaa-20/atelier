@@ -124,8 +124,8 @@ struct CalendarPageView: View {
     private var weekStrip: some View {
         let days = CalendarMath.days(inWeekStarting: source.weekStart, calendar: calendar)
         let selectedIndex = days.firstIndex { calendar.isDate($0, inSameDayAs: source.selectedDay) }
-        // `.id(weekStart)` + a crossfade: when the swipe rolls into another
-        // week the whole strip (dates and indicator) softly swaps instead of
+        // `.id(weekStart)` + a transition: when the swipe rolls into another
+        // week the whole strip (dates and indicator) swaps as one instead of
         // the dates snapping and the indicator flying across six columns.
         return ZStack {
             HStack(spacing: 0) {
@@ -135,9 +135,16 @@ struct CalendarPageView: View {
             }
             .background(alignment: .topLeading) { indicator(selectedIndex: selectedIndex) }
             .id(source.weekStart)
-            .transition(.opacity)
+            // The incoming week slides in from the side of travel; the
+            // outgoing one just fades (an outgoing view keeps the transition
+            // it was rendered with, so a direction-based removal would point
+            // the wrong way after a reversal).
+            .transition(.asymmetric(
+                insertion: .opacity.combined(with: .offset(x: source.weekDirection * 28)),
+                removal: .opacity
+            ))
         }
-        .animation(reduceMotion ? nil : .easeInOut(duration: 0.22), value: source.weekStart)
+        .animation(reduceMotion ? nil : .spring(response: 0.32, dampingFraction: 0.85), value: source.weekStart)
     }
 
     /// While the finger is down: a light interactive spring, so the capsule

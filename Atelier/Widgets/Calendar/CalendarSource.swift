@@ -39,7 +39,12 @@ final class CalendarSource: ObservableObject {
     @Published private(set) var access: Access = .notDetermined
     @Published private(set) var events: [CalendarEventItem] = []
     @Published private(set) var calendars: [CalendarInfo] = []
-    @Published private(set) var weekStart: Date
+    @Published private(set) var weekStart: Date {
+        didSet { weekDirection = weekStart >= oldValue ? 1 : -1 }
+    }
+    /// +1 when the last week change moved later, -1 earlier -- lets the strip
+    /// slide the new week in from the side you swiped toward.
+    private(set) var weekDirection: CGFloat = 1
     @Published var selectedDay: Date
     /// How far past `selectedDay` the finger is toward the next/previous day
     /// (-0.5...0.5) during a scroll-style swipe; 0 at rest. Drives the moving
