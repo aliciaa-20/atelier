@@ -18,6 +18,7 @@ enum AtelierSettings {
     static let colorPickerEnabledKey = "colorPickerEnabled"
     static let glassEffectEnabledKey = "glassEffectEnabled"
     static let glassIntensityKey = "glassIntensity"
+    static let tabOrderKey = "tabOrder"
 
     static func registerDefaults() {
         UserDefaults.standard.register(defaults: [
@@ -123,5 +124,23 @@ enum AtelierSettings {
     /// faint, 1 as the full-strength material.
     static var glassIntensity: Double {
         UserDefaults.standard.double(forKey: glassIntensityKey)
+    }
+
+    /// Page raw names in the user's preferred order; empty = default order.
+    /// Kept in full (disabled pages included) so a re-enabled tab returns to
+    /// its saved slot -- see `TabOrder.resolve`.
+    static var tabOrder: [String] {
+        get { UserDefaults.standard.stringArray(forKey: tabOrderKey) ?? [] }
+        set { UserDefaults.standard.set(newValue, forKey: tabOrderKey) }
+    }
+
+    /// Home is always enabled; the rest follow their own settings.
+    static var enabledPages: Set<NotchPage> {
+        var pages: Set<NotchPage> = [.home]
+        if shelfEnabled { pages.insert(.shelf) }
+        if systemMonitorEnabled { pages.insert(.systemMonitor) }
+        if calendarEnabled { pages.insert(.calendar) }
+        if cameraEnabled { pages.insert(.camera) }
+        return pages
     }
 }

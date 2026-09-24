@@ -1,0 +1,61 @@
+import Testing
+@testable import Atelier
+
+struct TabOrderTests {
+    private let all = Set(NotchPage.allCases)
+
+    @Test func emptyStoredOrderGivesTheDefaultOrder() {
+        let result = TabOrder.resolve(stored: [], enabled: all)
+
+        #expect(result == [.home, .shelf, .systemMonitor, .calendar, .camera])
+    }
+
+    @Test func followsTheStoredOrder() {
+        let result = TabOrder.resolve(stored: ["camera", "calendar", "shelf", "systemMonitor"], enabled: all)
+
+        #expect(result == [.home, .camera, .calendar, .shelf, .systemMonitor])
+    }
+
+    @Test func homeIsAlwaysFirstEvenIfStoredElsewhere() {
+        let result = TabOrder.resolve(stored: ["camera", "home", "shelf"], enabled: all)
+
+        #expect(result.first == .home)
+        #expect(result.filter { $0 == .home }.count == 1)
+    }
+
+    @Test func disabledPagesAreSkipped() {
+        let enabled: Set<NotchPage> = [.home, .camera]
+
+        let result = TabOrder.resolve(stored: ["shelf", "camera"], enabled: enabled)
+
+        #expect(result == [.home, .camera])
+    }
+
+    @Test func unknownNamesAndDuplicatesAreIgnored() {
+        let result = TabOrder.resolve(stored: ["bogus", "camera", "camera", "shelf"], enabled: all)
+
+        #expect(result == [.home, .camera, .shelf, .systemMonitor, .calendar])
+    }
+
+    @Test func aPageMissingFromTheStoredListIsAppendedInDefaultOrder() {
+        let result = TabOrder.resolve(stored: ["camera", "shelf"], enabled: all)
+
+        #expect(result == [.home, .camera, .shelf, .systemMonitor, .calendar])
+    }
+
+    @Test func aDisabledPageKeepsItsSavedPositionWhenReEnabled() {
+        let stored = ["camera", "shelf", "systemMonitor", "calendar"]
+
+        let whileDisabled = TabOrder.resolve(stored: stored, enabled: all.subtracting([.camera]))
+        let afterReEnable = TabOrder.resolve(stored: stored, enabled: all)
+
+        #expect(whileDisabled == [.home, .shelf, .systemMonitor, .calendar])
+        #expect(afterReEnable == [.home, .camera, .shelf, .systemMonitor, .calendar])
+    }
+
+    @Test func noEnabledPagesStillResolvesToHome() {
+        let result = TabOrder.resolve(stored: ["camera", "shelf"], enabled: [])
+
+        #expect(result == [.home])
+    }
+}

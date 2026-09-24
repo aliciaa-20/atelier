@@ -3,7 +3,7 @@
 /// into `NotchState` itself would duplicate every hover/peek transition
 /// per page). Only matters while `NotchState == .expanded`; `NotchState`
 /// itself still governs whether the notch is open at all.
-enum NotchPage: Hashable, CaseIterable {
+enum NotchPage: String, Hashable, CaseIterable {
     case home
     case shelf
     case systemMonitor

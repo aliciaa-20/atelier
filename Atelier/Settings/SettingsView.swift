@@ -38,7 +38,7 @@ struct SettingsView: View {
             switch selection ?? .general {
             case .general: GeneralPane()
             case .appearance: AppearancePane()
-            case .tabs: Text("Tabs")
+            case .tabs: TabsPane()
             case .widgets: Text("Widgets")
             case .permissions: Text("Permissions")
             }
