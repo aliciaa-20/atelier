@@ -16,8 +16,8 @@ Shown as icons in the calendar week strip + a compact row on idle Home. Not on t
 First network call in the app — note in README/ADR.
 
 - [x] W1. `WeatherSource` — CoreLocation + Open-Meteo fetch/cache, Info.plist location key
-- [ ] W2. Home weather glance (date line: glyph + temp). Calendar week-strip icons tried and dropped (too cluttered)
-- [ ] W3. Docs
+- [x] W2. Home weather glance + tap-for-detail card (5 days). Calendar week-strip icons tried and dropped (too cluttered)
+- [x] W3. Docs (ADR 0015, README, CLAUDE.md, FEATURES, ROADMAP)
 
 Later (separate STAGES): camera mirror (Phase 14) -> Settings (Phase 16) -> teleprompter (Phase 17).
 

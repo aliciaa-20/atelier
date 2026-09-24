@@ -25,6 +25,10 @@ belongs there, not bolted on.
 - **Home, Shelf, System Monitor & Calendar tabs** — an idle view for
   when nothing's playing, a week-strip calendar with a funny line for
   each day of the week (scroll through days with a swipe; double-tap to open your calendar app)
+- **Weather** — a quiet glance on the idle Home card (tap it for
+  conditions, high/low, a quip, and the next five days). Uses Open-Meteo
+  and your approximate location, refreshed at most every 30 minutes when
+  you open the notch; no background polling
 - **Lightweight by design** — animations and pollers run at capped rates
   and idle to nothing when not visible (no continuous redraw for static
   content, no polling when nothing's playing), so a menu-bar accessory
@@ -35,7 +39,7 @@ drop-in away.
 
 ## Status
 
-- **134 tests passing**
+- **139 tests passing**
 - Live phase-by-phase progress: [`docs/ROADMAP.md`](docs/ROADMAP.md)
 - Full feature survey: [`docs/FEATURES.md`](docs/FEATURES.md)
 - Known gap: AirPods support is disabled (a crash in Apple's own
@@ -64,8 +68,13 @@ keys, and the audio tap itself are manual-verification only (see
 |---|---|
 | Automation | Reads now-playing data from Spotify, and jumps Calendar.app to a day, via Apple Events |
 | Calendars (full access) | Read-only: shows your week and events in the Calendar tab. Atelier never adds or edits events |
+| Location (While Using) | Approximate location, one-shot, to fetch the forecast for the Home weather glance. If denied, weather is simply hidden |
 | Accessibility | Intercepts volume/brightness/mute keys for the custom HUD |
 | System Audio Recording Only | Powers the live waveform via a system-wide audio tap ([why not per-app](docs/decisions/0012-whole-system-audio-tap.md)) |
+
+**Network:** the only outbound requests are Spotify artwork and the weather
+forecast from `api.open-meteo.com` (rounded coordinates only; no account or
+key). See [ADR 0015](docs/decisions/0015-weather-open-meteo-corelocation.md).
 
 Decline any of these and Atelier degrades gracefully instead of failing
 silently. (Why Apple Events over the private `MediaRemote` framework?
