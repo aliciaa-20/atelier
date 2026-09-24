@@ -763,9 +763,9 @@ See [FEATURES.md §8](FEATURES.md#8-dev-agent-session-monitoring).
 *Ships: a Settings window and launch-at-login. (Originally Phase 6; moved
 here so the feature survey above ships first.)*
 
-- [ ] **Settings window** — surfaced from the `NSStatusItem` menu.
-- [ ] **Launch at login** via `SMAppService`.
-- [ ] **Automation-permission UX** — a visible "grant access" path when TCC is
+- [x] **Settings window** — surfaced from the `NSStatusItem` menu.
+- [x] **Launch at login** via `SMAppService`.
+- [ ] **Automation-permission UX** (Permissions pane shipped for Accessibility/Calendar/Camera/Location; Spotify Automation deferred — TCC only reveals it by trying) — a visible "grant access" path when TCC is
       denied, re-checkable from Settings.
 - [ ] Stable signing identity (free Apple Personal Team) so rebuilds don't
       re-trigger the Automation prompt every time.
@@ -773,7 +773,7 @@ here so the feature survey above ships first.)*
 Claude Code mechanic: custom slash commands; `/code-review`.
 
 **Parked from the 2026-09-24 UI review (belong here):**
-- [ ] Menu-bar settings tidy-up: "Camera: keep notch open whil…" is truncated
+- [x] Menu-bar settings tidy-up: "Camera: keep notch open whil…" is truncated
       -- shorten labels; indent dependent sub-toggles (Calendar swipe, Camera
       hold-open) under their parent
 - [ ] Custom template menu-bar icon (currently a generic window SF Symbol)

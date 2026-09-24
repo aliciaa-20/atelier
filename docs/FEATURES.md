@@ -100,6 +100,13 @@ architecture than to bolting features on individually.
 
 ---
 
+## Settings window (ROADMAP Phase 16)
+
+Shipped: a native Settings window (sidebar panes, instant apply), launch at
+login via `SMAppService`, drag-to-reorder tabs (Home pinned first), and a
+Permissions status pane. See ADR 0018. The window, launch at login and the
+permission rows are manually verified only, like `System/*.swift`.
+
 ## 7. System resource monitor
 
 | Feature | Source(s) |
