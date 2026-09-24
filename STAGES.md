@@ -23,7 +23,7 @@ Later (separate STAGES): camera mirror (Phase 14) -> Settings (Phase 16) -> tele
 
 ## Ideas parked (try later / maybe a user setting)
 
-- **Scroll-style week swipe (2026-09-24).** Instead of one discrete swipe = one week, the
+- **Scroll-style week swipe (2026-09-24) — IN PROGRESS, see plan stages S1-S5 below.** Instead of one discrete swipe = one week, the
   swipe scrolls continuously: the selected day follows the finger day-by-day and the
   selection indicator stretches/expands (like the tab-bar dot capsule) as it cycles.
   Needs a continuous-progress path in `NotchGestureModifier` (today it only fires discrete
@@ -33,3 +33,11 @@ Later (separate STAGES): camera mirror (Phase 14) -> Settings (Phase 16) -> tele
 - **Whimsy pass (2026-09-24).** The weekday quips were inspired by Claude Code's own cute
   status words. Same voice could go in: System Monitor loading state ("Simmering…"),
   empty states, the weather line. Keep it to a few spots so it stays a quirk, not noise.
+
+## Calendar: scroll swipe + double-tap (branch `feat/calendar-widget`)
+
+- [x] S1. Double-tap a date opens the calendar app
+- [ ] S2. Pure `CalendarScrub` + interpreter `.scrub` + modifier callbacks
+- [ ] S3. `CalendarSource` scrub state + `layoutDay`, wiring, setting + toggle
+- [ ] S4. Moving stretchy indicator, Reduce Motion, tuning
+- [ ] S5. Docs
