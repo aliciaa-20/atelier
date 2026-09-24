@@ -225,7 +225,7 @@ struct NotchRootView: View {
                         } else if AtelierSettings.systemMonitorEnabled, viewModel.currentPage == .systemMonitor {
                             SystemMonitorPageView(source: systemMonitor)
                         } else if AtelierSettings.calendarEnabled, viewModel.currentPage == .calendar {
-                            CalendarPageView(source: calendar, weather: weather)
+                            CalendarPageView(source: calendar)
                         } else {
                             ExpandedPlayerView(
                                 info: nowPlaying.current,
