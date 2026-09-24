@@ -776,6 +776,11 @@ Claude Code mechanic: custom slash commands; `/code-review`.
 - [x] Menu-bar settings tidy-up: "Camera: keep notch open whil…" is truncated
       -- shorten labels; indent dependent sub-toggles (Calendar swipe, Camera
       hold-open) under their parent
+- [ ] Permissions pane: after turning Camera off then on in System Settings, the row can stay
+      "Denied" until Atelier relaunches (seen on-device 2026-09-24; probably macOS caching the
+      camera answer per process). Parked -- add a "may need a relaunch" note or re-read differently.
+- [ ] Minor review leftovers (see ledger): Grant All keeps showing while Accessibility is off;
+      no window frame autosave; focus not returned after Settings closes; sidebar can lose highlight
 - [ ] Custom template menu-bar icon (currently a generic window SF Symbol)
 
 ### ⬜ Native-polish backlog (from ui-review-tahoe, 2026-09-24)
