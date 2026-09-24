@@ -145,6 +145,19 @@ struct CalendarPageView: View {
         .focusEffectDisabled()
         .accessibilityLabel(day.formatted(.dateTime.weekday(.wide).month().day()) + (hasEvents ? ", has events" : ""))
         .accessibilityAddTraits(isSelected ? .isSelected : [])
+        // `simultaneousGesture`, not a second `onTapGesture`: a single tap
+        // must still select instantly rather than wait out the double-tap
+        // timeout. The Button above keeps VoiceOver's tap-to-select intact.
+        .simultaneousGesture(
+            TapGesture(count: 2).onEnded {
+                source.selectDay(day)
+                openCalendar(on: day)
+            }
+        )
+        .accessibilityAction(named: "Open in calendar app") {
+            source.selectDay(day)
+            openCalendar(on: day)
+        }
     }
 
     // MARK: - Agenda
@@ -199,8 +212,8 @@ struct CalendarPageView: View {
     /// Opens the user's chosen calendar app (menu bar setting) -- adding and
     /// editing happens there, so the notch never needs write access or text
     /// input. Calendar.app jumps to the selected day; other apps just launch.
-    private func openCalendar() {
-        CalendarAppLauncher.open(on: source.selectedDay)
+    private func openCalendar(on day: Date? = nil) {
+        CalendarAppLauncher.open(on: day ?? source.selectedDay)
     }
 
     private func timeText(for item: CalendarEventItem) -> String {
