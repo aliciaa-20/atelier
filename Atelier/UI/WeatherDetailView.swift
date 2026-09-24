@@ -35,7 +35,7 @@ struct WeatherDetailView: View {
 
     var body: some View {
         Button(action: onClose) {
-            VStack(spacing: 6) {
+            VStack(spacing: 7) {
                 HStack(spacing: 8) {
                     Image(systemName: condition.symbol)
                         .symbolRenderingMode(.multicolor)
@@ -47,21 +47,29 @@ struct WeatherDetailView: View {
                         Text(condition.label)
                             .font(.caption.weight(.semibold))
                         if let today {
-                            Text("H \(degrees(today.high)) · L \(degrees(today.low))")
-                                .font(.caption2)
-                                .foregroundStyle(.white.opacity(0.6))
-                                .monospacedDigit()
+                            HStack(spacing: 5) {
+                                Text("H \(degrees(today.high))")
+                                Text("|").foregroundStyle(.white.opacity(0.25))
+                                Text("L \(degrees(today.low))")
+                            }
+                            .font(.caption2)
+                            .foregroundStyle(.white.opacity(0.6))
+                            .monospacedDigit()
                         }
                     }
                 }
 
                 Text(condition.quip)
                     .font(.caption2)
-                    .foregroundStyle(.white.opacity(0.6))
+                    .foregroundStyle(.white.opacity(0.45))
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
 
                 if !upcoming.isEmpty {
+                    Rectangle()
+                        .fill(Color.white.opacity(0.12))
+                        .frame(height: 1)
+                        .padding(.top, 1)
                     HStack(spacing: 0) {
                         ForEach(upcoming, id: \.dayKey) { day in
                             VStack(spacing: 2) {
@@ -72,7 +80,8 @@ struct WeatherDetailView: View {
                                     .symbolRenderingMode(.multicolor)
                                     .font(.system(size: 12))
                                 Text(degrees(day.high))
-                                    .font(.system(size: 10, weight: .medium))
+                                    .font(.system(size: 10))
+                                    .foregroundStyle(.white.opacity(0.75))
                                     .monospacedDigit()
                             }
                             .frame(maxWidth: .infinity)

@@ -9,7 +9,7 @@ enum NotchLayout {
 
     /// Idle Home's weather detail card (glyph/temp row, quip, 3-day row).
     /// Starting value -- tune on-device.
-    static let idleWeatherDetailContentHeight: CGFloat = 112
+    static let idleWeatherDetailContentHeight: CGFloat = 132
 
     // MARK: Calendar page height
     // The page grows with the selected day's events instead of always
