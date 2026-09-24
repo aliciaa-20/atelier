@@ -16,11 +16,23 @@ struct TabOrderTests {
         #expect(result == [.home, .camera, .calendar, .shelf, .systemMonitor])
     }
 
-    @Test func homeIsAlwaysFirstEvenIfStoredElsewhere() {
+    @Test func homeCanBeReorderedLikeAnyOtherTab() {
         let result = TabOrder.resolve(stored: ["camera", "home", "shelf"], enabled: all)
 
+        #expect(result == [.camera, .home, .shelf, .systemMonitor, .calendar])
+    }
+
+    @Test func homeStaysFirstWhenTheStoredOrderDoesNotMentionIt() {
+        // An order saved before Home was movable lists only the other pages.
+        let result = TabOrder.resolve(stored: ["camera", "shelf"], enabled: all)
+
         #expect(result.first == .home)
-        #expect(result.filter { $0 == .home }.count == 1)
+    }
+
+    @Test func homeCannotBeDisabled() {
+        let result = TabOrder.resolve(stored: [], enabled: [.camera])
+
+        #expect(result == [.home, .camera])
     }
 
     @Test func disabledPagesAreSkipped() {

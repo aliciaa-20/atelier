@@ -2,69 +2,85 @@ import SwiftUI
 
 /// Enable/disable and reorder in one list, like the System Settings and
 /// Shortcuts "drag to reorder" pattern. Every page is listed, disabled ones
-/// too, so a hidden tab can be turned back on from here. Home is a locked
-/// row: it's always first and can't be turned off.
+/// too, so a hidden tab can be turned back on from here. Home can be moved
+/// like the rest but not turned off, so there's always at least one tab.
 struct TabsPane: View {
-    /// Every non-Home page, in the saved order.
+    /// Every page, Home included, in the saved order.
     @State private var order: [NotchPage] = TabsPane.savedOrder()
 
     var body: some View {
         Form {
             Section {
-                HStack(spacing: 8) {
-                    Image(systemName: NotchPage.home.symbol)
-                        .frame(width: 22)
-                        .accessibilityHidden(true)
-                    Text("Home")
-                    Spacer()
-                    Image(systemName: "lock.fill")
-                        .accessibilityHidden(true)
-                }
-                .foregroundStyle(.secondary)
-                .accessibilityElement(children: .combine)
-                    .help("Home is always first and can't be turned off")
-            }
-
-            Section("Drag to reorder") {
                 ForEach(order, id: \.self) { page in
-                    TabRow(page: page)
+                    if let key = page.enabledKey {
+                        ToggleTabRow(page: page, enabledKey: key)
+                    } else {
+                        HomeTabRow()
+                    }
                 }
                 .onMove { source, destination in
                     order.move(fromOffsets: source, toOffset: destination)
                     AtelierSettings.tabOrder = order.map(\.rawValue)
                 }
+            } header: {
+                Text("Drag to reorder")
+            } footer: {
+                Text("The notch opens on the first tab.")
             }
         }
         .formStyle(.grouped)
     }
 
     private static func savedOrder() -> [NotchPage] {
-        // Resolve against *all* pages so disabled ones are listed, then drop Home.
-        Array(TabOrder.resolve(stored: AtelierSettings.tabOrder, enabled: Set(NotchPage.allCases)).dropFirst())
+        // Resolve against *all* pages so disabled ones are listed too.
+        TabOrder.resolve(stored: AtelierSettings.tabOrder, enabled: Set(NotchPage.allCases))
     }
 }
 
-private struct TabRow: View {
+/// Fixed-width icon column so titles line up whatever the symbol's width.
+private struct TabLabel: View {
+    let page: NotchPage
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: page.symbol)
+                .frame(width: 22)
+                .accessibilityHidden(true)
+            Text(page.title)
+        }
+    }
+}
+
+private struct ToggleTabRow: View {
     let page: NotchPage
     /// `@AppStorage` (not a hand-rolled `Binding` over `UserDefaults`) so the
     /// switch re-renders when flipped -- same lesson as the old menu toggles.
     @AppStorage private var isEnabled: Bool
 
-    init(page: NotchPage) {
+    init(page: NotchPage, enabledKey: String) {
         self.page = page
-        _isEnabled = AppStorage(wrappedValue: true, page.enabledKey ?? "")
+        _isEnabled = AppStorage(wrappedValue: true, enabledKey)
     }
 
     var body: some View {
         Toggle(isOn: $isEnabled) {
-            HStack(spacing: 8) {
-                // Fixed width so titles line up whatever the symbol's width.
-                Image(systemName: page.symbol)
-                    .frame(width: 22)
-                    .accessibilityHidden(true)
-                Text(page.title)
-            }
+            TabLabel(page: page)
         }
+    }
+}
+
+private struct HomeTabRow: View {
+    var body: some View {
+        HStack {
+            TabLabel(page: .home)
+            Spacer()
+            Image(systemName: "lock.fill")
+                .accessibilityHidden(true)
+        }
+        .foregroundStyle(.secondary)
+        .help("Home can be moved but not turned off")
+        .accessibilityElement(children: .combine)
+        .accessibilityHint("Can be moved but not turned off")
     }
 }
 

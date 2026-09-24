@@ -24,6 +24,11 @@ a page added later can't scramble a saved order. Launch at login uses
 
 ## Consequences
 
+- Home is movable like any tab but can't be disabled; "always reopens on
+  Home" became "reopens on the first tab in the user's order"
+  (`NotchPageTransition`'s `firstPage`). An order saved before Home was
+  movable doesn't mention it, so Home stays first for those.
+
 - A Dock icon appears while Settings is open. Accepted: it's the price of a
   window that reliably takes focus.
 - ⌘, works only while the menu is open; a global ⌘, would need a
