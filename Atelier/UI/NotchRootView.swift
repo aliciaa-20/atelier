@@ -28,6 +28,8 @@ struct NotchRootView: View {
     /// The last HUD shown, kept so it can fade out instead of vanishing when
     /// its source clears it.
     @State private var lastHUD: LiveActivityContent?
+    /// `hudActive` delayed into a `withAnimation` transaction; drives all HUD layout/visuals.
+    @State private var hudShown = false
     /// Shared by the pill/peek/expanded artwork (`ArtworkView`) so the cover
     /// appears to travel between them.
     @Namespace private var artworkNamespace
@@ -78,7 +80,7 @@ struct NotchRootView: View {
         case .pill:
             return (top: 6, bottom: 11)
         case .expanded:
-            if transientHUD != nil { return (top: NotchLayout.peekTopRadius, bottom: NotchLayout.peekBottomRadius) }
+            if hudShown { return (top: NotchLayout.peekTopRadius, bottom: NotchLayout.peekBottomRadius) }
             return (top: NotchLayout.panelTopRadius, bottom: NotchLayout.panelBottomRadius)
         case .peeking:
             return (top: NotchLayout.peekTopRadius, bottom: NotchLayout.peekBottomRadius)
@@ -119,7 +121,7 @@ struct NotchRootView: View {
         case .expanded:
             // A volume/brightness HUD while hover-open: the compact peek size
             // instead of the full player footprint, then back.
-            if transientHUD != nil { return viewModel.compactPeekSize }
+            if hudShown { return viewModel.compactPeekSize }
             // Idle Home (nothing playing, Home tab) gets its own shorter
             // footprint -- far less to show than a real player or the
             // shelf grid, so it shouldn't claim the same vertical space.
@@ -319,11 +321,10 @@ struct NotchRootView: View {
                     // (`NotchAnimations.hud`) morphs the panel and cross-dissolves the
                     // two contents with a slight scale + blur (see the doc there). One
                     // continuous, interruptible animation rather than a view swap.
-                    .opacity(hudActive ? 0 : 1)
-                    .scaleEffect(hudActive ? NotchAnimations.hudContentScale : 1, anchor: .top)
-                    .blur(radius: hudActive ? NotchAnimations.hudContentBlur : 0)
-                    .allowsHitTesting(!hudActive)
-                    .animation(NotchAnimations.hud, value: hudActive)
+                    .opacity(hudShown ? 0 : 1)
+                    .scaleEffect(hudShown ? NotchAnimations.hudContentScale : 1, anchor: .top)
+                    .blur(radius: hudShown ? NotchAnimations.hudContentBlur : 0)
+                    .allowsHitTesting(!hudShown)
                     .overlay(alignment: .top) {
                         if AtelierSettings.teleprompterEnabled, viewModel.currentPage == .teleprompter {
                             TeleprompterControlStrip(
@@ -394,31 +395,26 @@ struct NotchRootView: View {
                     Color.clear
                         .transition(.identity)
                 }
-
-                // The HUD is a sibling of the player, not an overlay on it: an
-                // overlay rides along with the player, which is larger than the
-                // compact frame and centred in the ZStack.
+            }
+            .frame(width: frameSize.width, height: frameSize.height)
+            // The volume/brightness HUD is an overlay on the panel-sized view (before
+            // the clip), so it is centred on the animating frame by construction. As a
+            // ZStack sibling it was laid out against the player's larger width and sat
+            // left-aligned mid-morph.
+            .overlay(alignment: .top) {
                 if viewModel.state == .expanded, let hud = transientHUD ?? lastHUD {
-                    // Fixed compact size, then pinned to the panel's own frame: the
-                    // ZStack is as big as its tallest/widest child (the player), so
-                    // anything that just fills it would be laid out at player size
-                    // and clipped.
                     hud.peekView()
                         .frame(width: viewModel.compactPeekSize.width, height: viewModel.compactPeekSize.height)
-                        .frame(width: frameSize.width, height: frameSize.height, alignment: .top)
-                        .opacity(hudActive ? 1 : 0)
-                        .scaleEffect(hudActive ? 1 : NotchAnimations.hudContentScale, anchor: .top)
-                        .blur(radius: hudActive ? 0 : NotchAnimations.hudContentBlur)
-                        .allowsHitTesting(hudActive)
-                        .animation(NotchAnimations.hud, value: hudActive)
+                        .opacity(hudShown ? 1 : 0)
+                        .scaleEffect(hudShown ? 1 : NotchAnimations.hudContentScale, anchor: .top)
+                        .blur(radius: hudShown ? 0 : NotchAnimations.hudContentBlur)
+                        .allowsHitTesting(hudShown)
                         // Notch closing while the bar is up: fade it out instead of
                         // snapping to the pill's percent text.
                         .transition(.asymmetric(insertion: .identity, removal: .opacity.animation(.easeOut(duration: 0.2))))
                 }
             }
-            .frame(width: frameSize.width, height: frameSize.height)
             .clipShape(NotchShape(topCornerRadius: cornerRadii.top, bottomCornerRadius: cornerRadii.bottom))
-            .animation(NotchAnimations.hud, value: hudActive)
             // No shadow while `.collapsed` -- Invariant 7 requires that
             // state to be visually indistinguishable from the stock notch,
             // which casts none. Every other state is already a departure
@@ -680,6 +676,14 @@ struct NotchRootView: View {
         }
         .onChange(of: transientHUD?.id) { _, _ in
             if let hud = transientHUD { lastHUD = hud }
+        }
+        // A real `withAnimation` transaction (not `.animation(value:)`) so the
+        // panel's size, its centring in the window, the corner radii and both
+        // contents all animate as one -- exactly like the normal open/close.
+        // `.animation(value:)` left the centring on the final size, so the panel
+        // lurched to one side (right on the way in, left on the way out).
+        .onChange(of: hudActive) { _, active in
+            withAnimation(NotchAnimations.hud) { hudShown = active }
         }
         .onChange(of: transientHUD == nil) { _, hudGone in
             guard hudGone, viewModel.state == .expanded, !pointerOverExpandedPanel() else { return }
