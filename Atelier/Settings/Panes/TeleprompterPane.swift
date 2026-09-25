@@ -14,7 +14,10 @@ struct TeleprompterPane: View {
     @AppStorage(AtelierSettings.ghostModeKey) private var ghostMode = false
     @AppStorage(AtelierSettings.teleprompterHotkeysKey) private var hotkeys = false
 
+    @AppStorage(AtelierSettings.teleprompterControlOrderKey) private var controlOrder = ""
+
     @State private var text = ""
+    @State private var dropTargetRow: String?
     @State private var loaded = false
     @State private var saveTask: Task<Void, Never>?
     @State private var message: String?
@@ -70,6 +73,16 @@ struct TeleprompterPane: View {
             }
             .disabled(!enabled)
 
+            Section("Top bar") {
+                Text("Drag to reorder. Controls above the camera row sit left of the notch, controls below it sit right.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                ForEach(order, id: \.self) { name in controlRow(name) }
+                Button("Reset Order") { controlOrder = "" }
+                    .disabled(controlOrder.isEmpty)
+            }
+            .disabled(!enabled)
+
             Section("Privacy and shortcuts") {
                 Toggle("Ghost Mode", isOn: $ghostMode)
                 Text("Hides the whole notch from screen sharing and recordings. It is still visible to you.")
@@ -97,6 +110,68 @@ struct TeleprompterPane: View {
         } message: { url in
             Text("\(url.lastPathComponent) will replace what's in the editor.")
         }
+    }
+
+    private var order: [String] {
+        TeleprompterControlLayout.normalized(controlOrder.split(separator: ",").map(String.init))
+    }
+
+    private func title(for name: String) -> String {
+        switch name {
+        case "play": "Play and pause"
+        case "speed": "Speed"
+        case "ring": "Time remaining"
+        default: "Camera notch"
+        }
+    }
+
+    private func symbol(for name: String) -> String {
+        switch name {
+        case "play": "playpause.fill"
+        case "speed": "gauge.with.dots.needle.33percent"
+        case "ring": "timer"
+        default: "camera"
+        }
+    }
+
+    /// One draggable row. The camera row is a marker rather than a control:
+    /// it shows where the cutout sits between the left and right groups.
+    private func controlRow(_ name: String) -> some View {
+        let isNotch = name == TeleprompterControlLayout.notchToken
+        return HStack(spacing: 10) {
+            Image(systemName: symbol(for: name))
+                .frame(width: 22)
+                .foregroundStyle(isNotch ? Color.secondary : Color.primary)
+            Text(title(for: name))
+                .foregroundStyle(isNotch ? Color.secondary : Color.primary)
+            Spacer()
+            Image(systemName: "line.3.horizontal")
+                .foregroundStyle(.tertiary)
+        }
+        .padding(.vertical, 3)
+        .padding(.horizontal, 6)
+        .background(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(dropTargetRow == name ? Color.accentColor.opacity(0.18) : Color.clear)
+        )
+        .contentShape(Rectangle())
+        .draggable(name)
+        .dropDestination(for: String.self) { items, _ in
+            guard let dragged = items.first else { return false }
+            controlOrder = TeleprompterControlLayout.move(dragged, onto: name, in: order).joined(separator: ",")
+            return true
+        } isTargeted: { targeted in
+            if targeted { dropTargetRow = name } else if dropTargetRow == name { dropTargetRow = nil }
+        }
+        .animation(.easeOut(duration: 0.15), value: dropTargetRow)
+        .accessibilityElement(children: .combine)
+        .accessibilityAction(named: "Move up") { shift(name, by: -1) }
+        .accessibilityAction(named: "Move down") { shift(name, by: 1) }
+    }
+
+    private func shift(_ name: String, by delta: Int) {
+        guard let index = order.firstIndex(of: name), order.indices.contains(index + delta) else { return }
+        controlOrder = TeleprompterControlLayout.move(name, onto: order[index + delta], in: order).joined(separator: ",")
     }
 
     /// The advertised drop target: dashed box that lights up while a file is

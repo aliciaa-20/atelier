@@ -19,6 +19,7 @@ enum AtelierSettings {
     static let teleprompterPauseOnHoverKey = "teleprompterPauseOnHover"
     static let teleprompterHotkeysKey = "teleprompterHotkeys"
     static let ghostModeKey = "ghostMode"
+    static let teleprompterControlOrderKey = "teleprompterControlOrder"
     static let hiddenCalendarIDsKey = "hiddenCalendarIDs"
     static let calendarAppBundleIDKey = "calendarAppBundleID"
     static let calendarScrollSwipeKey = "calendarScrollSwipe"
@@ -125,6 +126,14 @@ enum AtelierSettings {
     /// they're opt-in.
     static var teleprompterHotkeysEnabled: Bool {
         UserDefaults.standard.bool(forKey: teleprompterHotkeysKey)
+    }
+
+    /// Order of the teleprompter's top-bar controls plus the "notch" marker,
+    /// comma-separated (a string so `@AppStorage` observes it live); resolved
+    /// by the pure `TeleprompterControlLayout`. Empty = default order.
+    static var teleprompterControlOrder: [String] {
+        get { (UserDefaults.standard.string(forKey: teleprompterControlOrderKey) ?? "").split(separator: ",").map(String.init) }
+        set { UserDefaults.standard.set(newValue.joined(separator: ","), forKey: teleprompterControlOrderKey) }
     }
 
     /// Hides the whole notch panel from screen sharing and recording

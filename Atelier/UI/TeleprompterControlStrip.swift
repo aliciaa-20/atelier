@@ -8,16 +8,19 @@ struct TeleprompterControlStrip: View {
     let notchWidth: CGFloat
     let height: CGFloat
     @AppStorage(AtelierSettings.ghostModeKey) private var ghostMode = false
+    @AppStorage(AtelierSettings.teleprompterControlOrderKey) private var controlOrder = ""
 
     /// Trackpad points per 10 WPM step when scrolling over the speed control.
     private static let scrollPointsPerStep: CGFloat = 14
     @State private var scrollRemainder: CGFloat = 0
 
     var body: some View {
+        // Which controls sit on which side of the camera cutout is the
+        // user's order from Settings (`TeleprompterControlLayout`).
+        let layout = TeleprompterControlLayout.resolve(stored: controlOrder.split(separator: ",").map(String.init))
         HStack(spacing: 0) {
             HStack(spacing: 8) {
-                playPauseButton
-                speedStepper
+                ForEach(layout.left, id: \.self) { control in controlView(control) }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -34,7 +37,7 @@ struct TeleprompterControlStrip: View {
                         .help("Ghost Mode is on: hidden from screen sharing")
                         .accessibilityLabel("Ghost Mode on")
                 }
-                ring
+                ForEach(layout.right, id: \.self) { control in controlView(control) }
             }
             .frame(maxWidth: .infinity, alignment: .trailing)
         }
@@ -42,6 +45,15 @@ struct TeleprompterControlStrip: View {
         // the right edge).
         .padding(.horizontal, 24)
         .frame(height: height)
+    }
+
+    @ViewBuilder
+    private func controlView(_ control: TeleprompterControl) -> some View {
+        switch control {
+        case .play: playPauseButton
+        case .speed: speedStepper
+        case .ring: ring
+        }
     }
 
     private var playPauseButton: some View {

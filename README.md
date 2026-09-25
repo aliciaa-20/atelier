@@ -35,7 +35,9 @@ belongs there, not bolted on.
   `.doc`, `.docx` or `.rtf` file) in Settings → Teleprompter. Optional Ghost
   Mode hides the notch from screen sharing (still being verified) and opt-in
   global shortcuts (⌃⌥P play/pause, ⌃⌥↑/↓ speed). While paused you can scroll
-  through the script with the trackpad. Voice-synced scrolling is next.
+  through the script with the trackpad, drag the top-bar controls into your
+  preferred order (Settings → Teleprompter), and the tab dots hide while it
+  plays to give the text more room. Voice-synced scrolling is next.
 - **Weather** — a quiet glance on the idle Home card (tap it for
   conditions, high/low, a quip, and the next five days). Uses Open-Meteo
   and your approximate location, refreshed at most every 30 minutes when
@@ -50,7 +52,7 @@ drop-in away.
 
 ## Status
 
-- **226 tests passing**
+- **235 tests passing**
 - Live phase-by-phase progress: [`docs/ROADMAP.md`](docs/ROADMAP.md)
 - Full feature survey: [`docs/FEATURES.md`](docs/FEATURES.md)
 - Known gap: AirPods support is disabled (a crash in Apple's own

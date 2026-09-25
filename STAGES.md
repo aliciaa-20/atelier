@@ -75,7 +75,7 @@ Camera mirror (Phase 14) and Settings (Phase 16) shipped. Teleprompter (Phase 17
 
 ## Teleprompter (Phase 17)
 
-Spec: `docs/superpowers/specs/2026-09-25-teleprompter-design.md`. Plan (stages 1-3): `docs/superpowers/plans/2026-09-25-teleprompter-stages-1-3.md`. ADR 0019. Code for stages 1-3 is on `feat/teleprompter` (226 tests pass); **on-device verification is still pending** (marked below).
+Spec: `docs/superpowers/specs/2026-09-25-teleprompter-design.md`. Plan (stages 1-3): `docs/superpowers/plans/2026-09-25-teleprompter-stages-1-3.md`. ADR 0019. Code for stages 1-3 is on `feat/teleprompter` (235 tests pass); **on-device verification is still pending** (marked below).
 
 - [x] 1. Pure logic (`TeleprompterScript/Scroll/Lines`, hold-open) + script import + script store, tested
 - [ ] 2. The tab: control strip, progress ring, reading view, Settings pane — built; **needs on-device check** (strip alignment, ring text fit, speed menu in the panel, every-tab screenshots)
