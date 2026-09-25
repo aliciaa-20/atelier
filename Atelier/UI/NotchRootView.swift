@@ -235,48 +235,58 @@ struct NotchRootView: View {
                             Color.clear.frame(height: viewModel.collapsedSize.height + 5)
                         }
 
-                        if AtelierSettings.shelfEnabled, viewModel.currentPage == .shelf {
-                            ShelfView(store: shelfStore, rootDirectory: shelfStore.rootDirectory, notchHeight: 0)
-                                .onAppear { shelfStore.sweepExpired() }
-                        } else if AtelierSettings.systemMonitorEnabled, viewModel.currentPage == .systemMonitor {
-                            SystemMonitorPageView(source: systemMonitor)
-                        } else if AtelierSettings.calendarEnabled, viewModel.currentPage == .calendar {
-                            CalendarPageView(source: calendar)
-                        } else if AtelierSettings.cameraEnabled, viewModel.currentPage == .camera {
-                            CameraMirrorPageView(source: camera) {
-                                // Hold-open mode: turning the mirror off
-                                // means you're done, so close the notch now
-                                // instead of waiting for the pointer to leave.
-                                guard AtelierSettings.cameraHoldOpen else { return }
-                                withAnimation(NotchAnimations.close) {
-                                    viewModel.handle(.hoverEnded(isPlaying: liveActivity.hasContent))
+                        // Pages overlap in a ZStack (not the VStack) so the outgoing page never
+                        // pushes the incoming one down mid-swap; `.id` gives each page its own
+                        // identity so the transition below actually runs. The outer notch
+                        // container stays `.transition(.identity)` (ADR 0014).
+                        ZStack(alignment: .top) {
+                            Group {
+                                if AtelierSettings.shelfEnabled, viewModel.currentPage == .shelf {
+                                    ShelfView(store: shelfStore, rootDirectory: shelfStore.rootDirectory, notchHeight: 0)
+                                        .onAppear { shelfStore.sweepExpired() }
+                                } else if AtelierSettings.systemMonitorEnabled, viewModel.currentPage == .systemMonitor {
+                                    SystemMonitorPageView(source: systemMonitor)
+                                } else if AtelierSettings.calendarEnabled, viewModel.currentPage == .calendar {
+                                    CalendarPageView(source: calendar)
+                                } else if AtelierSettings.cameraEnabled, viewModel.currentPage == .camera {
+                                    CameraMirrorPageView(source: camera) {
+                                        // Hold-open mode: turning the mirror off
+                                        // means you're done, so close the notch now
+                                        // instead of waiting for the pointer to leave.
+                                        guard AtelierSettings.cameraHoldOpen else { return }
+                                        withAnimation(NotchAnimations.close) {
+                                            viewModel.handle(.hoverEnded(isPlaying: liveActivity.hasContent))
+                                        }
+                                    }
+                                } else if AtelierSettings.teleprompterEnabled, viewModel.currentPage == .teleprompter {
+                                    TeleprompterPageView(model: teleprompter)
+                                } else {
+                                    ExpandedPlayerView(
+                                        info: nowPlaying.current,
+                                        weather: weather,
+                                        weatherDetailOpen: $weatherDetailOpen,
+                                        waveformColor: artworkColor.color,
+                                        audioTap: audioTap,
+                                        outputDevices: outputDevices,
+                                        currentOutputDeviceID: currentOutputDeviceID,
+                                        onPlayPause: { Task { await nowPlaying.playPause() } },
+                                        onNext: { Task { await nowPlaying.next() } },
+                                        onPrevious: { Task { await nowPlaying.previous() } },
+                                        onSeek: { time in Task { await nowPlaying.seek(to: time) } },
+                                        onToggleShuffle: { Task { await nowPlaying.toggleShuffle() } },
+                                        onSelectOutputDevice: { deviceID in
+                                            OutputDeviceManager.setDefaultOutputDevice(deviceID)
+                                            currentOutputDeviceID = deviceID
+                                        }
+                                    )
+                                    .onAppear {
+                                        outputDevices = OutputDeviceManager.availableOutputDevices()
+                                        currentOutputDeviceID = OutputDeviceManager.currentDefaultOutputDevice()
+                                    }
                                 }
                             }
-                        } else if AtelierSettings.teleprompterEnabled, viewModel.currentPage == .teleprompter {
-                            TeleprompterPageView(model: teleprompter)
-                        } else {
-                            ExpandedPlayerView(
-                                info: nowPlaying.current,
-                                weather: weather,
-                                weatherDetailOpen: $weatherDetailOpen,
-                                waveformColor: artworkColor.color,
-                                audioTap: audioTap,
-                                outputDevices: outputDevices,
-                                currentOutputDeviceID: currentOutputDeviceID,
-                                onPlayPause: { Task { await nowPlaying.playPause() } },
-                                onNext: { Task { await nowPlaying.next() } },
-                                onPrevious: { Task { await nowPlaying.previous() } },
-                                onSeek: { time in Task { await nowPlaying.seek(to: time) } },
-                                onToggleShuffle: { Task { await nowPlaying.toggleShuffle() } },
-                                onSelectOutputDevice: { deviceID in
-                                    OutputDeviceManager.setDefaultOutputDevice(deviceID)
-                                    currentOutputDeviceID = deviceID
-                                }
-                            )
-                            .onAppear {
-                                outputDevices = OutputDeviceManager.availableOutputDevices()
-                                currentOutputDeviceID = OutputDeviceManager.currentDefaultOutputDevice()
-                            }
+                            .id(viewModel.currentPage)
+                            .transition(pageTransition)
                         }
                     }
                     // Root cause of the idle clock bleeding past the
@@ -624,6 +634,19 @@ struct NotchRootView: View {
                 lastPeekContent = topContent
             }
         }
+    }
+
+    /// Page swap: the new page settles in (fade + slight scale), the old one
+    /// leaves faster, so the swap never shows two pages at full strength.
+    /// Reduce Motion drops the scale.
+    private var pageTransition: AnyTransition {
+        if NSWorkspace.shared.accessibilityDisplayShouldReduceMotion {
+            return .opacity
+        }
+        return .asymmetric(
+            insertion: .opacity.combined(with: .scale(scale: 0.97, anchor: .top)).animation(.easeOut(duration: 0.2)),
+            removal: .opacity.animation(.easeOut(duration: 0.12))
+        )
     }
 
     /// A quick tuck-and-spring-back when landing on a new Space, so the
