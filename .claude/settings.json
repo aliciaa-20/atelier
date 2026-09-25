@@ -29,7 +29,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"additionalContext\":\"Before this git push completes: run the pre-push-docs-sync skill (syncs docs/ROADMAP.md + CLAUDE.md, scans for leftover debug prints, confirms tests are green, posts a chat status summary) unless it already ran for this push.\"}}'",
+            "command": "if grep -qE -- '--delete'; then exit 0; fi; echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"additionalContext\":\"Before this git push completes: run the pre-push-docs-sync skill (syncs docs/ROADMAP.md + CLAUDE.md, scans for leftover debug prints, confirms tests are green, posts a chat status summary) unless it already ran for this push.\"}}'",
             "if": "Bash(git push*)"
           }
         ]
