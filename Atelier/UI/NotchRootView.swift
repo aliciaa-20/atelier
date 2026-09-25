@@ -13,9 +13,14 @@ struct NotchRootView: View {
     @ObservedObject var weather: WeatherSource
     @StateObject private var artworkColor = ArtworkColorLoader()
     @StateObject private var camera = CameraMirrorSource()
+    @ObservedObject private var teleprompter = TeleprompterModel.shared
     /// Tracked so a hold-open that ends (mirror stopped) knows whether to
     /// retract now or wait for the pointer to actually leave.
     @State private var pointerInside = false
+    /// True while any `NSMenu` (e.g. the teleprompter's speed menu) is being
+    /// tracked: the pointer is over the popup, outside the panel, but the
+    /// notch must not retract underneath it.
+    @State private var menuTracking = false
     /// Idle Home shows the weather detail card instead of the clock. Reset
     /// whenever the notch leaves `.expanded`.
     @State private var weatherDetailOpen = false
@@ -100,6 +105,13 @@ struct NotchRootView: View {
     /// everything else already uses reads more consistent.
     /// True while the expanded notch is showing the Calendar tab -- the
     /// horizontal swipe changes week there rather than skipping a track.
+    /// Teleprompter page while paused: a vertical swipe scrolls the script,
+    /// so it must not also close the notch (hover-out still does).
+    private var teleprompterOwnsVerticalSwipe: Bool {
+        viewModel.state == .expanded && AtelierSettings.teleprompterEnabled
+            && viewModel.currentPage == .teleprompter && !teleprompter.wantsNotchOpen
+    }
+
     private var onCalendarPage: Bool {
         viewModel.state == .expanded && AtelierSettings.calendarEnabled && viewModel.currentPage == .calendar
     }
@@ -128,6 +140,9 @@ struct NotchRootView: View {
                     width: viewModel.calendarSize.width,
                     height: viewModel.collapsedSize.height + NotchLayout.calendarContentHeight(eventCount: count)
                 )
+            }
+            if AtelierSettings.teleprompterEnabled, viewModel.currentPage == .teleprompter {
+                return viewModel.teleprompterSize
             }
             return viewModel.currentSize
         case .pill, .collapsed, .shelf:
@@ -249,6 +264,8 @@ struct NotchRootView: View {
                                     viewModel.handle(.hoverEnded(isPlaying: liveActivity.hasContent))
                                 }
                             }
+                        } else if AtelierSettings.teleprompterEnabled, viewModel.currentPage == .teleprompter {
+                            TeleprompterPageView(model: teleprompter)
                         } else {
                             ExpandedPlayerView(
                                 info: nowPlaying.current,
@@ -290,6 +307,15 @@ struct NotchRootView: View {
                     // the shared wrapper, rather than in each page
                     // individually, so no future page can reintroduce it.
                     .frame(maxHeight: .infinity, alignment: .top)
+                    .overlay(alignment: .top) {
+                        if AtelierSettings.teleprompterEnabled, viewModel.currentPage == .teleprompter {
+                            TeleprompterControlStrip(
+                                model: teleprompter,
+                                notchWidth: viewModel.collapsedSize.width,
+                                height: viewModel.collapsedSize.height
+                            )
+                        }
+                    }
                     // `.identity`, not `.opacity` -- matching the
                     // background's own transition above. An `.opacity`
                     // fade here while the background snaps instantly made
@@ -367,6 +393,9 @@ struct NotchRootView: View {
             .contentShape(Rectangle())
             .onHover { hovering in
                 pointerInside = hovering
+                if AtelierSettings.teleprompterPauseOnHover {
+                    teleprompter.setPointerInside(hovering)
+                }
                 // A non-expandable live activity on top (Volume,
                 // Brightness, Battery) has no expanded view of its own --
                 // `.hoverStarted` would still force open
@@ -392,11 +421,17 @@ struct NotchRootView: View {
                         viewModel.handle(.hoverStarted)
                     }
                 } else {
+                    if menuTracking { return }
                     // Camera hold-open: only hover-out is suppressed; swipe-close
                     // and tab changes still close/stop (see `CameraHoldOpen`).
                     if CameraHoldOpen.shouldSuppressRetract(
                         holdOpenEnabled: AtelierSettings.cameraHoldOpen,
                         mirrorLive: camera.isLive,
+                        currentPage: viewModel.currentPage,
+                        state: viewModel.state
+                    ) { return }
+                    if TeleprompterHoldOpen.shouldSuppressRetract(
+                        isPlaying: teleprompter.wantsNotchOpen,
                         currentPage: viewModel.currentPage,
                         state: viewModel.state
                     ) { return }
@@ -410,10 +445,13 @@ struct NotchRootView: View {
                 }
             }
             .onChange(of: viewModel.state) { _, newState in
-                if newState != .expanded { camera.stop() }
+                if newState != .expanded { camera.stop(); teleprompter.pause() }
             }
             .onChange(of: viewModel.currentPage) { _, page in
                 if page != .camera { camera.stop() }
+                // Deliberately NOT paused on app-resign-active: you read
+                // while Zoom or a recorder is the frontmost app.
+                if page != .teleprompter { teleprompter.pause() }
             }
             .onReceive(NotificationCenter.default.publisher(for: NSApplication.didResignActiveNotification)) { _ in
                 camera.stop()
@@ -422,6 +460,44 @@ struct NotchRootView: View {
             // outside: do the retract the suppressed hover-out skipped.
             .onChange(of: camera.isLive) { _, live in
                 guard !live, !pointerInside, viewModel.state == .expanded else { return }
+                withAnimation(NotchAnimations.close) {
+                    viewModel.handle(.hoverEnded(isPlaying: liveActivity.hasContent))
+                }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: NSMenu.didBeginTrackingNotification)) { _ in
+                menuTracking = true
+            }
+            .onReceive(NotificationCenter.default.publisher(for: NSMenu.didEndTrackingNotification)) { _ in
+                menuTracking = false
+                // The hover-out that fired while the menu was open was skipped;
+                // catch up once the menu is gone and hover has re-settled
+                // (the pointer often lands back on the notch).
+                Task {
+                    try? await Task.sleep(for: .milliseconds(200))
+                    guard !menuTracking, !pointerInside, viewModel.state == .expanded else { return }
+                    if TeleprompterHoldOpen.shouldSuppressRetract(
+                        isPlaying: teleprompter.wantsNotchOpen,
+                        currentPage: viewModel.currentPage,
+                        state: viewModel.state
+                    ) { return }
+                    if CameraHoldOpen.shouldSuppressRetract(
+                        holdOpenEnabled: AtelierSettings.cameraHoldOpen,
+                        mirrorLive: camera.isLive,
+                        currentPage: viewModel.currentPage,
+                        state: viewModel.state
+                    ) { return }
+                    withAnimation(NotchAnimations.close) {
+                        viewModel.handle(.hoverEnded(isPlaying: liveActivity.hasContent))
+                    }
+                }
+            }
+            // Same for the teleprompter: playback ended while the pointer
+            // is already outside, so do the retract hold-open skipped.
+            .onChange(of: teleprompter.wantsNotchOpen) { _, wants in
+                // Only after the script ran to its end: a manual pause (e.g. the
+                // hotkey) keeps the notch up so the presenter keeps their place.
+                guard !wants, !pointerInside, viewModel.state == .expanded, viewModel.currentPage == .teleprompter,
+                      teleprompter.hasFinished() else { return }
                 withAnimation(NotchAnimations.close) {
                     viewModel.handle(.hoverEnded(isPlaying: liveActivity.hasContent))
                 }
@@ -440,7 +516,8 @@ struct NotchRootView: View {
                 NotchGestureModifier(
                     capabilities: NotchGestureCapabilities(
                         canOpen: viewModel.state == .collapsed || viewModel.state == .pill,
-                        canClose: viewModel.state == .expanded || viewModel.state == .peeking || viewModel.state == .shelf,
+                        canClose: (viewModel.state == .expanded || viewModel.state == .peeking || viewModel.state == .shelf)
+                            && !teleprompterOwnsVerticalSwipe,
                         // Not `liveActivity.topContent?.isExpandable` --
                         // `NowPlayingLiveActivitySource` deliberately
                         // publishes nil while paused (so the pill

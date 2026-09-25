@@ -7,19 +7,19 @@ struct TabOrderTests {
     @Test func emptyStoredOrderGivesTheDefaultOrder() {
         let result = TabOrder.resolve(stored: [], enabled: all)
 
-        #expect(result == [.home, .shelf, .systemMonitor, .calendar, .camera])
+        #expect(result == [.home, .shelf, .systemMonitor, .calendar, .camera, .teleprompter])
     }
 
     @Test func followsTheStoredOrder() {
         let result = TabOrder.resolve(stored: ["camera", "calendar", "shelf", "systemMonitor"], enabled: all)
 
-        #expect(result == [.home, .camera, .calendar, .shelf, .systemMonitor])
+        #expect(result == [.home, .camera, .calendar, .shelf, .systemMonitor, .teleprompter])
     }
 
     @Test func homeCanBeReorderedLikeAnyOtherTab() {
         let result = TabOrder.resolve(stored: ["camera", "home", "shelf"], enabled: all)
 
-        #expect(result == [.camera, .home, .shelf, .systemMonitor, .calendar])
+        #expect(result == [.camera, .home, .shelf, .systemMonitor, .calendar, .teleprompter])
     }
 
     @Test func homeStaysFirstWhenTheStoredOrderDoesNotMentionIt() {
@@ -46,13 +46,13 @@ struct TabOrderTests {
     @Test func unknownNamesAndDuplicatesAreIgnored() {
         let result = TabOrder.resolve(stored: ["bogus", "camera", "camera", "shelf"], enabled: all)
 
-        #expect(result == [.home, .camera, .shelf, .systemMonitor, .calendar])
+        #expect(result == [.home, .camera, .shelf, .systemMonitor, .calendar, .teleprompter])
     }
 
     @Test func aPageMissingFromTheStoredListIsAppendedInDefaultOrder() {
         let result = TabOrder.resolve(stored: ["camera", "shelf"], enabled: all)
 
-        #expect(result == [.home, .camera, .shelf, .systemMonitor, .calendar])
+        #expect(result == [.home, .camera, .shelf, .systemMonitor, .calendar, .teleprompter])
     }
 
     @Test func aDisabledPageKeepsItsSavedPositionWhenReEnabled() {
@@ -61,8 +61,8 @@ struct TabOrderTests {
         let whileDisabled = TabOrder.resolve(stored: stored, enabled: all.subtracting([.camera]))
         let afterReEnable = TabOrder.resolve(stored: stored, enabled: all)
 
-        #expect(whileDisabled == [.home, .shelf, .systemMonitor, .calendar])
-        #expect(afterReEnable == [.home, .camera, .shelf, .systemMonitor, .calendar])
+        #expect(whileDisabled == [.home, .shelf, .systemMonitor, .calendar, .teleprompter])
+        #expect(afterReEnable == [.home, .camera, .shelf, .systemMonitor, .calendar, .teleprompter])
     }
 
     @Test func noEnabledPagesStillResolvesToHome() {

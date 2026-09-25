@@ -12,6 +12,7 @@ final class NotchViewModel: ObservableObject {
 
     let collapsedSize: CGSize
     let expandedSize: CGSize
+    let teleprompterSize: CGSize
     /// A shorter `.expanded` footprint for the Home tab's idle content
     /// (date/time + battery %) -- much less to show than a real player, so
     /// it shouldn't claim the same vertical space. `NotchRootView` picks
@@ -44,7 +45,7 @@ final class NotchViewModel: ObservableObject {
     /// moment you arrive, so the fixed position reads as deliberate.
     @Published private(set) var spaceChangeTick: Int = 0
 
-    init(collapsedSize: CGSize, expandedSize: CGSize, idleHomeSize: CGSize, pillSize: CGSize, peekSize: CGSize, compactPeekSize: CGSize, shelfSize: CGSize, calendarSize: CGSize) {
+    init(collapsedSize: CGSize, expandedSize: CGSize, idleHomeSize: CGSize, pillSize: CGSize, peekSize: CGSize, compactPeekSize: CGSize, shelfSize: CGSize, calendarSize: CGSize, teleprompterSize: CGSize) {
         self.collapsedSize = collapsedSize
         self.expandedSize = expandedSize
         self.idleHomeSize = idleHomeSize
@@ -53,6 +54,7 @@ final class NotchViewModel: ObservableObject {
         self.compactPeekSize = compactPeekSize
         self.shelfSize = shelfSize
         self.calendarSize = calendarSize
+        self.teleprompterSize = teleprompterSize
     }
 
     func handle(_ event: NotchEvent) {

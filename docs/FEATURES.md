@@ -181,6 +181,8 @@ its `AudioMonitor.swift` is a simple mic-RMS meter, not the voice-synced
 pacing item 4 needs. Direct feedback split this into two tiers, in
 priority order:
 
+**Status (2026-09-25):** Tier 1 items 1 and 2 shipped (Phase 17 stages 1-3, ADR 0019); item 3 (script library) and item 4 (voice sync, its own plan) are next.
+
 **Tier 1 (wanted, in order):**
 1. **Scrolling script view** — a `NotchPage` tab, same shape as
    `SystemMonitorPageView`/`ShelfView`: a `ScrollView` with a timer-driven
