@@ -152,89 +152,9 @@ plus one registration. If it does, the protocol is wrong.
 
 ## Reference existing notch apps
 
-There are several real, shipped, open-source macOS notch apps worth checking
-before inventing something from scratch — they've already solved problems
-we'll hit (notch shape/geometry, hover/expand mechanics, now-playing
-integration, menu bar quirks). When stuck on "how does this kind of app
-usually do X," look at their actual source before hand-deriving it:
-
-- [TheBoredTeam/boring.notch](https://github.com/TheBoredTeam/boring.notch) —
-  where `Atelier/UI/NotchShape.swift` came from. Also has now-playing UI,
-  media controls, and file-shelf-style drag & drop (relevant to the backlog).
-  Its `NotchHomeView.swift` (`MusicPlayerView`/`MusicControlsView`) is where
-  Phase 4's expanded-player layout (artwork left, title/artist/scrubber/
-  transport stacked right) came from.
-- [MrKai77/DynamicNotchKit](https://github.com/MrKai77/DynamicNotchKit) — the
-  original source boring.notch itself credits for the notch shape algorithm.
-- [Ebullioscopic/Atoll](https://github.com/Ebullioscopic/Atoll) (formerly
-  DynamicIsland) — a more elaborate notch app; also uses the
-  `mediaremote-adapter` bridge (relevant to the backlog item of the same
-  name). Its `DynamicIslandWindow`/`FirstMouseHostingView` pair is where
-  Phase 4's fix for unresponsive buttons in a non-activating panel came
-  from — see `docs/decisions/0003-notch-panel-can-become-key.md`.
-- Others worth a look if relevant: NotchNook,
-  [Lakr233/NotchDrop](https://github.com/Lakr233/NotchDrop),
-  [jackson-storm/dynamicnotch](https://github.com/jackson-storm/dynamicnotch),
-  [omerates760/AgentPulse](https://github.com/omerates760/AgentPulse),
-  [fr0sty1122/notchify](https://github.com/fr0sty1122/notchify) (media
-  controls, browser audio detection, file shelf),
-  [navtoj/NotchBar](https://github.com/navtoj/NotchBar) (notch-as-menu-bar
-  mechanics), [monuk7735/mew-notch](https://github.com/monuk7735/mew-notch)
-  (alternative geometry/hover implementation),
-  [Clayton630/QuartzNotch](https://github.com/Clayton630/QuartzNotch) (a
-  boring.notch fork taken further),
-  [coaxel2/NotchIA](https://github.com/coaxel2/NotchIA) (media player +
-  shelf + focus + clipboard, on-device Apple Intelligence), and
-  [cshariq/Sapphire](https://github.com/cshariq/Sapphire) (another elaborate
-  notch app — worth checking for system-monitor/widget/live-activity
-  patterns given the in-progress CPU/mem monitor and widget work).
-
-Further sources for specific future features (backlog items, not v1),
-credited via [Ebullioscopic/Atoll's own README](https://github.com/Ebullioscopic/Atoll/blob/dev/ReadMe.md#acknowledgments):
-- [**Alcove**](https://tryalcove.com) — Minimalistic Mode interface design
-  and the conceptual framework for lock-screen widget integration.
-- [**Stats**](https://github.com/exelban/stats) — CPU temperature
-  monitoring via SMC access, frequency sampling through IOReport bindings,
-  per-core CPU utilisation tracking; relevant to Phase 13's system
-  resource monitor.
-- [**Open-Meteo**](https://open-meteo.com) — weather API, for a
-  lock-screen weather widget.
-- [**SkyLightWindow**](https://github.com/Lakr233/SkyLightWindow) —
-  window-rendering technique for lock-screen widgets.
-- [**rtaudio**](https://github.com/ZephyrCodesStuff/rtaudio) — C++ source
-  for a live music visualizer.
-- **Wick** — iOS-like Timer design, for a lock-screen timer widget (no
-  repo link in Atoll's own README either, just credited by first name).
-- [**OpenUsage**](https://github.com/robinebers/openusage) — LLM usage
-  tracking.
-- [**OpenRouter**](https://openrouter.ai) — API for automated model
-  pricing.
-
-Additional sources found directly (not via Atoll's acknowledgments), for
-specific backlog items:
-- [**Notchy**](https://notchy.dev) — closed-source, free; credited for product
-  ideas only (stacked live activities on the pill, timers, clipboard history,
-  synced lyrics). Its 74-feature approach is the opposite of our lightweight
-  differentiator; its "0.1% idle CPU" is an unverified marketing claim.
-- [**CueNotch**](https://cuenotch.com) — primary reference for Phase 17's
-  teleprompter/Ghost Mode; commercial, credited for the product idea only.
-- [**jpomykala/NotchPrompter**](https://github.com/jpomykala/NotchPrompter) —
-  open-source; its `PrompterWindow.swift` is where the Ghost Mode mechanism
-  (`NSWindow.sharingType = .none`) was confirmed for Phase 17.
-- [**Avocado**](https://avocadonotch.com) — commercial teleprompter app;
-  confirms voice-synced scrolling as real on-device speech recognition
-  (not just a mic-level meter) and is the source of the Focus Guide idea
-  (dim read lines, highlight current) in Phase 17's scope.
-- [**Aboudjem/Sleepless**](https://github.com/Aboudjem/Sleepless) —
-  open-source, MIT; the reference for the "keep awake with lid closed"
-  backlog idea. Uses `sudo pmset -a disablesleep 1` (undocumented but
-  real) via a narrowly-scoped, one-time-authorized passwordless sudoers
-  grant — see the feature's own backlog entry in `FEATURES.md` for the
-  safety tradeoffs before building anything from this.
-
-This list is also kept in the `check-reference-apps-first` skill
-(`.claude/skills/check-reference-apps-first/SKILL.md`) — update both if you
-add a repo.
+Before inventing a notch-app feature from scratch, check how shipped open-source notch
+apps solved it. The full repo list lives in the `check-reference-apps-first` skill
+(`.claude/skills/check-reference-apps-first/SKILL.md`); add new repos there.
 
 Use `gh api repos/<owner>/<repo>/...` to pull real source directly (as done for
 `NotchShape.swift`) rather than guessing at how a technique works from a
