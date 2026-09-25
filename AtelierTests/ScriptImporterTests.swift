@@ -74,4 +74,21 @@ struct ScriptImporterTests {
             try ScriptImporter.importText(from: url)
         }
     }
+
+
+    // Tidy-up: the Latin-1 fallback decodes any bytes, so binary-looking
+    // files (or UTF-16 without a BOM) must be refused, not imported as garbage.
+    @Test func binaryLookingFileIsUnreadable() throws {
+        let url = try tempFile("a.txt", data: Data([0x50, 0x00, 0x4B, 0x00, 0x03, 0x00, 0x04, 0x00, 0x00, 0x00, 0x01, 0x02]))
+        #expect(throws: ScriptImporter.ImportError.unreadable) {
+            try ScriptImporter.importText(from: url)
+        }
+    }
+
+    @Test func aWebLinkIsNeverReadOverTheNetwork() {
+        let url = URL(string: "https://example.com/notes.txt")!
+        #expect(throws: ScriptImporter.ImportError.unreadable) {
+            try ScriptImporter.importText(from: url)
+        }
+    }
 }

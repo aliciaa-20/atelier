@@ -178,4 +178,23 @@ struct TeleprompterModelTests {
         model.setPointerInside(false, now: t0)
         #expect(model.isPlaying)
     }
+
+
+    // Manual pause keeps the notch open; only a script that ran to its end
+    // is "finished" (the root view retracts after that, not after a pause).
+    @Test func hasFinishedIsTrueOnlyAfterRunningOffTheEnd() throws {
+        let (model, _) = try makeModel()
+        #expect(!model.hasFinished(now: t0))
+        model.play(now: t0)
+        model.pause(now: t0.addingTimeInterval(1))
+        #expect(!model.hasFinished(now: t0.addingTimeInterval(1)))
+        model.play(now: t0.addingTimeInterval(1))
+        model.settle(now: t0.addingTimeInterval(600))
+        #expect(model.hasFinished(now: t0.addingTimeInterval(600)))
+    }
+
+    @Test func anEmptyScriptIsNeverFinished() throws {
+        let (model, _) = try makeModel(script: " ")
+        #expect(!model.hasFinished(now: t0))
+    }
 }

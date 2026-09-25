@@ -43,8 +43,9 @@ final class GlobalHotkeys {
             )
             guard status == noErr else { return status }
             let id = hotKeyID.id
+            let signature = hotKeyID.signature
             DispatchQueue.main.async {
-                MainActor.assumeIsolated { GlobalHotkeys.shared.fire(id) }
+                MainActor.assumeIsolated { GlobalHotkeys.shared.fire(id, signature: signature) }
             }
             return noErr
         }, 1, &spec, nil, &eventHandlerRef)
@@ -63,6 +64,9 @@ final class GlobalHotkeys {
                 hotKeyRefs.append(ref)
             }
         }
+        // Every key already owned by another app: don't pretend to be on, so
+        // a later `register` (e.g. after the other app quits) can try again.
+        if hotKeyRefs.isEmpty { unregister() }
     }
 
     func unregister() {
@@ -75,8 +79,8 @@ final class GlobalHotkeys {
         isRegistered = false
     }
 
-    private func fire(_ id: UInt32) {
-        guard let action = Action(rawValue: id) else { return }
+    private func fire(_ id: UInt32, signature: OSType) {
+        guard signature == Self.signature, let action = Action(rawValue: id) else { return }
         handler?(action)
     }
 }

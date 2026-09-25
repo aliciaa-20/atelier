@@ -24,6 +24,8 @@ enum ScriptImporter {
     }
 
     static func importText(from url: URL) throws -> String {
+        // A dropped web link would otherwise be read over the network.
+        guard url.isFileURL else { throw ImportError.unreadable }
         let ext = url.pathExtension.lowercased()
         guard supportedExtensions.contains(ext) else { throw ImportError.unsupportedType(ext) }
 
@@ -39,7 +41,24 @@ enum ScriptImporter {
         return trimmed
     }
 
+    /// The Latin-1 fallback decodes any bytes, so a binary file (or UTF-16
+    /// without a BOM) would otherwise import as garbage. Real scripts have
+    /// no NULs and almost no control characters.
+    private static func looksBinary(_ text: String) -> Bool {
+        let scalars = text.unicodeScalars
+        guard !scalars.isEmpty else { return false }
+        let allowed: Set<UInt32> = [0x09, 0x0A, 0x0D]
+        let control = scalars.filter { $0.value < 0x20 && !allowed.contains($0.value) }.count
+        return text.contains("\0") || Double(control) / Double(scalars.count) > 0.05
+    }
+
     private static func readPlain(_ url: URL) throws -> String {
+        let text = try decodePlain(url)
+        if looksBinary(text) { throw ImportError.unreadable }
+        return text
+    }
+
+    private static func decodePlain(_ url: URL) throws -> String {
         if let text = try? String(contentsOf: url, encoding: .utf8) { return text }
         // `usedEncoding` only recognises BOM-marked files (UTF-16 etc.), so
         // plain legacy text needs explicit fallbacks: Windows-1252 is what

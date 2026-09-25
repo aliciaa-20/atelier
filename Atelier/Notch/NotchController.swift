@@ -121,6 +121,10 @@ final class NotchController {
     private func applyLiveSettings() {
         panel.sharingType = AtelierSettings.ghostModeEnabled ? .none : .readOnly
 
+        // Disabling the tab mid-play must not leave hold-open keeping the
+        // notch up with no way to pause.
+        if !AtelierSettings.teleprompterEnabled { TeleprompterModel.shared.pause() }
+
         if AtelierSettings.teleprompterEnabled, AtelierSettings.teleprompterHotkeysEnabled {
             GlobalHotkeys.shared.register { [weak self] action in self?.handleHotkey(action) }
         } else {
@@ -141,6 +145,9 @@ final class NotchController {
             if viewModel.state != .expanded {
                 withAnimation(NotchAnimations.open) { viewModel.handle(.hoverStarted) }
             }
+            // E.g. mid file-drag the notch stays in `.shelf`: nothing would be
+            // visible, so don't start playback behind it.
+            guard viewModel.state == .expanded else { return }
             viewModel.selectPage(.teleprompter)
             model.toggle()
         case .faster:
@@ -159,7 +166,7 @@ final class NotchController {
         shelfStore.sweepExpired()
 
         guard let screen = NSScreen.notchedOrMain else {
-            viewModel = NotchViewModel(collapsedSize: .zero, expandedSize: .zero, idleHomeSize: .zero, pillSize: .zero, peekSize: .zero, compactPeekSize: .zero, shelfSize: .zero, calendarSize: .zero)
+            viewModel = NotchViewModel(collapsedSize: .zero, expandedSize: .zero, idleHomeSize: .zero, pillSize: .zero, peekSize: .zero, compactPeekSize: .zero, shelfSize: .zero, calendarSize: .zero, teleprompterSize: .zero)
             let hudOrder = SystemHUDOrder()
             let volumeSource = VolumeSource(notchHeight: 0, hudOrder: hudOrder)
             let brightnessSource = BrightnessSource(notchHeight: 0, hudOrder: hudOrder)
@@ -321,7 +328,8 @@ final class NotchController {
         settingsObserver = NotificationCenter.default.addObserver(
             forName: UserDefaults.didChangeNotification, object: nil, queue: .main
         ) { [weak self] _ in
-            Task { @MainActor in self?.applyLiveSettings() }
+            // Delivered on `.main` already, so no extra task hop.
+            MainActor.assumeIsolated { self?.applyLiveSettings() }
         }
 
         // NotchController lives for the whole app run (owned by AtelierApp),
