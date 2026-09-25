@@ -9,7 +9,7 @@ import Foundation
 /// so a paused or finished teleprompter costs nothing.
 @MainActor
 final class TeleprompterModel: ObservableObject {
-    static let shared = TeleprompterModel()
+    static let shared = TeleprompterModel(speech: SpeechRecognizer.shared)
 
     @Published private(set) var script = TeleprompterScript(text: "")
     @Published private(set) var lines = TeleprompterLines.empty
