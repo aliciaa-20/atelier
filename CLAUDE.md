@@ -13,6 +13,11 @@ machine: MacBook Pro M3 (Mac15,3), macOS 26.6.
 > lives at `~/Downloads/CLAUDE.md` and is inherited by directory traversal. It has
 > nothing to do with Atelier. Ignore it.
 
+## Progress tracking
+
+`docs/ROADMAP.md` is the single source of truth for status (there is no `STAGES.md`;
+it was retired 2026-09-26). This overrides the global "create STAGES.md" preference.
+
 ## Who I'm working with
 
 Alicia is new to Swift, macOS development, and Claude Code. This project is
