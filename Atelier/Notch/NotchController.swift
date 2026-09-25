@@ -307,7 +307,7 @@ final class NotchController {
         )
 
         // Invariant 3: the panel is the maximum footprint of any page.
-        let maxHeight = max(expandedSize.height, calendarSize.height, teleprompterSize.height)
+        let maxHeight = max(expandedSize.height, calendarSize.height, teleprompterSize.height + NotchLayout.teleprompterPillHeight)
         let maxWidth = max(expandedSize.width, teleprompterSize.width)
         let maxRect = CGRect(
             x: collapsedRect.midX - maxWidth / 2,

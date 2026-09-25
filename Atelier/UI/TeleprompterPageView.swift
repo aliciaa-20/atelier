@@ -5,7 +5,7 @@ import SwiftUI
 /// already read dimmed, top/bottom edges faded. Only the visible window of
 /// lines is built. Redraws at 30 fps while playing, 4 fps under Reduce
 /// Motion (where the scroll steps line by line instead of gliding), and
-/// not at all when paused.
+/// not at all when paused, or (voice sync) while it waits for you to speak.
 struct TeleprompterPageView: View {
     @ObservedObject var model: TeleprompterModel
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -38,7 +38,7 @@ struct TeleprompterPageView: View {
     private func reader(height: CGFloat) -> some View {
         let lineHeight = fontSize * Self.lineHeightFactor
         let tick: TimeInterval = reduceMotion ? 0.25 : 1.0 / 30
-        return TeleprompterTicker(interval: tick, active: model.isPlaying) { now in
+        return TeleprompterTicker(interval: tick, active: model.isAnimating) { now in
             let wordPosition = model.scroll.position(at: now)
             let linePosition = model.lines.linePosition(forWord: wordPosition)
             // Reduce Motion: step whole lines instead of gliding.

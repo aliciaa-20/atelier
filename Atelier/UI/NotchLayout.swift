@@ -21,6 +21,10 @@ enum NotchLayout {
     /// notch band; the two flanks are ~100pt wide, so widths stay compact.
     static let teleprompterControlSize: CGFloat = 26
 
+    /// The "Listening" pill hangs this far below the teleprompter page. The
+    /// panel is always the maximum footprint (Invariant 3), so it includes it.
+    static let teleprompterPillHeight: CGFloat = 20
+
     /// Idle Home's weather detail card (glyph/temp row, quip, 5-day row).
     /// Starting value -- tune on-device.
     static let idleWeatherDetailContentHeight: CGFloat = 144
