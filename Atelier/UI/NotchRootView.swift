@@ -17,6 +17,10 @@ struct NotchRootView: View {
     /// Tracked so a hold-open that ends (mirror stopped) knows whether to
     /// retract now or wait for the pointer to actually leave.
     @State private var pointerInside = false
+    /// True while any `NSMenu` (e.g. the teleprompter's speed menu) is being
+    /// tracked: the pointer is over the popup, outside the panel, but the
+    /// notch must not retract underneath it.
+    @State private var menuTracking = false
     /// Idle Home shows the weather detail card instead of the clock. Reset
     /// whenever the notch leaves `.expanded`.
     @State private var weatherDetailOpen = false
@@ -417,6 +421,7 @@ struct NotchRootView: View {
                         viewModel.handle(.hoverStarted)
                     }
                 } else {
+                    if menuTracking { return }
                     // Camera hold-open: only hover-out is suppressed; swipe-close
                     // and tab changes still close/stop (see `CameraHoldOpen`).
                     if CameraHoldOpen.shouldSuppressRetract(
@@ -457,6 +462,33 @@ struct NotchRootView: View {
                 guard !live, !pointerInside, viewModel.state == .expanded else { return }
                 withAnimation(NotchAnimations.close) {
                     viewModel.handle(.hoverEnded(isPlaying: liveActivity.hasContent))
+                }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: NSMenu.didBeginTrackingNotification)) { _ in
+                menuTracking = true
+            }
+            .onReceive(NotificationCenter.default.publisher(for: NSMenu.didEndTrackingNotification)) { _ in
+                menuTracking = false
+                // The hover-out that fired while the menu was open was skipped;
+                // catch up once the menu is gone and hover has re-settled
+                // (the pointer often lands back on the notch).
+                Task {
+                    try? await Task.sleep(for: .milliseconds(200))
+                    guard !menuTracking, !pointerInside, viewModel.state == .expanded else { return }
+                    if TeleprompterHoldOpen.shouldSuppressRetract(
+                        isPlaying: teleprompter.wantsNotchOpen,
+                        currentPage: viewModel.currentPage,
+                        state: viewModel.state
+                    ) { return }
+                    if CameraHoldOpen.shouldSuppressRetract(
+                        holdOpenEnabled: AtelierSettings.cameraHoldOpen,
+                        mirrorLive: camera.isLive,
+                        currentPage: viewModel.currentPage,
+                        state: viewModel.state
+                    ) { return }
+                    withAnimation(NotchAnimations.close) {
+                        viewModel.handle(.hoverEnded(isPlaying: liveActivity.hasContent))
+                    }
                 }
             }
             // Same for the teleprompter: playback ended while the pointer

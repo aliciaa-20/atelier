@@ -36,7 +36,9 @@ struct TeleprompterControlStrip: View {
             }
             .frame(maxWidth: .infinity, alignment: .trailing)
         }
-        .padding(.horizontal, 14)
+        // Clear of the panel's rounded top corners (the ring used to touch
+        // the right edge).
+        .padding(.horizontal, 24)
         .frame(height: height)
     }
 
@@ -47,6 +49,7 @@ struct TeleprompterControlStrip: View {
             Image(systemName: model.wantsNotchOpen ? "pause.fill" : "play.fill")
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(.white)
+                .contentTransition(.symbolEffect(.replace))
                 .frame(width: 24, height: 24)
                 .contentShape(Rectangle())
         }
