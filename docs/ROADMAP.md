@@ -780,7 +780,7 @@ Claude Code mechanic: custom slash commands; `/code-review`.
       camera answer per process). Parked -- add a "may need a relaunch" note or re-read differently.
 - [x] Grant All no longer shows for Accessibility alone; window frame autosaved; sidebar can't lose its highlight
 - [x] Focus returns to the previous app after Settings closes
-- [x] Custom template menu-bar icon (`MenuBarIcon`, drawn in code) — check how it reads on-device
+- [x] Custom template menu-bar icon (`MenuBarIcon`, drawn in code) — placeholder, to be redrawn from the app icon once that exists
 
 ### ⬜ Native-polish backlog (from ui-review-tahoe, 2026-09-24)
 *Small, independent items; not a numbered phase.*

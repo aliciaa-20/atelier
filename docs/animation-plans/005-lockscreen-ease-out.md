@@ -1,6 +1,6 @@
 # 005 — Lock-screen hide uses ease-out
 
-- **Status**: DONE (unverified on-device)
+- **Status**: DONE (verified on-device 2026-09-25)
 - **Commit**: a793545
 - **Severity**: MEDIUM
 - **Category**: Easing & duration
