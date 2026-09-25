@@ -39,4 +39,36 @@ struct TeleprompterLineWrapperTests {
         #expect(TeleprompterLineWrapper.lines(for: TeleprompterScript(text: ""), font: font, width: 300).count == 0)
         #expect(TeleprompterLineWrapper.lines(for: TeleprompterScript(text: sentence), font: font, width: 0).count == 0)
     }
+
+
+    private func width(of text: String) -> CGFloat {
+        NSAttributedString(string: text, attributes: [.font: font]).size().width
+    }
+
+    /// Text of every display line, rebuilt from the line starts.
+    private func lineTexts(_ script: TeleprompterScript, _ lines: TeleprompterLines) -> [String] {
+        lines.starts.indices.map { i in
+            let end = i + 1 < lines.starts.count ? lines.starts[i + 1] : script.wordCount
+            return script.words[lines.starts[i]..<end].joined(separator: " ")
+        }
+    }
+
+    // Final review, Important 2: CoreText breaks inside hyphenated words and
+    // URLs, which used to leave a line wider than the panel (tail clipped).
+    @Test func noMultiWordLineIsWiderThanTheWidth() {
+        let script = TeleprompterScript(text: "go see state-of-the-art demos now please and visit https://example.com/some/long/path today")
+        let lines = TeleprompterLineWrapper.lines(for: script, font: font, width: 160)
+        #expect(lines.count > 1)
+        for text in lineTexts(script, lines) where text.contains(" ") {
+            #expect(width(of: text) <= 160, "line too wide: \(text)")
+        }
+    }
+
+    @Test func aHyphenatedWordIsNeverSplitAcrossLines() {
+        let script = TeleprompterScript(text: "go see state-of-the-art demos now")
+        let lines = TeleprompterLineWrapper.lines(for: script, font: font, width: 100)
+        for text in lineTexts(script, lines) {
+            #expect(!text.hasSuffix("-"), "split mid-word: \(text)")
+        }
+    }
 }

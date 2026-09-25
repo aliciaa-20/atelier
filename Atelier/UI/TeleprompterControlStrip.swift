@@ -44,17 +44,17 @@ struct TeleprompterControlStrip: View {
         Button {
             model.toggle()
         } label: {
-            Image(systemName: model.isPlaying ? "pause.fill" : "play.fill")
+            Image(systemName: model.wantsNotchOpen ? "pause.fill" : "play.fill")
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(.white)
                 .frame(width: 24, height: 24)
                 .contentShape(Rectangle())
         }
         .buttonStyle(TeleprompterPressStyle())
-        .disabled(model.script.isEmpty)
-        .opacity(model.script.isEmpty ? 0.35 : 1)
-        .help(model.isPlaying ? "Pause" : "Play")
-        .accessibilityLabel(model.isPlaying ? "Pause script" : "Play script")
+        .disabled(!model.canPlay)
+        .opacity(model.canPlay ? 1 : 0.35)
+        .help(model.wantsNotchOpen ? "Pause" : "Play")
+        .accessibilityLabel(model.wantsNotchOpen ? "Pause script" : "Play script")
     }
 
     private var speedMenu: some View {

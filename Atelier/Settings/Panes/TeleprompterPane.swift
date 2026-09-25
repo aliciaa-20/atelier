@@ -107,6 +107,9 @@ struct TeleprompterPane: View {
         saveTask = Task {
             try? await Task.sleep(for: .milliseconds(600))
             guard !Task.isCancelled else { return }
+            // Opening the pane sets `text` from the store; saving it back
+            // unchanged would still reload the model.
+            guard current != ScriptStore.shared.load() else { return }
             do { try ScriptStore.shared.save(current) }
             catch { message = "Couldn't save the script" }
         }
