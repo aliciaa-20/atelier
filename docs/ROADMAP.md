@@ -934,3 +934,8 @@ Items not part of the Phase 6–16 feature survey (see
 - **Weather TTL option** and the Phase 13 threshold check / pill text size (see those phases).
 - Per-phase stage checklists (Settings, Camera, Calendar, Teleprompter) lived in `STAGES.md`;
   they are all done and remain in git history (`git log -- STAGES.md`).
+- **Stacked live activities on the collapsed pill (from Notchy, 2026-09-26):** show several
+  `LiveActivitySource`s at once (e.g. music + timer) instead of one at a time. Best paired with
+  timers/Pomodoro; keep the idle cost near zero (see the performance section in `CLAUDE.md`).
+- **Synced lyrics** in the now-playing player (also from Notchy). Needs a lyrics source; check
+  privacy/licensing before choosing one.

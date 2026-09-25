@@ -212,6 +212,10 @@ credited via [Ebullioscopic/Atoll's own README](https://github.com/Ebullioscopic
 
 Additional sources found directly (not via Atoll's acknowledgments), for
 specific backlog items:
+- [**Notchy**](https://notchy.dev) — closed-source, free; credited for product
+  ideas only (stacked live activities on the pill, timers, clipboard history,
+  synced lyrics). Its 74-feature approach is the opposite of our lightweight
+  differentiator; its "0.1% idle CPU" is an unverified marketing claim.
 - [**CueNotch**](https://cuenotch.com) — primary reference for Phase 17's
   teleprompter/Ghost Mode; commercial, credited for the product idea only.
 - [**jpomykala/NotchPrompter**](https://github.com/jpomykala/NotchPrompter) —
