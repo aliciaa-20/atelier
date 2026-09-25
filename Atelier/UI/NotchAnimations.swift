@@ -62,20 +62,19 @@ enum NotchAnimations {
         reduceMotion ? .easeOut(duration: 0.12) : .spring(response: 0.3, dampingFraction: 0.75)
     }
     /// The panel morphing between the player and a compact volume/brightness
-    /// HUD: critically damped (no overshoot) and quick (0.28s, Control
-    /// Center-like) -- a bouncy or slow spring on a size change the user
+    /// HUD: critically damped (no overshoot), 0.4s -- a bouncy or slow spring on a size change the user
     /// didn't trigger by hovering reads as jitter. The content fades are
-    /// sequenced around it in `NotchRootView`: the player is gone before the
-    /// panel has visibly shrunk, and returns once it has mostly regrown, so a
-    /// squeezed, clipped player is never on screen.
+    /// sequenced strictly one after the other (never both on
+    /// screen): player out 0.16s, then the bar in 0.24s; on the way back the bar
+    /// out 0.16s, then the player in once the panel has mostly regrown.
     static var hud: Animation {
-        reduceMotion ? .easeInOut(duration: 0.15) : .spring(duration: 0.28, bounce: 0)
+        reduceMotion ? .easeInOut(duration: 0.15) : .spring(duration: 0.4, bounce: 0)
     }
     static var hudPlayerFade: (hudIn: Animation, hudOut: Animation) {
-        (.easeOut(duration: 0.08), .easeOut(duration: 0.15).delay(0.12))
+        (.easeOut(duration: 0.16), .easeOut(duration: 0.24).delay(0.24))
     }
     static var hudBarFade: (hudIn: Animation, hudOut: Animation) {
-        (.easeOut(duration: 0.12).delay(0.1), .easeOut(duration: 0.08))
+        (.easeOut(duration: 0.24).delay(0.2), .easeOut(duration: 0.16))
     }
     static let settleTuck: Animation = .easeOut(duration: 0.12)
     static var settleSpringBack: Animation {
