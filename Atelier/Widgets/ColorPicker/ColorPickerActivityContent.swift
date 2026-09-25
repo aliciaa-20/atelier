@@ -28,7 +28,7 @@ struct ColorPickerActivityContent: LiveActivityContent {
                     .fill(Color(color))
                     .frame(width: 8, height: 8)
                 Text(hex)
-                    .font(.system(size: 9, weight: .medium, design: .monospaced))
+                    .font(.system(size: 10, weight: .medium, design: .monospaced))
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
                     .foregroundStyle(.white)

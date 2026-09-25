@@ -38,9 +38,9 @@ struct VolumeActivityContent: LiveActivityContent {
             HStack(spacing: 4) {
                 Image(systemName: symbolName)
                     .foregroundStyle(.white)
-                    .font(.system(size: 9))
+                    .font(.system(size: 10))
                 Text(isMuted ? "Muted" : "\(percent)%")
-                    .font(.system(size: 9, weight: .medium))
+                    .font(.system(size: 10, weight: .medium))
                     .monospacedDigit()
                     .contentTransition(.numericText(value: Double(percent)))
                     .animation(.snappy(duration: 0.2), value: percent)
