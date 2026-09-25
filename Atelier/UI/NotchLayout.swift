@@ -7,15 +7,22 @@ import CoreGraphics
 enum NotchLayout {
     static let pageHorizontalInset: CGFloat = 26
 
-    /// Bottom corner radius of the expanded/shelf panel (`NotchRootView.cornerRadii`).
+    /// Corner radii of the expanded/shelf panel (`NotchRootView.cornerRadii`).
+    /// `NotchShape` insets its vertical edges by the top radius, so the
+    /// *visible* gap from a page's side inset to the panel edge is
+    /// `pageHorizontalInset - panelTopRadius` (26 - 14 = 12).
+    static let panelTopRadius: CGFloat = 14
     static let panelBottomRadius: CGFloat = 20
 
-    /// Gap below every page's content (Shelf/Camera/Teleprompter cards, reader
-    /// text) -- one value so no tab sits closer to the panel edge than another.
-    static let pageBottomInset: CGFloat = 12
+    /// Gap below every page's content, equal to that visible side gap so
+    /// cards sit evenly (12) from the panel's side and bottom edges.
+    static let pageBottomInset: CGFloat = pageHorizontalInset - panelTopRadius
 
-    /// Corner radius of the empty-state/preview cards (Shelf, Camera, Teleprompter).
-    static let cardCornerRadius: CGFloat = 16
+    /// Cards (Shelf, Camera, Teleprompter empty states) are concentric with
+    /// the panel's bottom corner: outer radius minus the even gap = 8. A
+    /// larger radius (it was 16) makes the gap widen at the corner, which
+    /// read as a wrong-looking inner curve.
+    static let cardCornerRadius: CGFloat = panelBottomRadius - pageBottomInset
 
     /// Peek/HUD panels: one visible gap between the content and every panel
     /// edge (sides, bottom, and below the notch). Horizontal padding adds the

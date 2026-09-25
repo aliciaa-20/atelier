@@ -61,6 +61,13 @@ enum NotchAnimations {
     static var grab: Animation {
         reduceMotion ? .easeOut(duration: 0.12) : .spring(response: 0.3, dampingFraction: 0.75)
     }
+    /// The panel morphing between the player and a compact volume/brightness
+    /// HUD: critically damped (no overshoot), Apple's `.smooth` feel -- a
+    /// bouncy spring on a size change the user didn't trigger by hovering
+    /// reads as jitter.
+    static var hud: Animation {
+        reduceMotion ? .easeInOut(duration: 0.2) : .smooth(duration: 0.45)
+    }
     static let settleTuck: Animation = .easeOut(duration: 0.12)
     static var settleSpringBack: Animation {
         reduceMotion ? .easeOut(duration: 0.12) : .spring(response: 0.35, dampingFraction: 0.5)
