@@ -10,6 +10,8 @@ struct TeleprompterControlStrip: View {
     @AppStorage(AtelierSettings.ghostModeKey) private var ghostMode = false
     @AppStorage(AtelierSettings.teleprompterControlOrderKey) private var controlOrder = ""
 
+    private static let controlSize = NotchLayout.teleprompterControlSize
+
     /// Trackpad points per 10 WPM step when scrolling over the speed control.
     private static let scrollPointsPerStep: CGFloat = 14
     @State private var scrollRemainder: CGFloat = 0
@@ -64,8 +66,9 @@ struct TeleprompterControlStrip: View {
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(.white)
                 .contentTransition(.symbolEffect(.replace))
-                .frame(width: 24, height: 24)
-                .contentShape(Rectangle())
+                .frame(width: Self.controlSize, height: Self.controlSize)
+                .background(Circle().fill(Color.white.opacity(0.14)))
+                .contentShape(Circle())
         }
         .buttonStyle(TeleprompterPressStyle())
         .disabled(!model.canPlay)
@@ -81,7 +84,7 @@ struct TeleprompterControlStrip: View {
         HStack(spacing: 0) {
             stepButton(symbol: "minus", label: "Slower", delta: -10)
             Text("\(Int(model.scroll.wpm))")
-                .font(.system(size: 10, weight: .semibold).monospacedDigit())
+                .font(.system(size: 11, weight: .semibold).monospacedDigit())
                 .foregroundStyle(.white.opacity(0.9))
                 .contentTransition(.numericText(value: model.scroll.wpm))
                 .animation(.snappy(duration: 0.2), value: model.scroll.wpm)
@@ -89,6 +92,7 @@ struct TeleprompterControlStrip: View {
             stepButton(symbol: "plus", label: "Faster", delta: 10)
         }
         .padding(.horizontal, 2)
+        .frame(height: Self.controlSize)
         .background(Capsule().fill(Color.white.opacity(0.14)))
         .background(TeleprompterScrollCatcher { deltaY in
             // Content-follows-fingers: fingers up (negative) = faster.
@@ -116,9 +120,9 @@ struct TeleprompterControlStrip: View {
             model.stepWPM(by: delta)
         } label: {
             Image(systemName: symbol)
-                .font(.system(size: 8, weight: .bold))
+                .font(.system(size: 9, weight: .bold))
                 .foregroundStyle(.white.opacity(0.85))
-                .frame(width: 18, height: 20)
+                .frame(width: 18, height: Self.controlSize)
                 .contentShape(Rectangle())
         }
         .buttonStyle(TeleprompterPressStyle())

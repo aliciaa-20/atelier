@@ -13,7 +13,7 @@ struct TeleprompterRing: View {
     /// Tooltip / VoiceOver value, e.g. "0:32 of 3:10".
     let detail: String
 
-    static let diameter: CGFloat = 28
+    static let diameter: CGFloat = NotchLayout.teleprompterControlSize
     private static let lineWidth: CGFloat = 2.5
 
     var body: some View {
