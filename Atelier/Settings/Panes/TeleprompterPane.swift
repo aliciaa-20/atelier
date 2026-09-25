@@ -17,7 +17,6 @@ struct TeleprompterPane: View {
     @AppStorage(AtelierSettings.teleprompterControlOrderKey) private var controlOrder = ""
 
     @State private var text = ""
-    @State private var dropTargetRow: String?
     @State private var loaded = false
     @State private var saveTask: Task<Void, Never>?
     @State private var message: String?
@@ -74,10 +73,24 @@ struct TeleprompterPane: View {
             .disabled(!enabled)
 
             Section("Top bar") {
-                Text("Drag to reorder. Controls above the camera row sit left of the notch, controls below it sit right.")
+                Text("Choose where each control sits around the camera. Drag a row, or use its arrows: rows above the camera cutout appear on its left, rows below it on its right.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
-                ForEach(order, id: \.self) { name in controlRow(name) }
+                topBarPreview
+                // A real `List` (its own table view), like the Tabs pane: drags
+                // on plain rows inside a `Form` don't work.
+                List {
+                    ForEach(order, id: \.self) { name in controlRow(name) }
+                        .onMove { source, destination in
+                            var items = order
+                            items.move(fromOffsets: source, toOffset: destination)
+                            controlOrder = TeleprompterControlLayout.normalized(items).joined(separator: ",")
+                        }
+                }
+                .listStyle(.plain)
+                .scrollContentBackground(.hidden)
+                .scrollDisabled(true)
+                .frame(height: CGFloat(order.count) * 40)
                 Button("Reset Order") { controlOrder = "" }
                     .disabled(controlOrder.isEmpty)
             }
@@ -121,7 +134,7 @@ struct TeleprompterPane: View {
         case "play": "Play and pause"
         case "speed": "Speed"
         case "ring": "Time remaining"
-        default: "Camera notch"
+        default: "Camera cutout"
         }
     }
 
@@ -134,36 +147,66 @@ struct TeleprompterPane: View {
         }
     }
 
-    /// One draggable row. The camera row is a marker rather than a control:
-    /// it shows where the cutout sits between the left and right groups.
+    /// A live mock-up of the notch's top bar: your controls on either side of
+    /// the camera cutout, so the result of a reorder is obvious.
+    private var topBarPreview: some View {
+        let layout = TeleprompterControlLayout.resolve(stored: controlOrder.split(separator: ",").map(String.init))
+        return HStack(spacing: 10) {
+            HStack(spacing: 10) {
+                ForEach(layout.left, id: \.self) { previewIcon($0) }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                .fill(Color.white.opacity(0.14))
+                .frame(width: 56, height: 16)
+                .overlay(Text("camera").font(.system(size: 8, weight: .medium)).foregroundStyle(.secondary))
+            HStack(spacing: 10) {
+                ForEach(layout.right, id: \.self) { previewIcon($0) }
+            }
+            .frame(maxWidth: .infinity, alignment: .trailing)
+        }
+        .padding(.vertical, 9)
+        .padding(.horizontal, 14)
+        .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Color.black.opacity(0.85)))
+        .animation(.easeOut(duration: 0.2), value: controlOrder)
+        .accessibilityHidden(true)
+    }
+
+    private func previewIcon(_ control: TeleprompterControl) -> some View {
+        Image(systemName: symbol(for: control.rawValue))
+            .font(.system(size: 12, weight: .medium))
+            .foregroundStyle(.white)
+    }
+
+    /// One row. The camera row is a marker, not a control: it stands for the
+    /// physical camera cutout in the middle of the notch.
     private func controlRow(_ name: String) -> some View {
         let isNotch = name == TeleprompterControlLayout.notchToken
+        let index = order.firstIndex(of: name) ?? 0
         return HStack(spacing: 10) {
             Image(systemName: symbol(for: name))
                 .frame(width: 22)
                 .foregroundStyle(isNotch ? Color.secondary : Color.primary)
-            Text(title(for: name))
-                .foregroundStyle(isNotch ? Color.secondary : Color.primary)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(title(for: name))
+                    .foregroundStyle(isNotch ? Color.secondary : Color.primary)
+                if isNotch {
+                    Text("the notch itself, not a control")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                }
+            }
             Spacer()
-            Image(systemName: "line.3.horizontal")
-                .foregroundStyle(.tertiary)
+            Button { shift(name, by: -1) } label: { Image(systemName: "chevron.up") }
+                .buttonStyle(.borderless)
+                .disabled(index == 0)
+                .help("Move up")
+            Button { shift(name, by: 1) } label: { Image(systemName: "chevron.down") }
+                .buttonStyle(.borderless)
+                .disabled(index == order.count - 1)
+                .help("Move down")
         }
         .padding(.vertical, 3)
-        .padding(.horizontal, 6)
-        .background(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .fill(dropTargetRow == name ? Color.accentColor.opacity(0.18) : Color.clear)
-        )
-        .contentShape(Rectangle())
-        .draggable(name)
-        .dropDestination(for: String.self) { items, _ in
-            guard let dragged = items.first else { return false }
-            controlOrder = TeleprompterControlLayout.move(dragged, onto: name, in: order).joined(separator: ",")
-            return true
-        } isTargeted: { targeted in
-            if targeted { dropTargetRow = name } else if dropTargetRow == name { dropTargetRow = nil }
-        }
-        .animation(.easeOut(duration: 0.15), value: dropTargetRow)
         .accessibilityElement(children: .combine)
         .accessibilityAction(named: "Move up") { shift(name, by: -1) }
         .accessibilityAction(named: "Move down") { shift(name, by: 1) }
