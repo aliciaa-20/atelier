@@ -36,7 +36,7 @@ belongs there, not bolted on.
   Mode hides the notch from screen sharing (still being verified) and opt-in
   global shortcuts (⌃⌥P play/pause, ⌃⌥↑/↓ speed). While paused you can scroll
   through the script with the trackpad, drag the top-bar controls into your
-  preferred order (Settings → Teleprompter). Voice-synced scrolling is next.
+  preferred order (Settings → Teleprompter). Turn on **Follow my voice** (Settings → Teleprompter, or the mic button in the top bar) and the script follows what you say and waits when you stop, using on-device speech recognition and the microphone only while listening.
 - **Weather** — a quiet glance on the idle Home card (tap it for
   conditions, high/low, a quip, and the next five days). Uses Open-Meteo
   and your approximate location, refreshed at most every 30 minutes when
@@ -90,6 +90,7 @@ System Settings). Home can be moved like any tab (but not turned off); the notch
 | Calendars (full access) | Read-only: shows your week and events in the Calendar tab. Atelier never adds or edits events |
 | Camera | Shows the live mirror in the Camera tab. Only requested on your first tap; if denied, the tab offers a shortcut to System Settings |
 | Location (While Using) | Approximate location, one-shot, to fetch the forecast for the Home weather glance. If denied, weather is simply hidden |
+| Microphone + Speech Recognition | Teleprompter voice sync: on-device word tracking, only while listening. Requested when you first turn voice sync on; if denied, the teleprompter keeps its manual reading speed and says why |
 | Accessibility | Intercepts volume/brightness/mute keys for the custom HUD |
 | System Audio Recording Only | Powers the live waveform via a system-wide audio tap ([why not per-app](docs/decisions/0012-whole-system-audio-tap.md)) |
 
