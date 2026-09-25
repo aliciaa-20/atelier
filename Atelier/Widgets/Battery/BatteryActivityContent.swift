@@ -109,6 +109,8 @@ struct BatteryActivityContent: LiveActivityContent {
             }
             .padding(.leading, 12)
             .padding(.trailing, 12)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Battery \(percent) percent")
         )
     }
 
@@ -124,6 +126,8 @@ struct BatteryActivityContent: LiveActivityContent {
             .padding(.horizontal, 24)
             .padding(.bottom, 9)
             .padding(.top, notchHeight + 4)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(label)
         )
     }
 }

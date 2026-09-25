@@ -34,6 +34,8 @@ struct BrightnessActivityContent: LiveActivityContent {
                     .foregroundStyle(.white)
             }
             .frame(maxWidth: .infinity)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Brightness \(percent) percent")
         )
     }
 
@@ -48,6 +50,7 @@ struct BrightnessActivityContent: LiveActivityContent {
                     .foregroundStyle(.white)
                     .font(.system(size: 13))
                     .frame(width: 16)
+                    .accessibilityHidden(true)
 
                 ScrubBarView(fillFraction: CGFloat(percent) / 100, tint: .white, label: "Brightness", onScrub: onScrub)
             }

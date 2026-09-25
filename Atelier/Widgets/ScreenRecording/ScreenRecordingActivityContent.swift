@@ -23,6 +23,8 @@ struct ScreenRecordingActivityContent: LiveActivityContent {
                 .frame(width: 5, height: 5)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
                 .padding(.trailing, 19)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("Screen recording in progress")
         )
     }
 
@@ -39,6 +41,8 @@ struct ScreenRecordingActivityContent: LiveActivityContent {
             .padding(.horizontal, 24)
             .padding(.bottom, 9)
             .padding(.top, notchHeight + 4)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Screen recording in progress")
         )
     }
 }

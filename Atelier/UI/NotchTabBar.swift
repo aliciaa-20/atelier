@@ -63,13 +63,16 @@ struct NotchTabBar: View {
                         .frame(width: Self.tapTargetSize, height: Self.tapTargetSize)
                         .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(SoftPressButtonStyle())
                 .focusEffectDisabled()
                 .accessibilityLabel("\(page.accessibilityName) tab")
                 .help(page.accessibilityName)
                 .accessibilityAddTraits(page == currentPage ? .isSelected : [])
             }
         }
+        // One labelled group: Mac VoiceOver navigates container-first.
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Notch tabs")
         .padding(.horizontal, 4)
         // Split from a symmetric `.padding(.vertical, 2)` -- the top side
         // still needs its 2pt (stacks with `NotchRootView`'s own

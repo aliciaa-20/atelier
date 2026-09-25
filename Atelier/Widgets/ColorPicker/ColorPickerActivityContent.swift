@@ -34,6 +34,8 @@ struct ColorPickerActivityContent: LiveActivityContent {
                     .foregroundStyle(.white)
             }
             .frame(maxWidth: .infinity)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Picked color \(hex)")
         )
     }
 
@@ -48,10 +50,11 @@ struct ColorPickerActivityContent: LiveActivityContent {
                     .font(.system(size: 13, weight: .medium, design: .monospaced))
                     .foregroundStyle(.white)
             }
-            .padding(.leading, 25)
-            .padding(.trailing, 24)
-            .padding(.bottom, 6)
-            .padding(.top, notchHeight + 2)
+            .padding(.horizontal, NotchLayout.peekHorizontalPadding)
+            .padding(.bottom, NotchLayout.peekEdgeGap)
+            .padding(.top, notchHeight + NotchLayout.peekEdgeGap)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Picked color \(hex)")
         )
     }
 }

@@ -36,6 +36,8 @@ struct WaveformView: View {
             }
         }
         .frame(width: CGFloat(Self.barCount) * barWidth + CGFloat(Self.barCount - 1) * barSpacing, height: height)
+        // Decorative: nothing here VoiceOver should read.
+        .accessibilityHidden(true)
         .onAppear { setAnimating(isPlaying) }
         .onDisappear { setAnimating(false) }
         .onChange(of: isPlaying) { _, playing in setAnimating(playing) }

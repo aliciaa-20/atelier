@@ -61,7 +61,7 @@ struct WeatherDetailView: View {
 
                 Text(condition.quip)
                     .font(.caption2)
-                    .foregroundStyle(.white.opacity(0.45))
+                    .dimmedText()
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
 
@@ -75,7 +75,7 @@ struct WeatherDetailView: View {
                             VStack(spacing: 2) {
                                 Text(weekday(day))
                                     .font(.system(size: 10, weight: .medium))
-                                    .foregroundStyle(.white.opacity(0.45))
+                                    .dimmedText()
                                 Image(systemName: day.condition.symbol)
                                     .symbolRenderingMode(.multicolor)
                                     .font(.system(size: 12))
@@ -102,6 +102,7 @@ struct WeatherDetailView: View {
         .focusEffectDisabled()
         .accessibilityLabel("Weather, \(condition.label), \(degrees(snapshot.currentTemp)). \(condition.quip)")
         .accessibilityHint("Press to go back to the clock")
+        .help("Back to the clock")
     }
 
     private func weekday(_ day: DayWeather) -> String {

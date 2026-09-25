@@ -89,6 +89,7 @@ final class BrightnessSource: LiveActivitySource {
 
     private func publish(percent: Int) {
         hudOrder.touch(id)
+        HUDAnnouncer.announce("Brightness \(percent) percent")
         subject.send(BrightnessActivityContent(
             percent: percent,
             notchHeight: notchHeight,

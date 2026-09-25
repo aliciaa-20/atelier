@@ -49,6 +49,8 @@ struct VolumeActivityContent: LiveActivityContent {
                     .foregroundStyle(.white)
             }
             .frame(maxWidth: .infinity)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(isMuted ? "Volume muted" : "Volume \(percent) percent")
         )
     }
 
@@ -64,6 +66,7 @@ struct VolumeActivityContent: LiveActivityContent {
                     .foregroundStyle(.white)
                     .font(.system(size: 13))
                     .frame(width: 16)
+                    .accessibilityHidden(true)
 
                 ScrubBarView(fillFraction: isMuted ? 0 : CGFloat(percent) / 100, tint: .white, label: "Volume", onScrub: onScrub)
             }

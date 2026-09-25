@@ -60,5 +60,7 @@ struct PeekPlayerView: View {
                 levels: audioTap.isRunning ? audioTap.levels : nil
             )
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Now \(info.isPlaying ? "playing" : "paused"): \(info.title) by \(info.artist)")
     }
 }
