@@ -220,14 +220,18 @@ struct LockScreenMusicCardView: View {
                 Image(systemName: "backward.fill")
                     .font(.system(size: 14, weight: .semibold))
             }
+            .accessibilityLabel("Previous")
             Button(action: onPlayPause) {
                 Image(systemName: info.isPlaying ? "pause.fill" : "play.fill")
                     .font(.system(size: 20, weight: .semibold))
+                    .contentTransition(.symbolEffect(.replace))
             }
+            .accessibilityLabel(info.isPlaying ? "Pause" : "Play")
             Button(action: onNext) {
                 Image(systemName: "forward.fill")
                     .font(.system(size: 14, weight: .semibold))
             }
+            .accessibilityLabel("Next")
         }
         .buttonStyle(.plain)
         .foregroundStyle(.white)

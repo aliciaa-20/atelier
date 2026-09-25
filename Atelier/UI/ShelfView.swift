@@ -71,6 +71,8 @@ private struct ShelfItemCell: View {
                             .font(.system(size: 14))
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel("Remove \(item.originalFilename)")
+                    .help("Remove from shelf")
                     .offset(x: 6, y: -6)
                 }
             }

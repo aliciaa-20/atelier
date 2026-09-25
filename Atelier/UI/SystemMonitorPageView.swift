@@ -253,6 +253,8 @@ private struct RingGauge: View {
                     Group {
                         if let percent {
                             Text("\(Int(percent.rounded()))%")
+                                .contentTransition(.numericText(value: percent))
+                                .animation(.snappy(duration: 0.2), value: Int(percent.rounded()))
                         } else {
                             // Loading state -- see `percent`'s own doc
                             // comment on why CPU starts as `nil` rather

@@ -27,6 +27,8 @@ struct BrightnessActivityContent: LiveActivityContent {
                 Text("\(percent)%")
                     .font(.system(size: 9, weight: .medium))
                     .monospacedDigit()
+                    .contentTransition(.numericText(value: Double(percent)))
+                    .animation(.snappy(duration: 0.2), value: percent)
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
                     .foregroundStyle(.white)
@@ -47,7 +49,7 @@ struct BrightnessActivityContent: LiveActivityContent {
                     .font(.system(size: 13))
                     .frame(width: 16)
 
-                ScrubBarView(fillFraction: CGFloat(percent) / 100, tint: .white, onScrub: onScrub)
+                ScrubBarView(fillFraction: CGFloat(percent) / 100, tint: .white, label: "Brightness", onScrub: onScrub)
             }
             .padding(.leading, 25)
             .padding(.trailing, 24)

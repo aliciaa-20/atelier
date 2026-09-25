@@ -14,6 +14,7 @@ struct CameraMirrorPageView: View {
 
     var body: some View {
         Button {
+            NotchHaptics.toggle()
             let wasLive = source.isLive
             source.toggle()
             if wasLive { onStopTapped() }

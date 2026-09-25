@@ -785,10 +785,10 @@ Claude Code mechanic: custom slash commands; `/code-review`.
 
 ### ⬜ Native-polish backlog (from ui-review-tahoe, 2026-09-24)
 *Small, independent items; not a numbered phase.*
-- [ ] VoiceOver-adjustable scrubber (`accessibilityValue` + `accessibilityAdjustableAction`)
-- [ ] Trackpad haptics (tab switch, mirror toggle)
-- [ ] Symbol/number morphs (`contentTransition(.numericText())`, `.symbolEffect`)
-- [ ] 9-10pt text bump; concentric corner radii pass
+- [x] VoiceOver-adjustable scrubbers (playback position, Volume, Brightness)
+- [x] Trackpad haptics (`NotchHaptics`: tab switch, mirror toggle, scrub release)
+- [x] Symbol/number morphs (`numericText` on Volume/Brightness/monitor %, `.symbolEffect` on transport)
+- [ ] 9-10pt text bump (only Calendar/Weather 9->10 done; HUD pills are width-constrained, needs on-device check); concentric corner radii pass
 - [x] Done in the `fix/native-polish-pass` branch: real-minute clock, locale-aware
       formats, macOS VoiceOver wording, Reduce Motion, tooltips, Shelf empty state
 

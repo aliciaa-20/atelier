@@ -352,6 +352,7 @@ struct ScrubberView: View {
                         .onEnded { _ in
                             if let dragValue {
                                 onSeek(dragValue)
+                                NotchHaptics.alignment()
                             }
                             dragValue = nil
                             dragging = false
@@ -361,6 +362,16 @@ struct ScrubberView: View {
                 // Only ease poll-driven updates; a live drag must track the
                 // finger 1:1, not lag behind an animation.
                 .animation(dragging ? nil : .easeOut(duration: 0.2), value: displayedElapsed)
+                // VoiceOver: one adjustable element (swipe up/down = +/-10s)
+                // instead of an unlabeled drag area it can't operate.
+                .accessibilityElement()
+                .accessibilityLabel("Playback position")
+                .accessibilityValue("\(TimeFormatting.mmss(elapsed)) of \(TimeFormatting.mmss(duration))")
+                .accessibilityAdjustableAction { direction in
+                    guard duration > 0 else { return }
+                    let step: TimeInterval = direction == .increment ? 10 : -10
+                    onSeek(min(max(elapsed + step, 0), duration))
+                }
             }
             .frame(height: 12)
 
