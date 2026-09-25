@@ -105,3 +105,121 @@ struct TeleprompterScrollTests {
         #expect(scroll.progress(at: t0.addingTimeInterval(30)) == 0.5)
     }
 }
+
+struct TeleprompterScrollVoiceTests {
+    private let t0 = Date(timeIntervalSinceReferenceDate: 1_000)
+
+    /// 120 wpm = 2 words/sec; catch-up is 1.5s, so a gap of 90 words glides at 60 words/sec.
+    private func voiceScroll(total: Int = 1_000) -> TeleprompterScroll {
+        var scroll = TeleprompterScroll(totalWords: total, wpm: 120)
+        scroll.enterVoiceMode(at: t0)
+        return scroll
+    }
+
+    @Test func aSmallGapGlidesAtTheReadingSpeed() {
+        var scroll = voiceScroll()
+        scroll.setTarget(1, at: t0)
+        #expect(scroll.position(at: t0.addingTimeInterval(0.25)) == 0.5)
+        #expect(scroll.position(at: t0.addingTimeInterval(5)) == 1)
+    }
+
+    @Test func aLargeGapCatchesUpWithinTheCatchUpTime() {
+        var scroll = voiceScroll()
+        scroll.setTarget(90, at: t0)
+        #expect(scroll.position(at: t0.addingTimeInterval(0.75)) == 45)
+        #expect(scroll.position(at: t0.addingTimeInterval(1.5)) == 90)
+        #expect(scroll.position(at: t0.addingTimeInterval(60)) == 90)
+    }
+
+    @Test func retargetingMidGlideDoesNotJump() {
+        var scroll = voiceScroll()
+        scroll.setTarget(90, at: t0)
+        let mid = t0.addingTimeInterval(0.75)
+        scroll.setTarget(100, at: mid)
+        #expect(scroll.position(at: mid) == 45)
+        #expect(scroll.position(at: mid.addingTimeInterval(60)) == 100)
+    }
+
+    @Test func neverGoesBackwards() {
+        var scroll = voiceScroll()
+        scroll.setTarget(50, at: t0)
+        let later = t0.addingTimeInterval(60)
+        scroll.setTarget(10, at: later)
+        #expect(scroll.position(at: later.addingTimeInterval(60)) == 50)
+    }
+
+    @Test func aTargetPastTheEndClampsAndFinishes() {
+        var scroll = voiceScroll(total: 100)
+        scroll.setTarget(500, at: t0)
+        let later = t0.addingTimeInterval(60)
+        #expect(scroll.position(at: later) == 100)
+        #expect(scroll.isFinished(at: later))
+    }
+
+    @Test func playingMeansGlidingInVoiceMode() {
+        var scroll = voiceScroll()
+        #expect(!scroll.isPlaying(at: t0))
+        scroll.setTarget(90, at: t0)
+        #expect(scroll.isGliding(at: t0.addingTimeInterval(0.5)))
+        #expect(scroll.isPlaying(at: t0.addingTimeInterval(0.5)))
+        #expect(!scroll.isGliding(at: t0.addingTimeInterval(2)))
+        #expect(!scroll.isPlaying(at: t0.addingTimeInterval(2)))
+    }
+
+    @Test func glideSecondsRemainingCountsDownToArrival() {
+        var scroll = voiceScroll()
+        scroll.setTarget(90, at: t0)
+        #expect(scroll.glideSecondsRemaining(at: t0) == 1.5)
+        #expect(scroll.glideSecondsRemaining(at: t0.addingTimeInterval(0.75)) == 0.75)
+        #expect(scroll.glideSecondsRemaining(at: t0.addingTimeInterval(5)) == 0)
+    }
+
+    @Test func pauseFreezesTheGlide() {
+        var scroll = voiceScroll()
+        scroll.setTarget(90, at: t0)
+        scroll.pause(at: t0.addingTimeInterval(0.5))
+        #expect(scroll.position(at: t0.addingTimeInterval(60)) == 30)
+        #expect(!scroll.isGliding(at: t0.addingTimeInterval(60)))
+    }
+
+    @Test func playIsIgnoredInVoiceMode() {
+        var scroll = voiceScroll()
+        scroll.play(at: t0)
+        #expect(scroll.position(at: t0.addingTimeInterval(100)) == 0)
+    }
+
+    @Test func seekLeavesVoiceMode() {
+        var scroll = voiceScroll()
+        scroll.setTarget(90, at: t0)
+        scroll.seek(to: 10, at: t0.addingTimeInterval(5))
+        #expect(!scroll.isVoiceMode)
+        #expect(scroll.position(at: t0.addingTimeInterval(100)) == 10)
+    }
+
+    @Test func leavingVoiceModeKeepsThePositionAndTheClockResumes() {
+        var scroll = voiceScroll()
+        scroll.setTarget(90, at: t0)
+        let mid = t0.addingTimeInterval(0.75)
+        scroll.exitVoiceMode(at: mid)
+        #expect(scroll.position(at: mid.addingTimeInterval(100)) == 45)
+        scroll.play(at: mid.addingTimeInterval(100))
+        // 2 words/sec.
+        #expect(scroll.position(at: mid.addingTimeInterval(101)) == 47)
+    }
+
+    @Test func enteringVoiceModeWhilePlayingKeepsThePosition() {
+        var scroll = TeleprompterScroll(totalWords: 1_000, wpm: 120)
+        scroll.play(at: t0)
+        let mid = t0.addingTimeInterval(30)
+        scroll.enterVoiceMode(at: mid)
+        #expect(scroll.position(at: mid.addingTimeInterval(100)) == 60)
+    }
+
+    @Test func changingWPMMidGlideDoesNotJump() {
+        var scroll = voiceScroll()
+        scroll.setTarget(90, at: t0)
+        let mid = t0.addingTimeInterval(0.75)
+        scroll.setWPM(60, at: mid)
+        #expect(scroll.position(at: mid) == 45)
+    }
+}

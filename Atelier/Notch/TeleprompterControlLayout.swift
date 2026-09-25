@@ -5,6 +5,7 @@ enum TeleprompterControl: String, CaseIterable {
     case play
     case speed
     case ring
+    case voice
 }
 
 /// Which controls sit left and right of the camera cutout, from a persisted
@@ -13,7 +14,7 @@ enum TeleprompterControl: String, CaseIterable {
 /// `TabOrder`: no `UserDefaults`, callers pass the stored order in.
 ///
 /// The marker is kept between the first and last control so each side always
-/// has at least one (three controls in one ~100pt flank would overflow).
+/// has at least one (a crowded ~100pt flank would overflow).
 struct TeleprompterControlLayout: Equatable {
     static let notchToken = "notch"
 
@@ -27,7 +28,7 @@ struct TeleprompterControlLayout: Equatable {
         return TeleprompterControlLayout(left: Array(controls[..<split]), right: Array(controls[split...]))
     }
 
-    /// The canonical four-row order (three controls plus the notch marker):
+    /// The canonical five-row order (four controls plus the notch marker):
     /// unknown names and duplicates dropped, missing controls appended in
     /// default order, a missing marker put in the default spot, and the
     /// marker clamped to sit between controls. An empty list is the default.
@@ -44,7 +45,11 @@ struct TeleprompterControlLayout: Equatable {
             items.insert(notchToken, at: min(2, items.count))
         }
         let controls = items.filter { $0 != notchToken }
-        let notchIndex = min(max(items.firstIndex(of: notchToken) ?? 2, 1), controls.count - 1)
+        // At least one control per side, at most two: a flank is only ~100pt
+        // wide, and the speed capsule plus two buttons would overflow it.
+        let lower = max(1, controls.count - 2)
+        let upper = min(controls.count - 1, 2)
+        let notchIndex = min(max(items.firstIndex(of: notchToken) ?? 2, lower), max(lower, upper))
         return Array(controls[..<notchIndex]) + [notchToken] + Array(controls[notchIndex...])
     }
 

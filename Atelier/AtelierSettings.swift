@@ -20,6 +20,7 @@ enum AtelierSettings {
     static let teleprompterHotkeysKey = "teleprompterHotkeys"
     static let ghostModeKey = "ghostMode"
     static let teleprompterControlOrderKey = "teleprompterControlOrder"
+    static let teleprompterVoiceSyncKey = "teleprompterVoiceSync"
     static let hiddenCalendarIDsKey = "hiddenCalendarIDs"
     static let calendarAppBundleIDKey = "calendarAppBundleID"
     static let calendarScrollSwipeKey = "calendarScrollSwipe"
@@ -134,6 +135,13 @@ enum AtelierSettings {
     static var teleprompterControlOrder: [String] {
         get { (UserDefaults.standard.string(forKey: teleprompterControlOrderKey) ?? "").split(separator: ",").map(String.init) }
         set { UserDefaults.standard.set(newValue.joined(separator: ","), forKey: teleprompterControlOrderKey) }
+    }
+
+    /// Voice sync: the script follows the speaker's voice. Off by default
+    /// (it uses the microphone and on-device speech recognition).
+    static var teleprompterVoiceSync: Bool {
+        get { UserDefaults.standard.bool(forKey: teleprompterVoiceSyncKey) }
+        set { UserDefaults.standard.set(newValue, forKey: teleprompterVoiceSyncKey) }
     }
 
     /// Hides the whole notch panel from screen sharing and recording

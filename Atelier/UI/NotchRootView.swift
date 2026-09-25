@@ -415,6 +415,23 @@ struct NotchRootView: View {
                 }
             }
             .clipShape(NotchShape(topCornerRadius: cornerRadii.top, bottomCornerRadius: cornerRadii.bottom))
+            // Voice sync: the "Listening" pill hangs below the notch. After
+            // the clip on purpose (it sits outside the shape), and the panel's
+            // max footprint already includes its height.
+            .overlay(alignment: .bottom) {
+                if AtelierSettings.teleprompterEnabled, viewModel.currentPage == .teleprompter,
+                   viewModel.state == .expanded {
+                    if let notice = teleprompter.voiceNotice {
+                        TeleprompterVoiceNoticePill(text: notice)
+                            .offset(y: NotchLayout.teleprompterPillHeight)
+                            .allowsHitTesting(false)   // Invariant 4
+                    } else if teleprompter.voiceSyncEnabled, teleprompter.isPlaying {
+                        TeleprompterListeningPill(speech: .shared)
+                            .offset(y: NotchLayout.teleprompterPillHeight)
+                            .allowsHitTesting(false)   // Invariant 4
+                    }
+                }
+            }
             // No shadow while `.collapsed` -- Invariant 7 requires that
             // state to be visually indistinguishable from the stock notch,
             // which casts none. Every other state is already a departure
