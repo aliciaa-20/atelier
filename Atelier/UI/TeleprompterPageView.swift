@@ -32,7 +32,7 @@ struct TeleprompterPageView: View {
             .onChange(of: mono) { _, isMono in model.updateLayout(width: geo.size.width, fontSize: fontSize, mono: isMono) }
         }
         .padding(.horizontal, NotchLayout.pageHorizontalInset)
-        .padding(.bottom, 8)
+        .padding(.bottom, NotchLayout.pageBottomInset)
     }
 
     private func reader(height: CGFloat) -> some View {
@@ -101,7 +101,7 @@ struct TeleprompterPageView: View {
             SettingsWindowController.shared.show(pane: .teleprompter)
         } label: {
             ZStack {
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                RoundedRectangle(cornerRadius: NotchLayout.cardCornerRadius, style: .continuous)
                     .fill(Color.white.opacity(0.06))
                 VStack(spacing: 6) {
                     Image(systemName: "text.alignleft")

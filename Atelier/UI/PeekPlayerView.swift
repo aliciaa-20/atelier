@@ -27,22 +27,21 @@ struct PeekPlayerView: View {
         // edge. Peeking uses equal 14/14 radii (see NotchRootView) for a
         // cohesive rounded-card look, so the flat-zone inset is 14pt —
         // horizontal padding needs real buffer over that.
-        .padding(.horizontal, 24)
-        .padding(.bottom, 9)
-        .padding(.top, notchHeight + 4)
+        // One visible gap (`peekEdgeGap`) to every edge; see NotchLayout.
+        // 9 + 34 + 9 = 52, `NotchController.peekContentHeight`.
+        .padding(.horizontal, NotchLayout.peekHorizontalPadding)
+        .padding(.bottom, NotchLayout.peekEdgeGap)
+        .padding(.top, notchHeight + NotchLayout.peekEdgeGap)
         .onAppear { artworkColor.load(from: info?.artworkURL) }
         .onChange(of: info?.artworkURL) { _, url in artworkColor.load(from: url) }
     }
 
     private func content(for info: NowPlayingInfo) -> some View {
         HStack(spacing: 8) {
-            // A smaller radius than ExpandedPlayerView's default (8) —
-            // Peek's panel corner (14, see NotchRootView) is large
-            // relative to this 34pt square, so the artwork's own rounding
-            // needs to be more subtle to read as concentric with it
-            // rather than competing with a second, differently-scaled
-            // rounded shape right next to it.
-            ArtworkView(url: info.artworkURL, cornerRadius: 5)
+            // Concentric with the panel's 14pt bottom corner: the artwork
+            // sits `peekEdgeGap` (9) from both the side and the bottom, so
+            // its radius is 14 - 9 = 5 and the gap reads even round the curve.
+            ArtworkView(url: info.artworkURL, cornerRadius: NotchLayout.peekArtworkRadius)
                 .frame(width: 34, height: 34)
 
             VStack(alignment: .leading, spacing: 2) {
@@ -61,5 +60,7 @@ struct PeekPlayerView: View {
                 levels: audioTap.isRunning ? audioTap.levels : nil
             )
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Now \(info.isPlaying ? "playing" : "paused"): \(info.title) by \(info.artist)")
     }
 }

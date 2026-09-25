@@ -44,7 +44,12 @@ struct SettingsView: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            List(SettingsPane.allCases, selection: $selection) { pane in
+            // Non-optional binding: clicking empty sidebar space would otherwise
+            // deselect and leave no row highlighted.
+            List(SettingsPane.allCases, selection: Binding(
+                get: { selection },
+                set: { if let pane = $0 { selection = pane } }
+            )) { pane in
                 Label(pane.rawValue, systemImage: pane.systemImage)
                     .tag(pane)
             }

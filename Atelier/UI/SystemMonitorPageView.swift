@@ -75,6 +75,7 @@ struct SystemMonitorPageView: View {
         .focusEffectDisabled()
         .accessibilityLabel(showingDetail ? "System status detail" : "System status rings")
         .accessibilityHint(showingDetail ? "Press to show gauges" : "Press for a plain-language status")
+        .help(showingDetail ? "Show gauges" : "Show a plain-language status")
         .padding(.horizontal, NotchLayout.pageHorizontalInset)
         .padding(.top, 6)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
@@ -253,6 +254,8 @@ private struct RingGauge: View {
                     Group {
                         if let percent {
                             Text("\(Int(percent.rounded()))%")
+                                .contentTransition(.numericText(value: percent))
+                                .animation(.snappy(duration: 0.2), value: Int(percent.rounded()))
                         } else {
                             // Loading state -- see `percent`'s own doc
                             // comment on why CPU starts as `nil` rather

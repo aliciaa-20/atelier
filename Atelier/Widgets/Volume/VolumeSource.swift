@@ -100,6 +100,7 @@ final class VolumeSource: LiveActivitySource {
 
     private func publish(percent: Int, isMuted: Bool) {
         hudOrder.touch(id)
+        HUDAnnouncer.announce(isMuted ? "Volume muted" : "Volume \(percent) percent")
         subject.send(VolumeActivityContent(
             percent: percent,
             isMuted: isMuted,

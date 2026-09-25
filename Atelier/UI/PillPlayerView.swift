@@ -27,11 +27,12 @@ struct PillPlayerView: View {
         Group {
             if let info {
                 HStack(spacing: 0) {
-                    // cornerRadius matches NotchRootView's .pill-state
-                    // topCornerRadius (6) so the artwork's rounding reads
-                    // as concentric with the pill shape itself, not an
-                    // arbitrary independent value.
-                    ArtworkView(url: info.artworkURL, cornerRadius: 6)
+                    // ~23% of the 17.5pt side (Apple's icon squircle is ~22%).
+                    // Also ~concentric with the pill's 11pt bottom corner:
+                    // 11 minus the artwork's ~7-8pt inset from the bottom edge.
+                    // (It used to be 6 = the pill's *top* radius, which is the
+                    // flare into the menu bar and unrelated to this corner.)
+                    ArtworkView(url: info.artworkURL, cornerRadius: artworkSide * 0.23)
                         .frame(width: artworkSide, height: artworkSide)
 
                     Spacer(minLength: 0)
@@ -57,6 +58,8 @@ struct PillPlayerView: View {
                     )
                     .frame(width: artworkSide)
                 }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("Now \(info.isPlaying ? "playing" : "paused"): \(info.title) by \(info.artist)")
             }
         }
         .padding(.leading, 13)

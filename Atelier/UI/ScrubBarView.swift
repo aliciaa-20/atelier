@@ -11,6 +11,7 @@ import SwiftUI
 struct ScrubBarView: View {
     let fillFraction: CGFloat
     let tint: Color
+    var label: String = "Level"
     let onScrub: (Int) -> Void
 
     @State private var dragging = false
@@ -36,11 +37,19 @@ struct ScrubBarView: View {
                         onScrub(Int((ratio * 100).rounded()))
                     }
                     .onEnded { _ in
+                        NotchHaptics.alignment()
                         dragging = false
                         dragFraction = nil
                     }
             )
-            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: dragging)
+            .animation(NotchAnimations.grab, value: dragging)
+            .accessibilityElement()
+            .accessibilityLabel(label)
+            .accessibilityValue("\(Int((displayedFraction * 100).rounded())) percent")
+            .accessibilityAdjustableAction { direction in
+                let current = Int((fillFraction * 100).rounded())
+                onScrub(min(max(current + (direction == .increment ? 5 : -5), 0), 100))
+            }
         }
         .frame(height: 8)
     }
