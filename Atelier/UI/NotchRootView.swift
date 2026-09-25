@@ -112,6 +112,13 @@ struct NotchRootView: View {
             && viewModel.currentPage == .teleprompter && !teleprompter.wantsNotchOpen
     }
 
+    /// While the teleprompter plays its tab dots hide, so the text gets their
+    /// row too. They come back when playback pauses (including when the
+    /// pointer arrives); swipes and hotkeys still switch tabs.
+    private var hidesTabDots: Bool {
+        AtelierSettings.teleprompterEnabled && viewModel.currentPage == .teleprompter && teleprompter.isPlaying
+    }
+
     private var onCalendarPage: Bool {
         viewModel.state == .expanded && AtelierSettings.calendarEnabled && viewModel.currentPage == .calendar
     }
@@ -219,7 +226,7 @@ struct NotchRootView: View {
                         // Both Shelf and System Monitor toggled off in
                         // Settings leaves only Home -- no point showing a
                         // switcher with one destination.
-                        if NotchTabBar.activePages.count > 1 {
+                        if NotchTabBar.activePages.count > 1, !hidesTabDots {
                             NotchTabBar(currentPage: viewModel.currentPage) { page in
                                 withAnimation(NotchAnimations.open) {
                                     viewModel.selectPage(page)
@@ -307,6 +314,7 @@ struct NotchRootView: View {
                     // the shared wrapper, rather than in each page
                     // individually, so no future page can reintroduce it.
                     .frame(maxHeight: .infinity, alignment: .top)
+                    .animation(.easeInOut(duration: 0.25), value: hidesTabDots)
                     .overlay(alignment: .top) {
                         if AtelierSettings.teleprompterEnabled, viewModel.currentPage == .teleprompter {
                             TeleprompterControlStrip(
