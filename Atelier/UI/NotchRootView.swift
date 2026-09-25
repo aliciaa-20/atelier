@@ -75,11 +75,11 @@ struct NotchRootView: View {
         case .pill:
             return (top: 6, bottom: 11)
         case .expanded:
-            return (top: 14, bottom: 20)
+            return (top: 14, bottom: NotchLayout.panelBottomRadius)
         case .peeking:
             return (top: 6, bottom: 14)
         case .shelf:
-            return (top: 14, bottom: 20)
+            return (top: 14, bottom: NotchLayout.panelBottomRadius)
         }
     }
 
