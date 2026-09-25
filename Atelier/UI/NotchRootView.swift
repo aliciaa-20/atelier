@@ -25,6 +25,9 @@ struct NotchRootView: View {
     /// whenever the notch leaves `.expanded`.
     @State private var weatherDetailOpen = false
     @State private var settleScale: CGFloat = 1
+    /// Shared by the pill/peek/expanded artwork (`ArtworkView`) so the cover
+    /// appears to travel between them.
+    @Namespace private var artworkNamespace
     /// A small scale dip anchored `.top` (the same anchor the real notch
     /// sits at) so the panel visibly gets pulled back toward the notch's
     /// own position on close, not just shrinking symmetrically in place. Separate from `settleScale`
@@ -387,6 +390,8 @@ struct NotchRootView: View {
             .shadow(color: .black.opacity(viewModel.state == .collapsed ? 0 : 0.25), radius: 8, y: 2)
             .scaleEffect(settleScale, anchor: .top)
             .scaleEffect(closeScale, anchor: .top)
+            .environment(\.artworkNamespace,
+                         NSWorkspace.shared.accessibilityDisplayShouldReduceMotion ? nil : artworkNamespace)
             .contentShape(Rectangle())
             .onHover { hovering in
                 pointerInside = hovering

@@ -44,13 +44,20 @@ struct MarqueeText: View {
     var height: CGFloat = 20
 
     var body: some View {
-        MarqueeTextCore(text: text, font: font, color: color, width: width, height: height)
+        // A one-cell ZStack so the old and new `MarqueeTextCore` overlap in the
+        // same clipped frame while the swap crossfades (0.2s ease-out); the
+        // `.id` below still hands the new track a clean identity.
+        ZStack {
+            MarqueeTextCore(text: text, font: font, color: color, width: width, height: height)
             // Forces a brand-new `MarqueeTextCore` identity -- and therefore
             // fresh `@State` (`textWidth`, `startDate`) -- on every distinct
             // `text` value. This is the only piece of manual state-reset
             // machinery left; everything downstream of it is a pure
             // recomputation, not a stateful animation to keep in sync.
             .id(text)
+            .transition(.opacity)
+        }
+        .animation(.easeOut(duration: 0.2), value: text)
     }
 }
 
