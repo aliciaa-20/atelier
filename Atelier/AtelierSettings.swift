@@ -12,6 +12,13 @@ enum AtelierSettings {
     static let calendarEnabledKey = "calendarEnabled"
     static let cameraEnabledKey = "cameraEnabled"
     static let cameraHoldOpenKey = "cameraHoldOpen"
+    static let teleprompterEnabledKey = "teleprompterEnabled"
+    static let teleprompterWPMKey = "teleprompterWPM"
+    static let teleprompterMonoFontKey = "teleprompterMonoFont"
+    static let teleprompterFontSizeKey = "teleprompterFontSize"
+    static let teleprompterPauseOnHoverKey = "teleprompterPauseOnHover"
+    static let teleprompterHotkeysKey = "teleprompterHotkeys"
+    static let ghostModeKey = "ghostMode"
     static let hiddenCalendarIDsKey = "hiddenCalendarIDs"
     static let calendarAppBundleIDKey = "calendarAppBundleID"
     static let calendarScrollSwipeKey = "calendarScrollSwipe"
@@ -28,6 +35,10 @@ enum AtelierSettings {
             systemMonitorEnabledKey: true,
             calendarEnabledKey: true,
             cameraEnabledKey: true,
+            teleprompterEnabledKey: true,
+            teleprompterWPMKey: TeleprompterScroll.defaultWPM,
+            teleprompterFontSizeKey: 15.0,
+            teleprompterPauseOnHoverKey: true,
             calendarScrollSwipeKey: true,
             calendarAppBundleIDKey: CalendarAppLauncher.defaultBundleID,
             colorPickerEnabledKey: true,
@@ -79,6 +90,47 @@ enum AtelierSettings {
 
     static var cameraHoldOpen: Bool {
         UserDefaults.standard.bool(forKey: cameraHoldOpenKey)
+    }
+
+    static var teleprompterEnabled: Bool {
+        UserDefaults.standard.bool(forKey: teleprompterEnabledKey)
+    }
+
+    /// Falls back to the default rather than 0 if defaults were never
+    /// registered (unit tests that don't launch `AtelierApp`).
+    static var teleprompterWPM: Double {
+        get {
+            let stored = UserDefaults.standard.double(forKey: teleprompterWPMKey)
+            return stored == 0 ? TeleprompterScroll.defaultWPM : stored
+        }
+        set { UserDefaults.standard.set(newValue, forKey: teleprompterWPMKey) }
+    }
+
+    /// Sans bold is the default; mono is a Settings option.
+    static var teleprompterMonoFont: Bool {
+        UserDefaults.standard.bool(forKey: teleprompterMonoFontKey)
+    }
+
+    static var teleprompterFontSize: Double {
+        let stored = UserDefaults.standard.double(forKey: teleprompterFontSizeKey)
+        return stored == 0 ? 15 : stored
+    }
+
+    /// Pause while the pointer is over the notch, resume when it leaves.
+    static var teleprompterPauseOnHover: Bool {
+        UserDefaults.standard.bool(forKey: teleprompterPauseOnHoverKey)
+    }
+
+    /// Off by default: global shortcuts take keys from other apps, so
+    /// they're opt-in.
+    static var teleprompterHotkeysEnabled: Bool {
+        UserDefaults.standard.bool(forKey: teleprompterHotkeysKey)
+    }
+
+    /// Hides the whole notch panel from screen sharing and recording
+    /// (`NSWindow.sharingType = .none`, applied by `NotchController`).
+    static var ghostModeEnabled: Bool {
+        UserDefaults.standard.bool(forKey: ghostModeKey)
     }
 
     static var calendarScrollSwipeEnabled: Bool {
@@ -146,6 +198,7 @@ enum AtelierSettings {
         if systemMonitorEnabled { pages.insert(.systemMonitor) }
         if calendarEnabled { pages.insert(.calendar) }
         if cameraEnabled { pages.insert(.camera) }
+        if teleprompterEnabled { pages.insert(.teleprompter) }
         return pages
     }
 }
