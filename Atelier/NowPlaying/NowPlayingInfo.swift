@@ -15,3 +15,13 @@ struct NowPlayingInfo: Equatable {
     let sourceBundleID: String
     let isShuffling: Bool
 }
+
+extension NowPlayingInfo {
+    func with(isPlaying: Bool, isShuffling: Bool) -> NowPlayingInfo {
+        NowPlayingInfo(
+            title: title, artist: artist, album: album, artworkURL: artworkURL,
+            isPlaying: isPlaying, duration: duration, elapsed: elapsed,
+            sourceBundleID: sourceBundleID, isShuffling: isShuffling
+        )
+    }
+}
