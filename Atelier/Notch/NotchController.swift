@@ -239,6 +239,10 @@ final class NotchController {
             width: Self.expandedWidth,
             height: collapsedRect.height + Self.calendarContentHeight
         )
+        let teleprompterSize = CGSize(
+            width: Self.expandedWidth,
+            height: NotchLayout.teleprompterHeight
+        )
         viewModel = NotchViewModel(
             collapsedSize: collapsedRect.size,
             expandedSize: expandedSize,
@@ -247,11 +251,12 @@ final class NotchController {
             peekSize: peekSize,
             compactPeekSize: compactPeekSize,
             shelfSize: shelfSize,
-            calendarSize: calendarSize
+            calendarSize: calendarSize,
+            teleprompterSize: teleprompterSize
         )
 
         // Invariant 3: the panel is the maximum footprint of any page.
-        let maxHeight = max(expandedSize.height, calendarSize.height)
+        let maxHeight = max(expandedSize.height, calendarSize.height, teleprompterSize.height)
         let maxRect = CGRect(
             x: collapsedRect.midX - expandedSize.width / 2,
             y: collapsedRect.maxY - maxHeight,
