@@ -794,17 +794,16 @@ Claude Code mechanic: custom slash commands; `/code-review`.
 
 ---
 
-### ⬜ Phase 17 — Teleprompter / Ghost Mode
+### 🟨 Phase 17 — Teleprompter / Ghost Mode (code landed, awaiting on-device verification)
 *Ships: a scrolling script tab, screen-share/recording invisibility, and a
 script library. Voice sync and AI coaching are explicitly later slices of
 this same phase, not separate phases — see FEATURES.md §10 for the full
 tier breakdown and why.*
 
-- [ ] **Scrolling script tab** — new `NotchPage`, `ScrollView` +
-      timer-driven auto-scroll, manual pace control.
-- [ ] **Ghost Mode** — `NSWindow.sharingType = .none` on the panel,
-      toggleable from the menu bar; verify it actually excludes the window
-      from a real screen recording/share, not just assume the API works.
+- [ ] **Scrolling script tab** — built (`NotchPage.teleprompter`, time-anchored WPM scroll,
+      control strip, ring, Settings pane + file drop); **tick once checked on-device**.
+- [ ] **Ghost Mode** — built (`sharingType = .none`, menu-bar + Settings toggle); **not yet
+      verified** against a real screen recording/share on macOS 26 (ADR 0019 #5). Do not tick until it is.
 - [ ] **Script library** — folders + search, `ShelfStore`-shaped
       JSON-manifest storage.
 - [ ] **Voice-synced scrolling** — `SFSpeechRecognizer` streaming pace
