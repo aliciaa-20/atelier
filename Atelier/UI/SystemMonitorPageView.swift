@@ -75,6 +75,7 @@ struct SystemMonitorPageView: View {
         .focusEffectDisabled()
         .accessibilityLabel(showingDetail ? "System status detail" : "System status rings")
         .accessibilityHint(showingDetail ? "Press to show gauges" : "Press for a plain-language status")
+        .help(showingDetail ? "Show gauges" : "Show a plain-language status")
         .padding(.horizontal, NotchLayout.pageHorizontalInset)
         .padding(.top, 6)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)

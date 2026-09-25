@@ -103,7 +103,7 @@ struct CalendarPageView: View {
                 .frame(width: 24, height: 20)
                 .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(SoftPressButtonStyle())
         .focusEffectDisabled()
         .accessibilityLabel(label)
         .help(label)
@@ -201,7 +201,7 @@ struct CalendarPageView: View {
             VStack(spacing: 2) {
                 Text(day, format: .dateTime.weekday(.narrow))
                     .font(.system(size: 10, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.45))
+                    .dimmedText()
                 Text(day, format: .dateTime.day())
                     .font(.system(size: 13, weight: isSelected ? .bold : .medium))
                     .foregroundStyle(underIndicator ? Color.black : (isToday ? Color.red : Color.white))
@@ -213,7 +213,7 @@ struct CalendarPageView: View {
             .frame(maxWidth: .infinity)
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(SoftPressButtonStyle())
         .focusEffectDisabled()
         .accessibilityLabel(day.formatted(.dateTime.weekday(.wide).month().day()) + (hasEvents ? ", has events" : ""))
         .accessibilityAddTraits(isSelected ? .isSelected : [])
@@ -241,18 +241,18 @@ struct CalendarPageView: View {
                 Button { openCalendar() } label: {
                     Text("Nothing planned · tap to add something")
                         .font(.system(size: 11))
-                        .foregroundStyle(.white.opacity(0.4))
+                        .dimmedText()
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(SoftPressButtonStyle())
                 .focusEffectDisabled()
             } else {
                 ScrollView(.vertical, showsIndicators: false) {
                     VStack(spacing: NotchLayout.calendarRowSpacing) {
                         ForEach(items) { item in
                             Button { openCalendar() } label: { agendaRow(item) }
-                                .buttonStyle(.plain)
+                                .buttonStyle(SoftPressButtonStyle())
                                 .focusEffectDisabled()
                         }
                     }

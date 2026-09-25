@@ -58,6 +58,8 @@ struct PillPlayerView: View {
                     )
                     .frame(width: artworkSide)
                 }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("Now \(info.isPlaying ? "playing" : "paused"): \(info.title) by \(info.artist)")
             }
         }
         .padding(.leading, 13)

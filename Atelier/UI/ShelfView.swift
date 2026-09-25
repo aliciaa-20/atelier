@@ -69,7 +69,7 @@ private struct ShelfItemCell: View {
                             .foregroundStyle(.white, .black.opacity(0.6))
                             .font(.system(size: 14))
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(SoftPressButtonStyle())
                     .accessibilityLabel("Remove \(item.originalFilename)")
                     .help("Remove from shelf")
                     .offset(x: 6, y: -6)
@@ -84,5 +84,11 @@ private struct ShelfItemCell: View {
         }
         .onHover { isHovering = $0 }
         .onDrag { NSItemProvider(contentsOf: fileURL) ?? NSItemProvider() }
+        // The remove button only exists while the pointer hovers, and VoiceOver
+        // never moves the pointer: one element per file, with Remove as an action.
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(item.originalFilename)
+        .accessibilityHint("Drag to move it out of the shelf")
+        .accessibilityAction(named: "Remove from shelf", onRemove)
     }
 }
