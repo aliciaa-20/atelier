@@ -28,20 +28,21 @@ struct PeekPlayerView: View {
         // cohesive rounded-card look, so the flat-zone inset is 14pt —
         // horizontal padding needs real buffer over that.
         .padding(.horizontal, 24)
-        .padding(.bottom, 9)
-        .padding(.top, notchHeight + 4)
+        // Equal gaps above (below the notch) and below the 34pt row, so it
+        // sits centred in the visible band; 6.2 + 34 + 6.2 = 46.4, exactly
+        // `NotchController.peekContentHeight` (it used to be 4 + 9 = 47).
+        .padding(.bottom, 6.2)
+        .padding(.top, notchHeight + 6.2)
         .onAppear { artworkColor.load(from: info?.artworkURL) }
         .onChange(of: info?.artworkURL) { _, url in artworkColor.load(from: url) }
     }
 
     private func content(for info: NowPlayingInfo) -> some View {
         HStack(spacing: 8) {
-            // A smaller radius than ExpandedPlayerView's default (8) —
-            // Peek's panel corner (14, see NotchRootView) is large
-            // relative to this 34pt square, so the artwork's own rounding
-            // needs to be more subtle to read as concentric with it
-            // rather than competing with a second, differently-scaled
-            // rounded shape right next to it.
+            // ~21% of the side: the same artwork-corner ratio as the pill
+            // and expanded player (Apple's icon squircle is ~22%), so the
+            // three read as one family. Not derived from the panel's 14pt
+            // corner -- the artwork sits 24pt in, clear of that curve.
             ArtworkView(url: info.artworkURL, cornerRadius: 34 * 0.21)
                 .frame(width: 34, height: 34)
 

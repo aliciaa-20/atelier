@@ -7,6 +7,18 @@ import CoreGraphics
 enum NotchLayout {
     static let pageHorizontalInset: CGFloat = 26
 
+    /// Bottom corner radius of the expanded/shelf panel (`NotchRootView.cornerRadii`).
+    static let panelBottomRadius: CGFloat = 20
+
+    /// One gap on the sides and bottom for every surface card (Shelf,
+    /// Camera, Teleprompter empty states). They used to differ (bottom
+    /// 22 / 12 / 8, sides 26), so the cards sat unevenly in the panel.
+    static let cardInset: CGFloat = 10
+
+    /// Concentric with the panel's own bottom corner: outer radius minus the
+    /// gap between the two shapes, so the gap looks even around the curve.
+    static let cardCornerRadius: CGFloat = panelBottomRadius - cardInset
+
     /// Whole-panel height of the Teleprompter tab, notch band included
     /// (NotchPrompter's 150pt). Fits inside the player's footprint, so no
     /// other page's geometry changes.

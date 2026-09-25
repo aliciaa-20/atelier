@@ -66,10 +66,10 @@ struct LockScreenMusicCardView: View {
     private static let cardCornerRadius: CGFloat = 26
 
     private var artworkSize: CGFloat { isExpanded ? 60 : 40 }
-    /// A steady ~0.28 ratio of `artworkSize` at both steps, not two
+    /// A steady ~0.22 ratio (Apple's icon squircle) of `artworkSize` at both steps, not two
     /// unrelated fixed values -- keeps the artwork's own curve looking
     /// consistent as it scales, matching the concentric-shape idea above.
-    private var artworkCornerRadius: CGFloat { artworkSize * 0.28 }
+    private var artworkCornerRadius: CGFloat { artworkSize * 0.22 }
     private var titleFontSize: CGFloat { isExpanded ? 14 : 13 }
     private var artistFontSize: CGFloat { isExpanded ? 12 : 11 }
     private var headerSpacing: CGFloat { isExpanded ? 3 : 2 }
