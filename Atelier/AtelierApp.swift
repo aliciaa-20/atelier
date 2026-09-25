@@ -30,11 +30,7 @@ struct AtelierApp: App {
         // right) like every other menu-bar app. The old `.window` style was
         // only needed for the glass-intensity `Slider`, which now lives in
         // the Settings window.
-        MenuBarExtra(
-            "Atelier",
-            systemImage: "rectangle.topthird.inset.filled",
-            isInserted: .constant(!Self.isRunningTests)
-        ) {
+        MenuBarExtra(isInserted: .constant(!Self.isRunningTests)) {
             Text("Atelier 0.1.0")
 
             Divider()
@@ -65,6 +61,8 @@ struct AtelierApp: App {
                 NSApplication.shared.terminate(nil)
             }
             .keyboardShortcut("q")
+        } label: {
+            Image(nsImage: MenuBarIcon.image)
         }
         .menuBarExtraStyle(.menu)
     }

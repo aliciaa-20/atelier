@@ -765,8 +765,7 @@ here so the feature survey above ships first.)*
 
 - [x] **Settings window** — surfaced from the `NSStatusItem` menu.
 - [x] **Launch at login** via `SMAppService`.
-- [ ] **Automation-permission UX** (Permissions pane shipped for Accessibility/Calendar/Camera/Location; Spotify Automation deferred — TCC only reveals it by trying) — a visible "grant access" path when TCC is
-      denied, re-checkable from Settings.
+- [x] **Automation-permission UX** — Spotify row in the Permissions pane via `AEDeterminePermissionToAutomateTarget` (only queried while Spotify is running, per Invariant 2; shows "Open Spotify to check" otherwise). Manual on-device check pending.
 - [ ] Stable signing identity (free Apple Personal Team) so rebuilds don't
       re-trigger the Automation prompt every time.
 
@@ -776,12 +775,12 @@ Claude Code mechanic: custom slash commands; `/code-review`.
 - [x] Menu-bar settings tidy-up: "Camera: keep notch open whil…" is truncated
       -- shorten labels; indent dependent sub-toggles (Calendar swipe, Camera
       hold-open) under their parent
-- [ ] Permissions pane: after turning Camera off then on in System Settings, the row can stay
+- [x] (note added, not a fix) Permissions pane: after turning Camera off then on in System Settings, the row can stay
       "Denied" until Atelier relaunches (seen on-device 2026-09-24; probably macOS caching the
       camera answer per process). Parked -- add a "may need a relaunch" note or re-read differently.
-- [ ] Minor review leftovers (see ledger): Grant All keeps showing while Accessibility is off;
-      no window frame autosave; focus not returned after Settings closes; sidebar can lose highlight
-- [ ] Custom template menu-bar icon (currently a generic window SF Symbol)
+- [x] Grant All no longer shows for Accessibility alone; window frame autosaved; sidebar can't lose its highlight
+- [ ] Focus not returned to the previous app after Settings closes
+- [x] Custom template menu-bar icon (`MenuBarIcon`, drawn in code) — check how it reads on-device
 
 ### ⬜ Native-polish backlog (from ui-review-tahoe, 2026-09-24)
 *Small, independent items; not a numbered phase.*

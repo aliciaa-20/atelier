@@ -22,7 +22,8 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
 
         if window == nil {
             window = makeWindow(initialPane: pane ?? .general)
-            window?.center()
+            // Restores the last size/position; only centre on first ever open.
+            if window?.setFrameAutosaveName("AtelierSettings") != true { window?.center() }
         } else if let pane {
             NotificationCenter.default.post(name: .atelierSelectSettingsPane, object: pane)
         }
