@@ -7,6 +7,34 @@ import CoreGraphics
 enum NotchLayout {
     static let pageHorizontalInset: CGFloat = 26
 
+    /// Corner radii of the expanded/shelf panel (`NotchRootView.cornerRadii`).
+    /// `NotchShape` insets its vertical edges by the top radius, so the
+    /// *visible* gap from a page's side inset to the panel edge is
+    /// `pageHorizontalInset - panelTopRadius` (26 - 14 = 12).
+    static let panelTopRadius: CGFloat = 14
+    static let panelBottomRadius: CGFloat = 20
+
+    /// Gap below every page's content, equal to that visible side gap so
+    /// cards sit evenly (12) from the panel's side and bottom edges.
+    static let pageBottomInset: CGFloat = pageHorizontalInset - panelTopRadius
+
+    /// Cards (Shelf, Camera, Teleprompter empty states) are concentric with
+    /// the panel's bottom corner: outer radius minus the even gap = 8. A
+    /// larger radius (it was 16) makes the gap widen at the corner, which
+    /// read as a wrong-looking inner curve.
+    static let cardCornerRadius: CGFloat = panelBottomRadius - pageBottomInset
+
+    /// Peek/HUD panels: one visible gap between the content and every panel
+    /// edge (sides, bottom, and below the notch). Horizontal padding adds the
+    /// shape's flat-zone inset (`peekTopRadius`) on top of it. With the
+    /// content in the corner, the artwork's radius is concentric with the
+    /// panel's bottom corner: `peekBottomRadius - peekEdgeGap`.
+    static let peekEdgeGap: CGFloat = 9
+    static let peekTopRadius: CGFloat = 6
+    static let peekBottomRadius: CGFloat = 14
+    static var peekHorizontalPadding: CGFloat { peekEdgeGap + peekTopRadius }
+    static var peekArtworkRadius: CGFloat { peekBottomRadius - peekEdgeGap }
+
     /// Whole-panel height of the Teleprompter tab, notch band included
     /// (NotchPrompter's 150pt). Fits inside the player's footprint, so no
     /// other page's geometry changes.

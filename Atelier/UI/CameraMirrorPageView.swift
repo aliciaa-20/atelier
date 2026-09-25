@@ -10,10 +10,11 @@ struct CameraMirrorPageView: View {
     /// or retract), so the host can close the notch in hold-open mode.
     var onStopTapped: () -> Void = {}
 
-    private static let cornerRadius: CGFloat = 16
+    private static let cornerRadius = NotchLayout.cardCornerRadius
 
     var body: some View {
         Button {
+            NotchHaptics.toggle()
             let wasLive = source.isLive
             source.toggle()
             if wasLive { onStopTapped() }
@@ -37,7 +38,7 @@ struct CameraMirrorPageView: View {
         .buttonStyle(CameraPressStyle())
         .focusEffectDisabled()
         .padding(.horizontal, NotchLayout.pageHorizontalInset)
-        .padding(.bottom, 12)
+        .padding(.bottom, NotchLayout.pageBottomInset)
         .animation(.easeInOut(duration: 0.2), value: source.phase)
         .accessibilityLabel(source.isLive ? "Camera mirror, on" : "Camera mirror, off")
         .help(source.isLive ? "Turn camera off" : "Turn camera on")

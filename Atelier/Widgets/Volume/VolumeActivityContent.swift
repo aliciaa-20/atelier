@@ -38,15 +38,19 @@ struct VolumeActivityContent: LiveActivityContent {
             HStack(spacing: 4) {
                 Image(systemName: symbolName)
                     .foregroundStyle(.white)
-                    .font(.system(size: 9))
+                    .font(.system(size: 10))
                 Text(isMuted ? "Muted" : "\(percent)%")
-                    .font(.system(size: 9, weight: .medium))
+                    .font(.system(size: 10, weight: .medium))
                     .monospacedDigit()
+                    .contentTransition(.numericText(value: Double(percent)))
+                    .animation(.snappy(duration: 0.2), value: percent)
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
                     .foregroundStyle(.white)
             }
             .frame(maxWidth: .infinity)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(isMuted ? "Volume muted" : "Volume \(percent) percent")
         )
     }
 
@@ -62,13 +66,15 @@ struct VolumeActivityContent: LiveActivityContent {
                     .foregroundStyle(.white)
                     .font(.system(size: 13))
                     .frame(width: 16)
+                    .accessibilityHidden(true)
 
-                ScrubBarView(fillFraction: isMuted ? 0 : CGFloat(percent) / 100, tint: .white, onScrub: onScrub)
+                ScrubBarView(fillFraction: isMuted ? 0 : CGFloat(percent) / 100, tint: .white, label: "Volume", onScrub: onScrub)
             }
-            .padding(.leading, 25)
-            .padding(.trailing, 24)
-            .padding(.bottom, 6)
-            .padding(.top, notchHeight + 2)
+            // Same uniform edge gap as the track peek (see NotchLayout);
+            // 9 + 16 + 9 = 34, `NotchController.compactPeekContentHeight`.
+            .padding(.horizontal, NotchLayout.peekHorizontalPadding)
+            .padding(.bottom, NotchLayout.peekEdgeGap)
+            .padding(.top, notchHeight + NotchLayout.peekEdgeGap)
         )
     }
 }

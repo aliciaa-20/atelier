@@ -142,14 +142,14 @@ final class LiveActivityCoordinator: ObservableObject {
             // damped going back out, same reasoning as hoverEnded's own
             // asymmetric treatment in NotchRootView -- retracting at the
             // same snappy speed it appeared with reads as abrupt.
-            withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
+            withAnimation(NotchAnimations.open) {
                 interruptContent = content
             }
             interruptClearTask = Task { [weak self] in
                 try? await Task.sleep(for: Self.interruptDuration)
                 guard !Task.isCancelled else { return }
                 guard let self else { return }
-                withAnimation(.spring(response: 0.6, dampingFraction: 0.92)) {
+                withAnimation(NotchAnimations.close) {
                     self.interruptContent = nil
                 }
             }
