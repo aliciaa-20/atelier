@@ -8,6 +8,7 @@ import SwiftUI
 struct CalendarPageView: View {
     @ObservedObject var source: CalendarSource
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.accessibilityDifferentiateWithoutColor) private var differentiateWithoutColor
 
     private var calendar: Calendar { .current }
 
@@ -205,6 +206,8 @@ struct CalendarPageView: View {
                 Text(day, format: .dateTime.day())
                     .font(.system(size: 13, weight: isSelected ? .bold : .medium))
                     .foregroundStyle(underIndicator ? Color.black : (isToday ? Color.red : Color.white))
+                    // Today isn't marked by red alone (Differentiate Without Color).
+                    .underline(isToday && differentiateWithoutColor)
                     .frame(width: Self.indicatorSize, height: Self.indicatorSize)
                 Circle()
                     .fill(Color.white.opacity(hasEvents ? 0.7 : 0))

@@ -792,8 +792,9 @@ Claude Code mechanic: custom slash commands; `/code-review`.
       peek/pill/HUD/battery/recording/colour-picker views, HUD announcements for VoiceOver (`HUDAnnouncer`), faint text
       raised to AA contrast (`dimmedText`, honours Increase Contrast), tab dots grouped as "Notch tabs", press feedback on
       tab dots/calendar cells/Shelf remove, missing tooltips
-- [ ] ui-review-tahoe leftovers: state shown by colour alone (shuffle on/off, calendar today) for Differentiate Without
-      Color; custom focus ring where `.focusEffectDisabled()` removed it; keyboard shortcut for switching tabs
+- [x] ui-review-tahoe batch 2: Differentiate Without Color (shuffle dot, calendar today underline), a custom keyboard focus
+      ring (`notchFocusRing`, drawn by the button styles since the system ring is off), and keyboard tab switching
+      (⌃Tab / ⌃⇧Tab cycle, ⌘1-⌘6 jump). Keyboard handling is best-effort: needs the panel to be key -- verify on-device.
 - [x] Done in the `fix/native-polish-pass` branch: real-minute clock, locale-aware
       formats, macOS VoiceOver wording, Reduce Motion, tooltips, Shelf empty state
 

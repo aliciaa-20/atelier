@@ -317,6 +317,11 @@ struct NotchRootView: View {
                     // the shared wrapper, rather than in each page
                     // individually, so no future page can reintroduce it.
                     .frame(maxHeight: .infinity, alignment: .top)
+                    // Keyboard tab switching: ⌃Tab / ⌃⇧Tab cycle, ⌘1-⌘6 jump. Best effort
+                    // like the player's own key handling (needs the panel to be key).
+                    .focusable()
+                    .focusEffectDisabled()
+                    .onKeyPress(phases: .down) { press in handleTabKey(press) }
                     // A volume/brightness HUD over the hover-open notch: one spring
                     // (`NotchAnimations.hud`) morphs the panel and cross-dissolves the
                     // two contents with a slight scale + blur (see the doc there). One
@@ -696,6 +701,28 @@ struct NotchRootView: View {
                 lastPeekContent = topContent
             }
         }
+    }
+
+    private func handleTabKey(_ press: KeyPress) -> KeyPress.Result {
+        let pages = NotchTabBar.activePages
+        guard pages.count > 1 else { return .ignored }
+        if press.key == .tab, press.modifiers.contains(.control) {
+            guard let index = pages.firstIndex(of: viewModel.currentPage) else { return .ignored }
+            let step = press.modifiers.contains(.shift) ? -1 : 1
+            select(pages[(index + step + pages.count) % pages.count])
+            return .handled
+        }
+        if press.modifiers.contains(.command), let number = Int(press.characters), (1...pages.count).contains(number) {
+            select(pages[number - 1])
+            return .handled
+        }
+        return .ignored
+    }
+
+    private func select(_ page: NotchPage) {
+        guard page != viewModel.currentPage else { return }
+        NotchHaptics.alignment()
+        withAnimation(NotchAnimations.page) { viewModel.selectPage(page) }
     }
 
     /// Whether the mouse is over the (now full-size) expanded panel -- the
