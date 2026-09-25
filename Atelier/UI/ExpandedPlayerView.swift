@@ -13,7 +13,6 @@ import SwiftUI
 /// on top. That's what makes the transport buttons read as a tight,
 /// deliberate group instead of being stretched across the whole width.
 struct ExpandedPlayerView: View {
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let info: NowPlayingInfo?
     @ObservedObject var weather: WeatherSource
     @Binding var weatherDetailOpen: Bool
@@ -146,8 +145,7 @@ struct ExpandedPlayerView: View {
                 Button(action: onPlayPause) {
                     Image(systemName: info.isPlaying ? "pause.fill" : "play.fill")
                         .font(.system(size: 23, weight: .semibold))
-                        .contentTransition(reduceMotion ? .identity : .symbolEffect(.replace))
-                        .animation(reduceMotion ? nil : NotchAnimations.press, value: info.isPlaying)
+                        .contentTransition(.symbolEffect(.replace))
                 }
                 .accessibilityLabel(info.isPlaying ? "Pause" : "Play")
                 .help(info.isPlaying ? "Pause" : "Play")
