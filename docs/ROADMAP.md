@@ -813,7 +813,7 @@ tier breakdown and why.*
       JSON-manifest storage.
 - [ ] **Voice-synced scrolling** (built, core flow verified on-device; edge cases such as >1 min reads, AirPods mid-read, VoiceOver not yet run) — on-device `SFSpeechRecognizer` word tracking (`ScriptMatcher`),
       glide toward the spoken position, "Listening" pill, mic + speech permissions (ADR 0020).
-      Built and unit-tested (282 tests); on-device checks listed in STAGES.md still open.
+      Built and unit-tested (282 tests); remaining on-device edge checks: recognition on a long script, >1 min read (request restart), pill placement/height, permission grant/deny/revoke, VoiceOver, Reduce Motion, AirPods connecting mid-read, CPU ~0% while waiting, mic indicator off when paused.
 - [ ] *(lower priority)* **AI rehearsal coach** — needs an LLM backend +
       likely Vision-framework posture analysis. Discuss stack/privacy
       tradeoffs before scoping; this is a different trust model than the
@@ -923,3 +923,19 @@ Items not part of the Phase 6–16 feature survey (see
   design in ADR 0012 instead). Never opened as a PR; needs a decision on
   whether to revive it. A related but distinct `wip: WiFi/VPN sources`
   stash also sits on `main`, reported broken on-device and never debugged.
+
+## Parked ideas (folded in from the retired STAGES.md, 2026-09-26)
+
+- **VoiceOver-adjustable scrubber:** `ScrubberView` is a raw drag gesture; needs
+  `accessibilityValue` + `accessibilityAdjustableAction`. Not built, by choice.
+- **Whimsy pass:** the weekday quips were inspired by Claude Code's status words. The same
+  voice could go in the System Monitor loading state ("Simmering..."), empty states and the
+  weather line. Keep it to a few spots so it stays a quirk, not noise.
+- **Weather TTL option** and the Phase 13 threshold check / pill text size (see those phases).
+- Per-phase stage checklists (Settings, Camera, Calendar, Teleprompter) lived in `STAGES.md`;
+  they are all done and remain in git history (`git log -- STAGES.md`).
+- **Stacked live activities on the collapsed pill (from Notchy, 2026-09-26):** show several
+  `LiveActivitySource`s at once (e.g. music + timer) instead of one at a time. Best paired with
+  timers/Pomodoro; keep the idle cost near zero (see the performance section in `CLAUDE.md`).
+- **Synced lyrics** in the now-playing player (also from Notchy). Needs a lyrics source; check
+  privacy/licensing before choosing one.
