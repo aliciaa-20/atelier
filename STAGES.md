@@ -75,12 +75,12 @@ Camera mirror (Phase 14) and Settings (Phase 16) shipped. Teleprompter (Phase 17
 
 ## Teleprompter (Phase 17)
 
-Spec: `docs/superpowers/specs/2026-09-25-teleprompter-design.md`. Plan (stages 1-3): `docs/superpowers/plans/2026-09-25-teleprompter-stages-1-3.md`. ADR 0019. Code for stages 1-3 is on `feat/teleprompter` (239 tests pass); stages 1-3 checked on-device by Alicia (see below and ADR 0019).
+Spec: `docs/superpowers/specs/2026-09-25-teleprompter-design.md`. Plans: `docs/superpowers/plans/2026-09-25-teleprompter-stages-1-3.md`, `docs/superpowers/plans/2026-09-25-teleprompter-voice-sync.md` (stage 4, spec `docs/superpowers/specs/2026-09-25-teleprompter-voice-sync-design.md`). ADRs 0019, 0020. Code for stages 1-3 is on `feat/teleprompter` (239 tests pass); stages 1-3 checked on-device by Alicia (see below and ADR 0019).
 
 - [x] 1. Pure logic (`TeleprompterScript/Scroll/Lines`, hold-open) + script import + script store, tested
 - [x] 2. The tab: control strip (reorderable, matched control sizes), progress ring, reading view, hand-scroll, Settings pane — built and checked on-device (VoiceOver + CPU/battery check still open)
 - [x] 3. Ghost Mode + global hotkeys — Ghost Mode verified hiding the notch in a Google Meet screen share (macOS 27.0; QuickTime/`screencapture`/Zoom not tested), hotkeys work
-- [ ] 4. Voice sync (`SFSpeechRecognizer`, `ScriptMatcher`, mic/speech permissions, "Listening…" pill) — not started, gets its own plan
+- [x] 4. **Done: core flow verified on-device (2026-09-26).** Voice sync (`ScriptMatcher`, voice mode in `TeleprompterScroll`/model, `SpeechRecognizer`, mic/speech permissions, top-bar control, "Listening" pill) — built on `feat/teleprompter-voice-sync` (282 tests pass). **Edge checks not yet run (optional):** recognition quality on a real script, >1 min read (request restart), pill placement/height, permission grant/deny/revoke, VoiceOver, Reduce Motion, AirPods connecting mid-read, CPU ~0% while waiting, mic indicator off when paused
 
 Settings (Phase 16) must include **user-reorderable tabs** (asked 2026-09-24). Notes for that plan:
 `NotchPage` is a fixed `CaseIterable` order today (home, shelf, systemMonitor, calendar), and

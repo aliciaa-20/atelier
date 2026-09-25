@@ -55,6 +55,7 @@ struct TeleprompterControlStrip: View {
         case .play: playPauseButton
         case .speed: speedStepper
         case .ring: ring
+        case .voice: voiceButton
         }
     }
 
@@ -75,6 +76,28 @@ struct TeleprompterControlStrip: View {
         .opacity(model.canPlay ? 1 : 0.35)
         .help(model.wantsNotchOpen ? "Pause" : "Play")
         .accessibilityLabel(model.wantsNotchOpen ? "Pause script" : "Play script")
+    }
+
+    private var voiceButton: some View {
+        let on = model.voiceSyncEnabled
+        let problem = model.voiceUnavailableReason
+        return Button {
+            Task { await model.setVoiceSync(!on) }
+        } label: {
+            Image(systemName: on ? "mic.fill" : (problem == nil ? "mic" : "mic.slash"))
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(.white)
+                .contentTransition(.symbolEffect(.replace))
+                .frame(width: Self.controlSize, height: Self.controlSize)
+                .background(Circle().fill(Color.white.opacity(on ? 0.30 : 0.14)))
+                .contentShape(Circle())
+        }
+        .buttonStyle(TeleprompterPressStyle())
+        .help(problem ?? (on ? "Voice sync on: the script follows your voice" : "Voice sync: let the script follow your voice"))
+        .accessibilityLabel("Voice sync")
+        .accessibilityValue(on ? "On" : "Off")
+        .accessibilityAddTraits(.isToggle)
+        .accessibilityHint(problem ?? "")
     }
 
     /// `−  100  +` capsule, all inside the notch (no popup window, so the
@@ -130,7 +153,7 @@ struct TeleprompterControlStrip: View {
     }
 
     private var ring: some View {
-        TeleprompterTicker(interval: 1, active: model.isPlaying) { now in
+        TeleprompterTicker(interval: 1, active: model.isAnimating) { now in
             let remaining = model.scroll.secondsRemaining(at: now)
             let elapsed = model.scroll.secondsElapsed(at: now)
             TeleprompterRing(

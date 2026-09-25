@@ -13,6 +13,8 @@ struct TeleprompterPane: View {
     @AppStorage(AtelierSettings.teleprompterPauseOnHoverKey) private var pauseOnHover = true
     @AppStorage(AtelierSettings.ghostModeKey) private var ghostMode = false
     @AppStorage(AtelierSettings.teleprompterHotkeysKey) private var hotkeys = false
+    @AppStorage(AtelierSettings.teleprompterVoiceSyncKey) private var voiceSync = false
+    @ObservedObject private var model = TeleprompterModel.shared
 
     @AppStorage(AtelierSettings.teleprompterControlOrderKey) private var controlOrder = ""
 
@@ -69,6 +71,16 @@ struct TeleprompterPane: View {
                     }
                 }
                 Toggle("Pause while the pointer is over the notch", isOn: $pauseOnHover)
+            }
+            .disabled(!enabled)
+
+            Section("Voice") {
+                Toggle("Follow my voice", isOn: $voiceSync)
+                Text("The script follows what you say, and waits when you stop. Uses the microphone and on-device speech recognition, which costs some CPU and battery while listening. Nothing leaves your Mac.")
+                    .font(.callout).foregroundStyle(.secondary)
+                if let reason = model.voiceUnavailableReason {
+                    Text(reason).font(.callout).foregroundStyle(.orange)
+                }
             }
             .disabled(!enabled)
 
@@ -134,6 +146,7 @@ struct TeleprompterPane: View {
         case "play": "Play and pause"
         case "speed": "Speed"
         case "ring": "Time remaining"
+        case "voice": "Voice sync"
         default: "Camera cutout"
         }
     }
@@ -143,6 +156,7 @@ struct TeleprompterPane: View {
         case "play": "playpause.fill"
         case "speed": "gauge.with.dots.needle.33percent"
         case "ring": "timer"
+        case "voice": "mic.fill"
         default: "camera"
         }
     }

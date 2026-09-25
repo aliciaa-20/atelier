@@ -198,3 +198,190 @@ struct TeleprompterModelTests {
         #expect(!model.hasFinished(now: t0))
     }
 }
+
+@MainActor
+final class FakeSpeech: SpeechWordSource {
+    var onWords: (([String]) -> Void)?
+    var onFailure: ((String) -> Void)?
+    var prepareResult: String?
+    private(set) var isRunning = false
+    private(set) var startCount = 0
+
+    func prepare() async -> String? { prepareResult }
+    func start() { isRunning = true; startCount += 1 }
+    func stop() { isRunning = false }
+    func hear(_ words: [String]) { onWords?(words) }
+    func fail(_ reason: String) { onFailure?(reason) }
+}
+
+@MainActor
+struct TeleprompterModelVoiceTests {
+    private let script = "one two three four five six seven eight nine ten"
+
+    private func makeModel(script text: String? = nil) throws -> (TeleprompterModel, FakeSpeech, ScriptStore) {
+        let dir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("AtelierVoiceTests-\(UUID().uuidString)")
+        let store = ScriptStore(directory: dir)
+        try store.save(text ?? script)
+        let speech = FakeSpeech()
+        let model = TeleprompterModel(store: store, speech: speech, persistsWPM: false, persistsVoiceSync: false, initialWPM: 140)
+        model.updateLayout(width: 400, fontSize: 15, mono: false)
+        return (model, speech, store)
+    }
+
+    private func later(_ seconds: TimeInterval = 10) -> Date { Date().addingTimeInterval(seconds) }
+
+    @Test func enablingVoiceSyncEntersVoiceModeWithoutListening() async throws {
+        let (model, speech, _) = try makeModel()
+        await model.setVoiceSync(true)
+        #expect(model.voiceSyncEnabled)
+        #expect(model.scroll.isVoiceMode)
+        #expect(!model.isPlaying)
+        #expect(!speech.isRunning)
+    }
+
+    @Test func playStartsListeningAndPauseStops() async throws {
+        let (model, speech, _) = try makeModel()
+        await model.setVoiceSync(true)
+        model.play()
+        #expect(model.isPlaying && speech.isRunning)
+        #expect(model.wantsNotchOpen)
+        model.pause()
+        #expect(!model.isPlaying && !speech.isRunning)
+    }
+
+    @Test func heardWordsMoveTheScrollTarget() async throws {
+        let (model, speech, _) = try makeModel()
+        await model.setVoiceSync(true)
+        model.play()
+        speech.hear(["one", "two", "three"])
+        #expect(model.scroll.position(at: later()) == 3)
+        #expect(model.isGliding)
+        #expect(model.isAnimating)
+    }
+
+    @Test func silenceOrNoiseDoesNothing() async throws {
+        let (model, speech, _) = try makeModel()
+        await model.setVoiceSync(true)
+        model.play()
+        speech.hear([])
+        speech.hear(["", "..."])
+        #expect(model.scroll.position(at: later()) == 0)
+    }
+
+    @Test func wordsHeardWhileNotListeningAreIgnored() async throws {
+        let (model, speech, _) = try makeModel()
+        await model.setVoiceSync(true)
+        speech.hear(["one", "two", "three"])
+        #expect(model.scroll.position(at: later()) == 0)
+    }
+
+    @Test func thePointerLeavingDoesNotStopListening() async throws {
+        let (model, speech, _) = try makeModel()
+        await model.setVoiceSync(true)
+        model.play()
+        model.setPointerInside(true)
+        #expect(model.isPlaying && speech.isRunning)
+        model.setPointerInside(false)
+        #expect(model.isPlaying && speech.isRunning)
+    }
+
+    @Test func readingToTheEndFinishesAndStopsListening() async throws {
+        let (model, speech, _) = try makeModel()
+        await model.setVoiceSync(true)
+        model.play()
+        speech.hear(["seven", "eight", "nine", "ten"])
+        let end = later()
+        model.settle(now: end)
+        #expect(!model.isPlaying)
+        #expect(!speech.isRunning)
+        #expect(model.hasFinished(now: end))
+    }
+
+    @Test func deniedPermissionFallsBackToManualWithAReason() async throws {
+        let (model, speech, _) = try makeModel()
+        speech.prepareResult = "Microphone access is off."
+        await model.setVoiceSync(true)
+        #expect(!model.voiceSyncEnabled)
+        #expect(model.voiceUnavailableReason == "Microphone access is off.")
+        #expect(model.voiceNotice != nil)
+        model.play()
+        #expect(model.isPlaying)
+        #expect(!speech.isRunning)
+        #expect(!model.scroll.isVoiceMode)
+    }
+
+    @Test func aMissingSpeechSourceFallsBackToo() async throws {
+        let store = ScriptStore(directory: FileManager.default.temporaryDirectory
+            .appendingPathComponent("AtelierVoiceTests-\(UUID().uuidString)"))
+        let model = TeleprompterModel(store: store, speech: nil, persistsWPM: false, persistsVoiceSync: false, initialWPM: 140)
+        await model.setVoiceSync(true)
+        #expect(!model.voiceSyncEnabled)
+        #expect(model.voiceUnavailableReason != nil)
+    }
+
+    @Test func speechFailureMidReadFallsBack() async throws {
+        let (model, speech, _) = try makeModel()
+        await model.setVoiceSync(true)
+        model.play()
+        speech.fail("The microphone changed.")
+        #expect(model.voiceUnavailableReason == "The microphone changed.")
+        #expect(!model.voiceSyncEnabled)
+        #expect(!speech.isRunning && !model.isPlaying)
+        #expect(!model.scroll.isVoiceMode)
+        #expect(model.voiceNotice != nil)
+    }
+
+    @Test func clearingTheScriptWhileListeningStopsTheMic() async throws {
+        let (model, speech, store) = try makeModel()
+        await model.setVoiceSync(true)
+        model.play()
+        try store.save("")
+        model.reloadScript()
+        #expect(!model.isPlaying)
+        #expect(!speech.isRunning)
+    }
+
+    @Test func disablingVoiceSyncReturnsToManual() async throws {
+        let (model, speech, _) = try makeModel()
+        await model.setVoiceSync(true)
+        model.play()
+        await model.setVoiceSync(false)
+        #expect(!model.voiceSyncEnabled)
+        #expect(!speech.isRunning && !model.isPlaying)
+        #expect(!model.scroll.isVoiceMode)
+        #expect(model.voiceUnavailableReason == nil)
+    }
+
+    @Test func resumingListeningKeepsTrackingFromThePausedPlace() async throws {
+        let (model, speech, _) = try makeModel()
+        await model.setVoiceSync(true)
+        model.play()
+        speech.hear(["one", "two", "three"])
+        model.pause()
+        model.play()
+        #expect(speech.startCount == 2)
+        speech.hear(["four", "five", "six"])
+        #expect(model.scroll.position(at: later()) == 6)
+    }
+
+    @Test func playingAnEmptyScriptDoesNotStartTheMic() async throws {
+        let (model, speech, _) = try makeModel(script: "")
+        await model.setVoiceSync(true)
+        model.play()
+        #expect(!speech.isRunning && !model.isPlaying)
+    }
+
+    @Test func editingTheScriptWhileListeningKeepsVoiceMode() async throws {
+        let (model, speech, store) = try makeModel()
+        await model.setVoiceSync(true)
+        model.play()
+        speech.hear(["one", "two", "three"])
+        try store.save(script + " eleven twelve")
+        model.reloadScript()
+        #expect(model.voiceSyncEnabled && model.scroll.isVoiceMode)
+        #expect(model.isPlaying && speech.isRunning)
+        speech.hear(["eleven", "twelve"])
+        #expect(model.scroll.position(at: later()) == 12)
+    }
+}
