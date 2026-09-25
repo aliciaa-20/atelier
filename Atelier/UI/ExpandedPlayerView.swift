@@ -13,7 +13,6 @@ import SwiftUI
 /// on top. That's what makes the transport buttons read as a tight,
 /// deliberate group instead of being stretched across the whole width.
 struct ExpandedPlayerView: View {
-    @Environment(\.accessibilityDifferentiateWithoutColor) private var differentiateWithoutColor
     let info: NowPlayingInfo?
     @ObservedObject var weather: WeatherSource
     @Binding var weatherDetailOpen: Bool
@@ -172,12 +171,6 @@ struct ExpandedPlayerView: View {
                         .foregroundStyle(info.isShuffling ? waveformColor : Color.white.opacity(0.65))
                         .animation(.easeOut(duration: 0.15), value: info.isShuffling)
                         .frame(width: 24, height: 24)
-                        // Not colour alone (Differentiate Without Color): a dot under it.
-                        .overlay(alignment: .bottom) {
-                            if info.isShuffling && differentiateWithoutColor {
-                                Circle().fill(.white).frame(width: 3, height: 3).offset(y: 2)
-                            }
-                        }
                 }
                 .accessibilityLabel("Shuffle")
                 .help(info.isShuffling ? "Shuffle: on" : "Shuffle: off")
@@ -217,7 +210,6 @@ private struct PressScaleButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .notchFocusRing(cornerRadius: 10)
             .scaleEffect(configuration.isPressed && !reduceMotion ? 0.88 : 1)
             .opacity(configuration.isPressed ? 0.7 : 1)
             .animation(reduceMotion ? nil : NotchAnimations.press, value: configuration.isPressed)
