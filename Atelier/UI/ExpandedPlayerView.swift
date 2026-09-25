@@ -13,6 +13,7 @@ import SwiftUI
 /// on top. That's what makes the transport buttons read as a tight,
 /// deliberate group instead of being stretched across the whole width.
 struct ExpandedPlayerView: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let info: NowPlayingInfo?
     @ObservedObject var weather: WeatherSource
     @Binding var weatherDetailOpen: Bool
@@ -145,6 +146,8 @@ struct ExpandedPlayerView: View {
                 Button(action: onPlayPause) {
                     Image(systemName: info.isPlaying ? "pause.fill" : "play.fill")
                         .font(.system(size: 23, weight: .semibold))
+                        .contentTransition(reduceMotion ? .identity : .symbolEffect(.replace))
+                        .animation(reduceMotion ? nil : NotchAnimations.press, value: info.isPlaying)
                 }
                 .accessibilityLabel(info.isPlaying ? "Pause" : "Play")
                 .help(info.isPlaying ? "Pause" : "Play")
@@ -168,6 +171,7 @@ struct ExpandedPlayerView: View {
                     Image(systemName: "shuffle")
                         .font(.system(size: 13, weight: .medium))
                         .foregroundStyle(info.isShuffling ? waveformColor : Color.white.opacity(0.65))
+                        .animation(.easeOut(duration: 0.15), value: info.isShuffling)
                         .frame(width: 24, height: 24)
                 }
                 .accessibilityLabel("Shuffle")
@@ -224,21 +228,31 @@ struct ArtworkView: View {
     let url: URL?
     var cornerRadius: CGFloat = 8
     @State private var image: NSImage?
+    @Environment(\.artworkNamespace) private var artworkNamespace
 
     var body: some View {
-        Group {
+        // Old art stays until the new one has loaded, then crossfades (no
+        // flash of the placeholder between tracks).
+        ZStack {
             if let image {
                 Image(nsImage: image).resizable().aspectRatio(contentMode: .fill)
+                    .id(ObjectIdentifier(image))
+                    .transition(.opacity)
             } else {
                 placeholder
+                    .transition(.opacity)
             }
         }
+        .animation(.easeOut(duration: 0.2), value: image.map(ObjectIdentifier.init))
         .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+        .modifier(SharedArtworkModifier(namespace: artworkNamespace))
         .task(id: url) {
-            image = nil
             guard let url,
                   let data = await ArtworkImageCache.shared.data(for: url),
-                  let nsImage = NSImage(data: data) else { return }
+                  let nsImage = NSImage(data: data) else {
+                image = nil
+                return
+            }
             image = nsImage
         }
     }
@@ -354,6 +368,32 @@ struct ScrubberView: View {
                 .font(.system(size: 10, weight: .medium, design: .rounded))
                 .monospacedDigit()
                 .foregroundStyle(.white.opacity(0.55))
+        }
+    }
+}
+
+/// Set by `NotchRootView` so the pill, peek and expanded artwork share one
+/// `matchedGeometryEffect` identity and the cover appears to travel between
+/// them. Nil (the default, and with Reduce Motion) means no shared element.
+private struct ArtworkNamespaceKey: EnvironmentKey {
+    static let defaultValue: Namespace.ID? = nil
+}
+
+extension EnvironmentValues {
+    var artworkNamespace: Namespace.ID? {
+        get { self[ArtworkNamespaceKey.self] }
+        set { self[ArtworkNamespaceKey.self] = newValue }
+    }
+}
+
+private struct SharedArtworkModifier: ViewModifier {
+    let namespace: Namespace.ID?
+
+    func body(content: Content) -> some View {
+        if let namespace {
+            content.matchedGeometryEffect(id: "nowPlayingArtwork", in: namespace)
+        } else {
+            content
         }
     }
 }
