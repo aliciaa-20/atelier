@@ -97,6 +97,7 @@ struct TeleprompterControlStrip: View {
         .accessibilityLabel("Voice sync")
         .accessibilityValue(on ? "On" : "Off")
         .accessibilityAddTraits(.isToggle)
+        .accessibilityHint(problem ?? "")
     }
 
     /// `−  100  +` capsule, all inside the notch (no popup window, so the
