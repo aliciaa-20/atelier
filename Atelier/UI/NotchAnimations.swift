@@ -61,22 +61,20 @@ enum NotchAnimations {
     static var grab: Animation {
         reduceMotion ? .easeOut(duration: 0.12) : .spring(response: 0.3, dampingFraction: 0.75)
     }
-    /// The panel morphing between the player and a compact volume/brightness
-    /// HUD: critically damped (no overshoot), 0.32s -- a bouncy or slow spring on a size change the user
-    /// didn't trigger by hovering reads as jitter. The content fades are
-    /// sequenced strictly one after the other (never both on
-    /// screen): player out 0.1s, the bar in 0.16s after a 0.08s beat; on the way back the
-    /// bar out 0.1s, then the player in after 0.1s. Short delays: longer ones
-    /// (0.2-0.24s) left the notch looking empty and felt laggy.
+    /// The player <-> compact volume/brightness HUD swap, the way Dynamic
+    /// Island does it: ONE critically damped spring (damping 1.0, no
+    /// overshoot -- it isn't a flick, so no bounce) drives the panel size AND
+    /// both contents together. Content scales 0.92 <-> 1 and blurs 6pt <-> 0
+    /// while it fades, so the cross-dissolve never shows two sharp layers at
+    /// once; the panel morph carries the eye. No timelines, delays or
+    /// staggered fades, so a second key press mid-swap just retargets the same
+    /// spring from where it is (interruptible), and going back is the exact
+    /// reverse path.
     static var hud: Animation {
-        reduceMotion ? .easeInOut(duration: 0.15) : .spring(duration: 0.32, bounce: 0)
+        reduceMotion ? .easeInOut(duration: 0.15) : .spring(duration: 0.4, bounce: 0)
     }
-    static var hudPlayerFade: (hudIn: Animation, hudOut: Animation) {
-        (.easeOut(duration: 0.1), .easeOut(duration: 0.18).delay(0.1))
-    }
-    static var hudBarFade: (hudIn: Animation, hudOut: Animation) {
-        (.easeOut(duration: 0.16).delay(0.08), .easeOut(duration: 0.1))
-    }
+    static var hudContentScale: CGFloat { reduceMotion ? 1 : 0.92 }
+    static var hudContentBlur: CGFloat { reduceMotion ? 0 : 6 }
     static let settleTuck: Animation = .easeOut(duration: 0.12)
     static var settleSpringBack: Animation {
         reduceMotion ? .easeOut(duration: 0.12) : .spring(response: 0.35, dampingFraction: 0.5)

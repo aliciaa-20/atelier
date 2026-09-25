@@ -315,15 +315,15 @@ struct NotchRootView: View {
                     // the shared wrapper, rather than in each page
                     // individually, so no future page can reintroduce it.
                     .frame(maxHeight: .infinity, alignment: .top)
-                    // A volume/brightness HUD over the hover-open notch: the
-                    // player fades out and the HUD fades in over it (stagger, so
-                    // never both at full strength) while the panel morphs to the
-                    // compact size (`frameSize`, `NotchAnimations.hud`). One
-                    // continuous, interruptible opacity animation rather than a
-                    // view swap, so a second key press mid-fade just retargets.
+                    // A volume/brightness HUD over the hover-open notch: one spring
+                    // (`NotchAnimations.hud`) morphs the panel and cross-dissolves the
+                    // two contents with a slight scale + blur (see the doc there). One
+                    // continuous, interruptible animation rather than a view swap.
                     .opacity(hudActive ? 0 : 1)
+                    .scaleEffect(hudActive ? NotchAnimations.hudContentScale : 1, anchor: .top)
+                    .blur(radius: hudActive ? NotchAnimations.hudContentBlur : 0)
                     .allowsHitTesting(!hudActive)
-                    .animation(hudActive ? NotchAnimations.hudPlayerFade.hudIn : NotchAnimations.hudPlayerFade.hudOut, value: hudActive)
+                    .animation(NotchAnimations.hud, value: hudActive)
                     .overlay(alignment: .top) {
                         if AtelierSettings.teleprompterEnabled, viewModel.currentPage == .teleprompter {
                             TeleprompterControlStrip(
@@ -407,8 +407,10 @@ struct NotchRootView: View {
                         .frame(width: viewModel.compactPeekSize.width, height: viewModel.compactPeekSize.height)
                         .frame(width: frameSize.width, height: frameSize.height, alignment: .top)
                         .opacity(hudActive ? 1 : 0)
+                        .scaleEffect(hudActive ? 1 : NotchAnimations.hudContentScale, anchor: .top)
+                        .blur(radius: hudActive ? 0 : NotchAnimations.hudContentBlur)
                         .allowsHitTesting(hudActive)
-                        .animation(hudActive ? NotchAnimations.hudBarFade.hudIn : NotchAnimations.hudBarFade.hudOut, value: hudActive)
+                        .animation(NotchAnimations.hud, value: hudActive)
                         // Notch closing while the bar is up: fade it out instead of
                         // snapping to the pill's percent text.
                         .transition(.asymmetric(insertion: .identity, removal: .opacity.animation(.easeOut(duration: 0.2))))
