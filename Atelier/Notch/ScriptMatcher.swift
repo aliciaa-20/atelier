@@ -14,12 +14,25 @@ struct ScriptMatcher: Equatable {
     static let windowSize = 30
     /// How many of the most recent spoken words are matched.
     static let tailLength = 4
+
     /// Matched-word weight needed to advance (long words weigh 1, short 0.5).
-    static let minimumScore = 1.0
+    /// The further ahead the match lands, the more evidence it needs, so a
+    /// single recurring word can't drag the cursor across the script: a match
+    /// up to 3 words ahead needs 1, up to 8 words 1.5, further 2.
+    static func requiredScore(distance: Int) -> Double {
+        distance <= 3 ? 1.0 : (distance <= 8 ? 1.5 : 2.0)
+    }
 
     private let script: [String]
     /// Number of script words confirmed spoken (= index of the next unread word).
     private(set) var cursor: Int
+    /// The last transcript seen (word count + last word). The recognizer
+    /// re-sends the same partial transcript, or only revises earlier words;
+    /// re-scoring that would hunt for a *later* copy of the last word and
+    /// run ahead of the speaker, so only a transcript with something new at
+    /// its end is scored.
+    private var lastCount = 0
+    private var lastWord = ""
 
     init(scriptWords: [String], cursor: Int = 0) {
         script = scriptWords.map(Self.normalize)
@@ -28,14 +41,22 @@ struct ScriptMatcher: Equatable {
 
     mutating func reset(cursor: Int) {
         self.cursor = min(max(cursor, 0), script.count)
+        lastCount = 0
+        lastWord = ""
     }
 
     /// Feeds the full spoken transcript so far. Returns the new cursor if it
     /// advanced, nil if the words didn't match with enough confidence.
     @discardableResult
     mutating func update(spoken: [String]) -> Int? {
-        let tail = Array(spoken.map(Self.normalize).filter { !$0.isEmpty }.suffix(Self.tailLength))
-        guard let last = tail.last, cursor < script.count else { return nil }
+        let heard = spoken.map(Self.normalize).filter { !$0.isEmpty }
+        guard let last = heard.last, cursor < script.count else { return nil }
+        // Nothing new at the end of the transcript: same words again, or an
+        // earlier word revised.
+        guard heard.count != lastCount || last != lastWord else { return nil }
+        lastCount = heard.count
+        lastWord = last
+        let tail = Array(heard.suffix(Self.tailLength))
 
         let lastEnd = min(cursor + Self.windowSize, script.count)
         var best: (end: Int, score: Double)?
@@ -49,7 +70,7 @@ struct ScriptMatcher: Equatable {
                 if Self.wordsMatch(word, script[scriptIndex]) { score += Self.weight(word) }
             }
             // Strictly greater: on a tie the nearest candidate wins.
-            if score >= Self.minimumScore, score > (best?.score ?? 0) {
+            if score >= Self.requiredScore(distance: end - cursor), score > (best?.score ?? 0) {
                 best = (end, score)
             }
         }

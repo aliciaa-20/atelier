@@ -29,6 +29,9 @@ final class TeleprompterModel: ObservableObject {
     /// Voice mode only: the script is currently gliding toward the spoken
     /// position. Views tick only while this is true.
     @Published private(set) var isGliding = false
+    /// A short on-notch note shown for a few seconds when voice sync stops or
+    /// can't start, so the cause is visible without hovering for a tooltip.
+    @Published private(set) var voiceNotice: String?
 
     /// Whether views need to redraw continuously: the clock is running
     /// (manual) or a glide is in flight (voice).
@@ -67,6 +70,7 @@ final class TeleprompterModel: ObservableObject {
     private let persistsVoiceSync: Bool
     private var matcher = ScriptMatcher(scriptWords: [])
     private var glideTask: Task<Void, Never>?
+    private var noticeTask: Task<Void, Never>?
     private var isPreparingVoice = false
 
     /// `initialWPM` defaults to the saved speed; tests pass a fixed one so
@@ -117,7 +121,7 @@ final class TeleprompterModel: ObservableObject {
             isGliding = false
             scroll.enterVoiceMode(at: now)
             matcher = ScriptMatcher(scriptWords: reloaded.words, cursor: Int(scroll.position(at: now)))
-            isPlaying = wasPlaying && !scroll.isFinished(at: now)
+            isPlaying = wasPlaying && !reloaded.isEmpty && !scroll.isFinished(at: now)
             if !isPlaying { speech?.stop() }
         } else {
             if wasPlaying, !scroll.isFinished(at: now) { scroll.play(at: now) }
@@ -265,8 +269,22 @@ final class TeleprompterModel: ObservableObject {
             voiceSyncEnabled = false
             scroll.exitVoiceMode(at: now)
         }
+        let wasEnabled = voiceSyncEnabled
         voiceUnavailableReason = reason
         if persistsVoiceSync { AtelierSettings.teleprompterVoiceSync = false }
+        showVoiceNotice(wasEnabled ? "Voice sync stopped" : "Voice sync unavailable")
+    }
+
+    /// A short note on the notch for a few seconds; the full reason stays in
+    /// the mic button's tooltip, its VoiceOver hint and the Settings pane.
+    private func showVoiceNotice(_ text: String) {
+        voiceNotice = text
+        noticeTask?.cancel()
+        noticeTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(4))
+            guard !Task.isCancelled else { return }
+            self?.voiceNotice = nil
+        }
     }
 
     private func startListening(now: Date) {

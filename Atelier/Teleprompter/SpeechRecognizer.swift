@@ -29,6 +29,8 @@ final class SpeechRecognizer: ObservableObject, SpeechWordSource {
     /// Bumped on every (re)start/stop so a cancelled task's late callback is ignored.
     private var generation = 0
     private var quickFailures = 0
+    private var taskStarted = Date.distantPast
+    private var restarts: [Date] = []
     private var configObserver: NSObjectProtocol?
 
     // MARK: SpeechWordSource
@@ -71,8 +73,9 @@ final class SpeechRecognizer: ObservableObject, SpeechWordSource {
             forName: .AVAudioEngineConfigurationChange, object: engine, queue: .main
         ) { [weak self] _ in
             // The audio route changed (AirPods connected, device unplugged):
-            // the engine has stopped. Say so instead of leaving a dead mic.
-            MainActor.assumeIsolated { self?.fail("The audio device changed, so voice sync stopped.") }
+            // the engine has stopped. Try one in-place restart on the new
+            // input; only if that fails say so, instead of a silently dead mic.
+            MainActor.assumeIsolated { self?.restartAfterRouteChange() }
         }
         do {
             engine.prepare()
@@ -105,6 +108,7 @@ final class SpeechRecognizer: ObservableObject, SpeechWordSource {
         request.requiresOnDeviceRecognition = true
         request.taskHint = .dictation
         box.set(request)
+        taskStarted = .now
         let current = generation
         task = Self.makeTask(recognizer: recognizer, request: request) { [weak self] words, isFinal, failed in
             DispatchQueue.main.async {
@@ -123,13 +127,43 @@ final class SpeechRecognizer: ObservableObject, SpeechWordSource {
         // Recognition tasks end after about a minute, or on a hiccup. Start a
         // fresh request; the matcher's cursor lives in the model, so nothing
         // is lost. Repeated failures with no words in between = give up.
-        if failed, words?.isEmpty ?? true { quickFailures += 1 }
+        // Only a task that dies within moments of starting, with nothing heard,
+        // counts as a failure; a silent task that simply times out doesn't.
+        if failed, words?.isEmpty ?? true, Date.now.timeIntervalSince(taskStarted) < 2 { quickFailures += 1 }
         if quickFailures >= 3 {
             fail("Speech recognition stopped working.")
             return
         }
         task?.cancel()
         if let recognizer { beginTask(recognizer) }
+    }
+
+    /// Re-binds the tap to the new default input. Opening a Bluetooth mic can
+    /// itself post a configuration change, so a couple of restarts are
+    /// normal; more than three in ten seconds is a loop, so give up.
+    private func restartAfterRouteChange() {
+        guard running else { return }
+        restarts = restarts.filter { Date.now.timeIntervalSince($0) < 10 } + [.now]
+        guard restarts.count <= 3 else {
+            fail("The audio device keeps changing, so voice sync stopped.")
+            return
+        }
+        let input = engine.inputNode
+        input.removeTap(onBus: 0)
+        let format = input.outputFormat(forBus: 0)
+        guard format.sampleRate > 0 else {
+            fail("The audio device changed and no microphone is available.")
+            return
+        }
+        input.installTap(onBus: 0, bufferSize: 1024, format: format, block: Self.makeTap(box: box) { [weak self] level in
+            DispatchQueue.main.async { MainActor.assumeIsolated { self?.level = level } }
+        })
+        do {
+            engine.prepare()
+            try engine.start()
+        } catch {
+            fail("The microphone couldn't restart: \(error.localizedDescription)")
+        }
     }
 
     private func fail(_ reason: String) {

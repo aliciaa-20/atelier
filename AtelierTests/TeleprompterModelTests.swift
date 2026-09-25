@@ -304,6 +304,7 @@ struct TeleprompterModelVoiceTests {
         await model.setVoiceSync(true)
         #expect(!model.voiceSyncEnabled)
         #expect(model.voiceUnavailableReason == "Microphone access is off.")
+        #expect(model.voiceNotice != nil)
         model.play()
         #expect(model.isPlaying)
         #expect(!speech.isRunning)
@@ -328,6 +329,17 @@ struct TeleprompterModelVoiceTests {
         #expect(!model.voiceSyncEnabled)
         #expect(!speech.isRunning && !model.isPlaying)
         #expect(!model.scroll.isVoiceMode)
+        #expect(model.voiceNotice != nil)
+    }
+
+    @Test func clearingTheScriptWhileListeningStopsTheMic() async throws {
+        let (model, speech, store) = try makeModel()
+        await model.setVoiceSync(true)
+        model.play()
+        try store.save("")
+        model.reloadScript()
+        #expect(!model.isPlaying)
+        #expect(!speech.isRunning)
     }
 
     @Test func disablingVoiceSyncReturnsToManual() async throws {

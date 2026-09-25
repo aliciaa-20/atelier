@@ -22,7 +22,12 @@ loudness only). Spec: `docs/superpowers/specs/2026-09-25-teleprompter-voice-sync
 3. **`ScriptMatcher` is forward-only and windowed** (30 words ahead, last 4
    spoken words, short words weigh less, fuzzy match for long words). One
    misheard word or a repeated phrase far away can't teleport the script, and
-   it never rewinds. Rejected: a global search (teleport risk). Known limit:
+   it never rewinds. A transcript with nothing new at its end (re-sent
+   partials, revised earlier words) is not re-scored, and matches further
+   ahead need more evidence (1 / 1.5 / 2 matched-word weight at <=3 / <=8 /
+   more words). Found in the final review: without this, resending the same
+   partial ran the cursor ahead of the speaker. Rejected: a global search
+   (teleport risk). Known limit:
    skipping more than ~30 words isn't followed; hand-scroll while paused
    re-syncs.
 4. **On-device only.** `requiresOnDeviceRecognition = true`, and a locale
@@ -38,13 +43,15 @@ loudness only). Spec: `docs/superpowers/specs/2026-09-25-teleprompter-voice-sync
 7. **Failure is never a dead control.** Denied permission, no recognizer, no
    on-device model, a lost audio device or a dying recognizer all fall back to
    the manual pace, flip the setting back off and keep a reason (mic.slash
-   icon + tooltip + VoiceOver hint, note in Settings).
+   icon + tooltip + VoiceOver hint, note in Settings, and a 4-second
+   "Voice sync stopped/unavailable" pill on the notch).
 8. **Permissions are requested on first enabling**, not at launch.
 
 ## Consequences
 
 - The top bar has a fourth control (`voice`); orders saved before it get it
-  appended.
+  appended. Each flank holds at most two controls (2 | 2 with four), since a
+  ~100pt flank can't fit three.
 - The panel's maximum footprint grew by the "Listening" pill (20pt) to respect
   Invariant 3.
 - `AVAudioEngine.installTap(onBus:bufferSize:format:block:)` is flagged
