@@ -60,7 +60,6 @@ struct TeleprompterPageView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             .clipped()
             .mask(edgeFade)
-            .mask(sideFade)
             // One element for VoiceOver: the current line, not every Text.
             // Inside the ticker so the value follows the scroll instead of
             // going stale while playing.
@@ -81,21 +80,6 @@ struct TeleprompterPageView: View {
         if line < current { return 0.35 }
         if line == current { return 1 }
         return 0.7
-    }
-
-    /// A few points of horizontal fade, so a word wider than the panel dissolves
-    /// at the edge instead of being cut off hard.
-    private var sideFade: some View {
-        LinearGradient(
-            stops: [
-                .init(color: .clear, location: 0),
-                .init(color: .black, location: 0.03),
-                .init(color: .black, location: 0.97),
-                .init(color: .clear, location: 1)
-            ],
-            startPoint: .leading,
-            endPoint: .trailing
-        )
     }
 
     private var edgeFade: some View {

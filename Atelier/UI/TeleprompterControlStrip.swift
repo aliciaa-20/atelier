@@ -9,13 +9,15 @@ struct TeleprompterControlStrip: View {
     let height: CGFloat
     @AppStorage(AtelierSettings.ghostModeKey) private var ghostMode = false
 
-    private static let speedPresets: [Int] = [60, 80, 100, 120, 140, 160, 180, 200, 240, 280]
+    /// Trackpad points per 10 WPM step when scrolling over the speed control.
+    private static let scrollPointsPerStep: CGFloat = 14
+    @State private var scrollRemainder: CGFloat = 0
 
     var body: some View {
         HStack(spacing: 0) {
             HStack(spacing: 8) {
                 playPauseButton
-                speedMenu
+                speedStepper
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -60,30 +62,55 @@ struct TeleprompterControlStrip: View {
         .accessibilityLabel(model.wantsNotchOpen ? "Pause script" : "Play script")
     }
 
-    private var speedMenu: some View {
-        Menu {
-            ForEach(Self.speedPresets, id: \.self) { wpm in
-                Button("\(wpm) WPM") { model.setWPM(Double(wpm)) }
-            }
-        } label: {
+    /// `−  100  +` capsule, all inside the notch (no popup window, so the
+    /// notch never sees the pointer "leave"). Scrolling over it also changes
+    /// the speed, like the Calendar's scroll: up = faster.
+    private var speedStepper: some View {
+        HStack(spacing: 0) {
+            stepButton(symbol: "minus", label: "Slower", delta: -10)
             Text("\(Int(model.scroll.wpm))")
-                .font(.system(size: 9, weight: .semibold).monospacedDigit())
-                .foregroundStyle(.white.opacity(0.85))
-                .padding(.horizontal, 5)
-                .padding(.vertical, 2)
-                .background(Capsule().fill(Color.white.opacity(0.14)))
+                .font(.system(size: 10, weight: .semibold).monospacedDigit())
+                .foregroundStyle(.white.opacity(0.9))
+                .contentTransition(.numericText(value: model.scroll.wpm))
+                .animation(.snappy(duration: 0.2), value: model.scroll.wpm)
+                .frame(minWidth: 24)
+            stepButton(symbol: "plus", label: "Faster", delta: 10)
         }
-        .menuStyle(.button)
-        .buttonStyle(.plain)
-        .menuIndicator(.hidden)
-        .fixedSize()
-        // A `Menu` label is bridged to AppKit and can keep showing the old
-        // number until something else re-renders it; a new id per speed
-        // rebuilds it immediately.
-        .id(Int(model.scroll.wpm))
-        .help("Reading speed, words per minute")
+        .padding(.horizontal, 2)
+        .background(Capsule().fill(Color.white.opacity(0.14)))
+        .background(TeleprompterScrollCatcher { deltaY in
+            // Content-follows-fingers: fingers up (negative) = faster.
+            scrollRemainder += -deltaY
+            let steps = (scrollRemainder / Self.scrollPointsPerStep).rounded(.towardZero)
+            guard steps != 0 else { return }
+            scrollRemainder -= steps * Self.scrollPointsPerStep
+            model.stepWPM(by: Double(steps) * 10)
+        })
+        .help("Reading speed, words per minute. Scroll here to change it")
+        .accessibilityElement(children: .ignore)
         .accessibilityLabel("Reading speed")
         .accessibilityValue("\(Int(model.scroll.wpm)) words per minute")
+        .accessibilityAdjustableAction { direction in
+            switch direction {
+            case .increment: model.stepWPM(by: 10)
+            case .decrement: model.stepWPM(by: -10)
+            @unknown default: break
+            }
+        }
+    }
+
+    private func stepButton(symbol: String, label: String, delta: Double) -> some View {
+        Button {
+            model.stepWPM(by: delta)
+        } label: {
+            Image(systemName: symbol)
+                .font(.system(size: 8, weight: .bold))
+                .foregroundStyle(.white.opacity(0.85))
+                .frame(width: 18, height: 20)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(TeleprompterPressStyle())
+        .help(label)
     }
 
     private var ring: some View {
