@@ -99,6 +99,7 @@ Additional sources found directly (not via Atoll's acknowledgments):
 
 | Source | Relevant for |
 |---|---|
+| [Notchy](https://notchy.dev) | Stacked live activities on the collapsed pill, timers/Pomodoro, clipboard history, synced lyrics; closed source and free, product ideas only (its "0.1% idle CPU" is an unverified marketing claim) |
 | [CueNotch](https://cuenotch.com) | Phase 17 teleprompter/Ghost Mode, primary reference (commercial, idea only) |
 | [jpomykala/NotchPrompter](https://github.com/jpomykala/NotchPrompter) | Ghost Mode mechanism (`NSWindow.sharingType = .none`), open-source, pulled directly |
 | [Avocado](https://avocadonotch.com) | Voice-synced scrolling shape (real speech recognition), Focus Guide idea for Phase 17 |
