@@ -8,19 +8,22 @@ enum PermissionState {
     case granted
     case notDetermined
     case denied
+    /// Can't be read right now (Spotify's Automation, while Spotify is closed).
+    case unavailable
 
     var text: String {
         switch self {
         case .granted: "Granted"
         case .notDetermined: "Not asked yet"
         case .denied: "Denied"
+        case .unavailable: "Open Spotify to check"
         }
     }
 
     var color: Color {
         switch self {
         case .granted: .green
-        case .notDetermined: .secondary
+        case .notDetermined, .unavailable: .secondary
         case .denied: .red
         }
     }
@@ -33,6 +36,7 @@ private struct PermissionSnapshot {
     let calendar: PermissionState
     let camera: PermissionState
     let location: PermissionState
+    let spotify: PermissionState
 
     static func current() -> PermissionSnapshot {
         PermissionSnapshot(
@@ -57,6 +61,14 @@ private struct PermissionSnapshot {
                 case .notDetermined: .notDetermined
                 default: .denied
                 }
+            }(),
+            spotify: {
+                switch AutomationPermission.spotifyStatus() {
+                case .granted: .granted
+                case .notDetermined: .notDetermined
+                case .denied: .denied
+                case .targetNotRunning: .unavailable
+                }
             }()
         )
     }
@@ -66,9 +78,12 @@ struct PermissionsPane: View {
     @State private var snapshot = PermissionSnapshot.current()
     @State private var isGrantingAll = false
 
+    /// Only what "Grant All" can actually ask for. Accessibility is excluded:
+    /// it can't be requested in-app, so counting it kept the button showing
+    /// with nothing left for it to do (its row has its own button).
     private var needsAnything: Bool {
-        snapshot.accessibility != .granted || snapshot.calendar == .notDetermined
-            || snapshot.camera == .notDetermined || snapshot.location == .notDetermined
+        snapshot.calendar == .notDetermined || snapshot.camera == .notDetermined
+            || snapshot.location == .notDetermined || snapshot.spotify == .notDetermined
     }
 
     var body: some View {
@@ -105,6 +120,7 @@ struct PermissionsPane: View {
                     title: "Camera",
                     detail: "The mirror in the Camera tab",
                     state: snapshot.camera,
+                    deniedNote: "If you just turned this on in System Settings, quit and reopen Atelier.",
                     grant: {
                         _ = await CameraPermission.requestAccess()
                         snapshot = .current()
@@ -120,6 +136,16 @@ struct PermissionsPane: View {
                         snapshot = .current()
                     },
                     openSettings: LocationPermission.openSystemSettings
+                )
+                PermissionRow(
+                    title: "Spotify (Automation)",
+                    detail: "Now playing and transport controls",
+                    state: snapshot.spotify,
+                    grant: {
+                        await AutomationPermission.requestSpotifyAccess()
+                        snapshot = .current()
+                    },
+                    openSettings: AutomationPermission.openSystemSettings
                 )
             } footer: {
                 Text("Changes you make in System Settings show up here when you come back to Atelier.")
@@ -144,6 +170,7 @@ extension PermissionsPane {
         if snapshot.camera == .notDetermined { _ = await CameraPermission.requestAccess() }
         if snapshot.calendar == .notDetermined { _ = await CalendarPermission.requestAccess() }
         if snapshot.location == .notDetermined { await LocationPermission.requestAccess() }
+        if snapshot.spotify == .notDetermined { await AutomationPermission.requestSpotifyAccess() }
         snapshot = .current()
 
         if snapshot.accessibility != .granted { AccessibilityPermission.requestPrompt() }
@@ -154,6 +181,7 @@ private struct PermissionRow: View {
     let title: String
     let detail: String
     let state: PermissionState
+    var deniedNote: String?
     var grant: (() async -> Void)?
     let openSettings: () -> Void
 
@@ -170,6 +198,11 @@ private struct PermissionRow: View {
                 Text(detail)
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                if state == .denied, let deniedNote {
+                    Text(deniedNote)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
         }
         // One VoiceOver element per row: "Camera, The mirror…, Granted".
@@ -178,7 +211,7 @@ private struct PermissionRow: View {
 
     @ViewBuilder private var action: some View {
         switch state {
-        case .granted:
+        case .granted, .unavailable:
             EmptyView()
         case .denied:
             Button("Open System Settings", action: openSettings)

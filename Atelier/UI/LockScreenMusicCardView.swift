@@ -66,10 +66,10 @@ struct LockScreenMusicCardView: View {
     private static let cardCornerRadius: CGFloat = 26
 
     private var artworkSize: CGFloat { isExpanded ? 60 : 40 }
-    /// A steady ~0.28 ratio of `artworkSize` at both steps, not two
+    /// A steady ~0.22 ratio (Apple's icon squircle) of `artworkSize` at both steps, not two
     /// unrelated fixed values -- keeps the artwork's own curve looking
     /// consistent as it scales, matching the concentric-shape idea above.
-    private var artworkCornerRadius: CGFloat { artworkSize * 0.28 }
+    private var artworkCornerRadius: CGFloat { artworkSize * 0.22 }
     private var titleFontSize: CGFloat { isExpanded ? 14 : 13 }
     private var artistFontSize: CGFloat { isExpanded ? 12 : 11 }
     private var headerSpacing: CGFloat { isExpanded ? 3 : 2 }
@@ -220,14 +220,21 @@ struct LockScreenMusicCardView: View {
                 Image(systemName: "backward.fill")
                     .font(.system(size: 14, weight: .semibold))
             }
+            .accessibilityLabel("Previous")
+            .help("Previous")
             Button(action: onPlayPause) {
                 Image(systemName: info.isPlaying ? "pause.fill" : "play.fill")
                     .font(.system(size: 20, weight: .semibold))
+                    .contentTransition(.symbolEffect(.replace))
             }
+            .accessibilityLabel(info.isPlaying ? "Pause" : "Play")
+            .help(info.isPlaying ? "Pause" : "Play")
             Button(action: onNext) {
                 Image(systemName: "forward.fill")
                     .font(.system(size: 14, weight: .semibold))
             }
+            .accessibilityLabel("Next")
+            .help("Next")
         }
         .buttonStyle(.plain)
         .foregroundStyle(.white)

@@ -76,7 +76,7 @@ final class LockScreenPanelController {
         window.orderFrontRegardless()
         NSAnimationContext.runAnimationGroup { context in
             context.duration = Self.visibilityAnimationDuration
-            context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            context.timingFunction = CAMediaTimingFunction(controlPoints: 0.23, 1, 0.32, 1)
             window.animator().alphaValue = 1
         }
     }
@@ -99,7 +99,7 @@ final class LockScreenPanelController {
 
         NSAnimationContext.runAnimationGroup({ context in
             context.duration = Self.visibilityAnimationDuration
-            context.timingFunction = CAMediaTimingFunction(name: .easeIn)
+            context.timingFunction = CAMediaTimingFunction(controlPoints: 0.23, 1, 0.32, 1)
             window.animator().alphaValue = 0
             window.animator().setFrame(dismissedFrame, display: true)
         }, completionHandler: { [weak window] in

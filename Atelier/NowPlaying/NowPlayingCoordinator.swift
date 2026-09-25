@@ -32,7 +32,7 @@ final class NowPlayingCoordinator: ObservableObject {
         pollTask?.cancel()
         pollTask = Task {
             while !Task.isCancelled {
-                current = await source.fetch()
+                apply(await source.fetch())
                 try? await Task.sleep(for: interval)
             }
         }
@@ -42,7 +42,7 @@ final class NowPlayingCoordinator: ObservableObject {
             let notifications = DistributedNotificationCenter.default()
                 .notifications(named: Self.spotifyPlaybackStateChanged)
             for await _ in notifications {
-                current = await source.fetch()
+                apply(await source.fetch())
             }
         }
     }
@@ -58,9 +58,51 @@ final class NowPlayingCoordinator: ObservableObject {
         interval = expanded ? Self.expandedInterval : Self.idleInterval
     }
 
-    func playPause() async { await source.playPause() }
-    func next() async { await source.next() }
-    func previous() async { await source.previous() }
+    /// While set, polls can't flip the play/shuffle state back to what
+    /// Spotify reported before it had processed our command.
+    private var optimisticHoldUntil = Date.distantPast
+    private static let optimisticHold: TimeInterval = 0.6
+
+    private func apply(_ fetched: NowPlayingInfo?) {
+        if let fetched, let held = current, Date() < optimisticHoldUntil, held.title == fetched.title {
+            current = fetched.with(isPlaying: held.isPlaying, isShuffling: held.isShuffling)
+        } else {
+            current = fetched
+        }
+    }
+
+    /// Flips the icon immediately instead of waiting for the AppleScript
+    /// round trip plus the next poll. The pause before the command lets
+    /// SwiftUI commit the new frame first: AppleScript runs on the main
+    /// thread and would otherwise block the render for its duration.
+    private func showOptimistically(isPlaying: Bool? = nil, isShuffling: Bool? = nil) async {
+        guard let held = current else { return }
+        current = held.with(isPlaying: isPlaying ?? held.isPlaying, isShuffling: isShuffling ?? held.isShuffling)
+        optimisticHoldUntil = Date().addingTimeInterval(Self.optimisticHold)
+        try? await Task.sleep(for: .milliseconds(16))
+    }
+
+    func playPause() async {
+        await showOptimistically(isPlaying: current.map { !$0.isPlaying })
+        await source.playPause()
+        apply(await source.fetch())
+    }
+
+    func next() async {
+        await source.next()
+        apply(await source.fetch())
+    }
+
+    func previous() async {
+        await source.previous()
+        apply(await source.fetch())
+    }
+
     func seek(to time: TimeInterval) async { await source.seek(to: time) }
-    func toggleShuffle() async { await source.toggleShuffle() }
+
+    func toggleShuffle() async {
+        await showOptimistically(isShuffling: current.map { !$0.isShuffling })
+        await source.toggleShuffle()
+        apply(await source.fetch())
+    }
 }

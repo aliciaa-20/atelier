@@ -6,7 +6,7 @@ overall plan is [the design spec](superpowers/specs/2026-08-31-atelier-notch-des
 this file tracks progress against it.
 
 **Where we are:** Phases 0–12 and 14 (camera mirror) shipped, Phase 17 stages 1–3 (teleprompter tab + Ghost Mode + hotkeys) shipped with voice sync next, Phase 16 (Settings window) mostly shipped (Phase 12 so far: color picker + Calendar tab + weather; quick notes/timers not started). Phase 13 (system resource monitor),
-Phase 16 (Automation UX, stable signing, menu-bar icon still open), and Phase 18 (Liquid Glass notch background) are all 🟨 partial — see
+Phase 16 (stable signing still open; the menu-bar icon is a placeholder until the app icon exists), and Phase 18 (Liquid Glass notch background) are all 🟨 partial — see
 their entries below for what's still open (Phase 18 has one known
 unresolved visual bug on close). Phases 9 and 10 detail below is kept as
 historical context from when they were in progress.
@@ -765,8 +765,7 @@ here so the feature survey above ships first.)*
 
 - [x] **Settings window** — surfaced from the `NSStatusItem` menu.
 - [x] **Launch at login** via `SMAppService`.
-- [ ] **Automation-permission UX** (Permissions pane shipped for Accessibility/Calendar/Camera/Location; Spotify Automation deferred — TCC only reveals it by trying) — a visible "grant access" path when TCC is
-      denied, re-checkable from Settings.
+- [x] **Automation-permission UX** — Spotify row in the Permissions pane via `AEDeterminePermissionToAutomateTarget` (only queried while Spotify is running, per Invariant 2; shows "Open Spotify to check" otherwise). Manual on-device check pending.
 - [ ] Stable signing identity (free Apple Personal Team) so rebuilds don't
       re-trigger the Automation prompt every time.
 
@@ -776,19 +775,25 @@ Claude Code mechanic: custom slash commands; `/code-review`.
 - [x] Menu-bar settings tidy-up: "Camera: keep notch open whil…" is truncated
       -- shorten labels; indent dependent sub-toggles (Calendar swipe, Camera
       hold-open) under their parent
-- [ ] Permissions pane: after turning Camera off then on in System Settings, the row can stay
+- [x] (note added, not a fix) Permissions pane: after turning Camera off then on in System Settings, the row can stay
       "Denied" until Atelier relaunches (seen on-device 2026-09-24; probably macOS caching the
       camera answer per process). Parked -- add a "may need a relaunch" note or re-read differently.
-- [ ] Minor review leftovers (see ledger): Grant All keeps showing while Accessibility is off;
-      no window frame autosave; focus not returned after Settings closes; sidebar can lose highlight
-- [ ] Custom template menu-bar icon (currently a generic window SF Symbol)
+- [x] Grant All no longer shows for Accessibility alone; window frame autosaved; sidebar can't lose its highlight
+- [x] Focus returns to the previous app after Settings closes
+- [x] Custom template menu-bar icon (`MenuBarIcon`, drawn in code) — placeholder, to be redrawn from the app icon once that exists
 
 ### ⬜ Native-polish backlog (from ui-review-tahoe, 2026-09-24)
 *Small, independent items; not a numbered phase.*
-- [ ] VoiceOver-adjustable scrubber (`accessibilityValue` + `accessibilityAdjustableAction`)
-- [ ] Trackpad haptics (tab switch, mirror toggle)
-- [ ] Symbol/number morphs (`contentTransition(.numericText())`, `.symbolEffect`)
-- [ ] 9-10pt text bump; concentric corner radii pass
+- [x] VoiceOver-adjustable scrubbers (playback position, Volume, Brightness)
+- [x] Trackpad haptics (`NotchHaptics`: tab switch, mirror toggle, scrub release)
+- [x] Symbol/number morphs (`numericText` on Volume/Brightness/monitor %, `.symbolEffect` on transport)
+- [ ] 9-10pt text bump (done: Calendar, Weather, Volume/Brightness/ColorPicker pills, which all scale down if tight; the 8pt teleprompter ring label is left); edge gaps: cards share `pageHorizontalInset` (26) / `pageBottomInset` (12, = the visible side gap once NotchShape's 14pt edge inset is counted) / `cardCornerRadius` (20 - 12 = 8, concentric); peek + HUD panels use one `peekEdgeGap` (9) to every edge with the artwork radius concentric (14 - 9); other artwork corners ~22%
+- [x] ui-review-tahoe sweep (2026-09-25), batch 1: Shelf remove as a VoiceOver action, labels/decorative hiding on
+      peek/pill/HUD/battery/recording/colour-picker views, HUD announcements for VoiceOver (`HUDAnnouncer`), faint text
+      raised to AA contrast (`dimmedText`, honours Increase Contrast), tab dots grouped as "Notch tabs", press feedback on
+      tab dots/calendar cells/Shelf remove, missing tooltips
+- [ ] ui-review-tahoe leftovers: state shown by colour alone (shuffle on/off, calendar today) for Differentiate Without
+      Color; custom focus ring where `.focusEffectDisabled()` removed it; keyboard shortcut for switching tabs
 - [x] Done in the `fix/native-polish-pass` branch: real-minute clock, locale-aware
       formats, macOS VoiceOver wording, Reduce Motion, tooltips, Shelf empty state
 

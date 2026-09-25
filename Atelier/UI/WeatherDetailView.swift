@@ -61,7 +61,7 @@ struct WeatherDetailView: View {
 
                 Text(condition.quip)
                     .font(.caption2)
-                    .foregroundStyle(.white.opacity(0.45))
+                    .dimmedText()
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
 
@@ -74,8 +74,8 @@ struct WeatherDetailView: View {
                         ForEach(upcoming, id: \.dayKey) { day in
                             VStack(spacing: 2) {
                                 Text(weekday(day))
-                                    .font(.system(size: 9, weight: .medium))
-                                    .foregroundStyle(.white.opacity(0.45))
+                                    .font(.system(size: 10, weight: .medium))
+                                    .dimmedText()
                                 Image(systemName: day.condition.symbol)
                                     .symbolRenderingMode(.multicolor)
                                     .font(.system(size: 12))
@@ -102,6 +102,7 @@ struct WeatherDetailView: View {
         .focusEffectDisabled()
         .accessibilityLabel("Weather, \(condition.label), \(degrees(snapshot.currentTemp)). \(condition.quip)")
         .accessibilityHint("Press to go back to the clock")
+        .help("Back to the clock")
     }
 
     private func weekday(_ day: DayWeather) -> String {
@@ -117,6 +118,6 @@ struct SoftPressButtonStyle: ButtonStyle {
         configuration.label
             .scaleEffect(configuration.isPressed ? 0.97 : 1)
             .opacity(configuration.isPressed ? 0.7 : 1)
-            .animation(.spring(response: 0.2, dampingFraction: 0.7), value: configuration.isPressed)
+            .animation(NotchAnimations.press, value: configuration.isPressed)
     }
 }

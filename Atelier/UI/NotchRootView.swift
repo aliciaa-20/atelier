@@ -25,21 +25,17 @@ struct NotchRootView: View {
     /// whenever the notch leaves `.expanded`.
     @State private var weatherDetailOpen = false
     @State private var settleScale: CGFloat = 1
-    /// A brief dip-and-recover applied to the *whole already-composited*
-    /// panel on close -- not a per-branch `.opacity`/`.transition` on
-    /// background or content separately. Those were tried (twice) to get a
-    /// "fade" feel and both reintroduced real bugs: fading the glass
-    /// background while its own shape was resizing rendered a wrong-sized
-    /// rectangle, and fading content independently let it render past the
-    /// clip during removal. A single opacity value on the outer view,
-    /// after background+content are already combined into one image,
-    /// can't drift out of sync with itself -- same reasoning as
-    /// `settleScale` below, reused for the same reason.
-    @State private var closeFadeOpacity: CGFloat = 1
-    /// Paired with `closeFadeOpacity` -- a scale dip anchored `.top` (the
-    /// same anchor the real notch sits at) so the panel visibly gets
-    /// pulled back toward the notch's own position while it fades, not
-    /// just shrinking symmetrically in place. Separate from `settleScale`
+    /// The last HUD shown, kept so it can fade out instead of vanishing when
+    /// its source clears it.
+    @State private var lastHUD: LiveActivityContent?
+    /// `hudActive` delayed into a `withAnimation` transaction; drives all HUD layout/visuals.
+    @State private var hudShown = false
+    /// Shared by the pill/peek/expanded artwork (`ArtworkView`) so the cover
+    /// appears to travel between them.
+    @Namespace private var artworkNamespace
+    /// A small scale dip anchored `.top` (the same anchor the real notch
+    /// sits at) so the panel visibly gets pulled back toward the notch's
+    /// own position on close, not just shrinking symmetrically in place. Separate from `settleScale`
     /// (Space-change tuck) so the two triggers can't stomp each other's
     /// in-flight animation.
     @State private var closeScale: CGFloat = 1
@@ -84,11 +80,12 @@ struct NotchRootView: View {
         case .pill:
             return (top: 6, bottom: 11)
         case .expanded:
-            return (top: 14, bottom: 20)
+            if hudShown { return (top: NotchLayout.peekTopRadius, bottom: NotchLayout.peekBottomRadius) }
+            return (top: NotchLayout.panelTopRadius, bottom: NotchLayout.panelBottomRadius)
         case .peeking:
-            return (top: 6, bottom: 14)
+            return (top: NotchLayout.peekTopRadius, bottom: NotchLayout.peekBottomRadius)
         case .shelf:
-            return (top: 14, bottom: 20)
+            return (top: NotchLayout.panelTopRadius, bottom: NotchLayout.panelBottomRadius)
         }
     }
 
@@ -122,6 +119,9 @@ struct NotchRootView: View {
             let content = liveActivity.topContent ?? lastPeekContent
             return content?.isExpandable == false ? viewModel.compactPeekSize : viewModel.peekSize
         case .expanded:
+            // A volume/brightness HUD while hover-open: the compact peek size
+            // instead of the full player footprint, then back.
+            if hudShown { return viewModel.compactPeekSize }
             // Idle Home (nothing playing, Home tab) gets its own shorter
             // footprint -- far less to show than a real player or the
             // shelf grid, so it shouldn't claim the same vertical space.
@@ -221,7 +221,7 @@ struct NotchRootView: View {
                         // switcher with one destination.
                         if NotchTabBar.activePages.count > 1 {
                             NotchTabBar(currentPage: viewModel.currentPage) { page in
-                                withAnimation(NotchAnimations.open) {
+                                withAnimation(NotchAnimations.page) {
                                     viewModel.selectPage(page)
                                 }
                             }
@@ -247,48 +247,58 @@ struct NotchRootView: View {
                             Color.clear.frame(height: viewModel.collapsedSize.height + 5)
                         }
 
-                        if AtelierSettings.shelfEnabled, viewModel.currentPage == .shelf {
-                            ShelfView(store: shelfStore, rootDirectory: shelfStore.rootDirectory, notchHeight: 0)
-                                .onAppear { shelfStore.sweepExpired() }
-                        } else if AtelierSettings.systemMonitorEnabled, viewModel.currentPage == .systemMonitor {
-                            SystemMonitorPageView(source: systemMonitor)
-                        } else if AtelierSettings.calendarEnabled, viewModel.currentPage == .calendar {
-                            CalendarPageView(source: calendar)
-                        } else if AtelierSettings.cameraEnabled, viewModel.currentPage == .camera {
-                            CameraMirrorPageView(source: camera) {
-                                // Hold-open mode: turning the mirror off
-                                // means you're done, so close the notch now
-                                // instead of waiting for the pointer to leave.
-                                guard AtelierSettings.cameraHoldOpen else { return }
-                                withAnimation(NotchAnimations.close) {
-                                    viewModel.handle(.hoverEnded(isPlaying: liveActivity.hasContent))
+                        // Pages overlap in a ZStack (not the VStack) so the outgoing page never
+                        // pushes the incoming one down mid-swap; `.id` gives each page its own
+                        // identity so the transition below actually runs. The outer notch
+                        // container stays `.transition(.identity)` (ADR 0014).
+                        ZStack(alignment: .top) {
+                            Group {
+                                if AtelierSettings.shelfEnabled, viewModel.currentPage == .shelf {
+                                    ShelfView(store: shelfStore, rootDirectory: shelfStore.rootDirectory, notchHeight: 0)
+                                        .onAppear { shelfStore.sweepExpired() }
+                                } else if AtelierSettings.systemMonitorEnabled, viewModel.currentPage == .systemMonitor {
+                                    SystemMonitorPageView(source: systemMonitor)
+                                } else if AtelierSettings.calendarEnabled, viewModel.currentPage == .calendar {
+                                    CalendarPageView(source: calendar)
+                                } else if AtelierSettings.cameraEnabled, viewModel.currentPage == .camera {
+                                    CameraMirrorPageView(source: camera) {
+                                        // Hold-open mode: turning the mirror off
+                                        // means you're done, so close the notch now
+                                        // instead of waiting for the pointer to leave.
+                                        guard AtelierSettings.cameraHoldOpen else { return }
+                                        withAnimation(NotchAnimations.close) {
+                                            viewModel.handle(.hoverEnded(isPlaying: liveActivity.hasContent))
+                                        }
+                                    }
+                                } else if AtelierSettings.teleprompterEnabled, viewModel.currentPage == .teleprompter {
+                                    TeleprompterPageView(model: teleprompter)
+                                } else {
+                                    ExpandedPlayerView(
+                                        info: nowPlaying.current,
+                                        weather: weather,
+                                        weatherDetailOpen: $weatherDetailOpen,
+                                        waveformColor: artworkColor.color,
+                                        audioTap: audioTap,
+                                        outputDevices: outputDevices,
+                                        currentOutputDeviceID: currentOutputDeviceID,
+                                        onPlayPause: { Task { await nowPlaying.playPause() } },
+                                        onNext: { Task { await nowPlaying.next() } },
+                                        onPrevious: { Task { await nowPlaying.previous() } },
+                                        onSeek: { time in Task { await nowPlaying.seek(to: time) } },
+                                        onToggleShuffle: { Task { await nowPlaying.toggleShuffle() } },
+                                        onSelectOutputDevice: { deviceID in
+                                            OutputDeviceManager.setDefaultOutputDevice(deviceID)
+                                            currentOutputDeviceID = deviceID
+                                        }
+                                    )
+                                    .onAppear {
+                                        outputDevices = OutputDeviceManager.availableOutputDevices()
+                                        currentOutputDeviceID = OutputDeviceManager.currentDefaultOutputDevice()
+                                    }
                                 }
                             }
-                        } else if AtelierSettings.teleprompterEnabled, viewModel.currentPage == .teleprompter {
-                            TeleprompterPageView(model: teleprompter)
-                        } else {
-                            ExpandedPlayerView(
-                                info: nowPlaying.current,
-                                weather: weather,
-                                weatherDetailOpen: $weatherDetailOpen,
-                                waveformColor: artworkColor.color,
-                                audioTap: audioTap,
-                                outputDevices: outputDevices,
-                                currentOutputDeviceID: currentOutputDeviceID,
-                                onPlayPause: { Task { await nowPlaying.playPause() } },
-                                onNext: { Task { await nowPlaying.next() } },
-                                onPrevious: { Task { await nowPlaying.previous() } },
-                                onSeek: { time in Task { await nowPlaying.seek(to: time) } },
-                                onToggleShuffle: { Task { await nowPlaying.toggleShuffle() } },
-                                onSelectOutputDevice: { deviceID in
-                                    OutputDeviceManager.setDefaultOutputDevice(deviceID)
-                                    currentOutputDeviceID = deviceID
-                                }
-                            )
-                            .onAppear {
-                                outputDevices = OutputDeviceManager.availableOutputDevices()
-                                currentOutputDeviceID = OutputDeviceManager.currentDefaultOutputDevice()
-                            }
+                            .id(viewModel.currentPage)
+                            .transition(pageTransition)
                         }
                     }
                     // Root cause of the idle clock bleeding past the
@@ -307,6 +317,14 @@ struct NotchRootView: View {
                     // the shared wrapper, rather than in each page
                     // individually, so no future page can reintroduce it.
                     .frame(maxHeight: .infinity, alignment: .top)
+                    // A volume/brightness HUD over the hover-open notch: one spring
+                    // (`NotchAnimations.hud`) morphs the panel and cross-dissolves the
+                    // two contents with a slight scale + blur (see the doc there). One
+                    // continuous, interruptible animation rather than a view swap.
+                    .opacity(hudShown ? 0 : 1)
+                    .scaleEffect(hudShown ? NotchAnimations.hudContentScale : 1, anchor: .top)
+                    .blur(radius: hudShown ? NotchAnimations.hudContentBlur : 0)
+                    .allowsHitTesting(!hudShown)
                     .overlay(alignment: .top) {
                         if AtelierSettings.teleprompterEnabled, viewModel.currentPage == .teleprompter {
                             TeleprompterControlStrip(
@@ -379,6 +397,23 @@ struct NotchRootView: View {
                 }
             }
             .frame(width: frameSize.width, height: frameSize.height)
+            // The volume/brightness HUD is an overlay on the panel-sized view (before
+            // the clip), so it is centred on the animating frame by construction. As a
+            // ZStack sibling it was laid out against the player's larger width and sat
+            // left-aligned mid-morph.
+            .overlay(alignment: .top) {
+                if viewModel.state == .expanded, let hud = transientHUD ?? lastHUD {
+                    hud.peekView()
+                        .frame(width: viewModel.compactPeekSize.width, height: viewModel.compactPeekSize.height)
+                        .opacity(hudShown ? 1 : 0)
+                        .scaleEffect(hudShown ? 1 : NotchAnimations.hudContentScale, anchor: .top)
+                        .blur(radius: hudShown ? 0 : NotchAnimations.hudContentBlur)
+                        .allowsHitTesting(hudShown)
+                        // Notch closing while the bar is up: fade it out instead of
+                        // snapping to the pill's percent text.
+                        .transition(.asymmetric(insertion: .identity, removal: .opacity.animation(.easeOut(duration: 0.2))))
+                }
+            }
             .clipShape(NotchShape(topCornerRadius: cornerRadii.top, bottomCornerRadius: cornerRadii.bottom))
             // No shadow while `.collapsed` -- Invariant 7 requires that
             // state to be visually indistinguishable from the stock notch,
@@ -389,7 +424,8 @@ struct NotchRootView: View {
             .shadow(color: .black.opacity(viewModel.state == .collapsed ? 0 : 0.25), radius: 8, y: 2)
             .scaleEffect(settleScale, anchor: .top)
             .scaleEffect(closeScale, anchor: .top)
-            .opacity(closeFadeOpacity)
+            .environment(\.artworkNamespace,
+                         NSWorkspace.shared.accessibilityDisplayShouldReduceMotion ? nil : artworkNamespace)
             .contentShape(Rectangle())
             .onHover { hovering in
                 pointerInside = hovering
@@ -414,7 +450,9 @@ struct NotchRootView: View {
                 // hover-driven transition needed. `nil` topContent
                 // (nothing peeking right now) keeps the original
                 // hover-to-open behavior for the plain notch/pill.
-                guard liveActivity.topContent?.isExpandable ?? true else { return }
+                // Already hover-open (e.g. a volume HUD took over): exits must
+                // still get through, or the notch never retracts.
+                guard viewModel.state == .expanded || (liveActivity.topContent?.isExpandable ?? true) else { return }
 
                 if hovering {
                     withAnimation(NotchAnimations.open) {
@@ -422,6 +460,10 @@ struct NotchRootView: View {
                     }
                 } else {
                     if menuTracking { return }
+                    // The HUD shrinks the panel, so the pointer usually ends up
+                    // outside it. Don't close under the HUD; the check below
+                    // retracts when it ends and the pointer really is away.
+                    if transientHUD != nil { return }
                     // Camera hold-open: only hover-out is suppressed; swipe-close
                     // and tab changes still close/stop (see `CameraHoldOpen`).
                     if CameraHoldOpen.shouldSuppressRetract(
@@ -543,14 +585,14 @@ struct NotchRootView: View {
                     },
                     onSkipForward: {
                         if onCalendarPage {
-                            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { calendar.shiftWeek(by: 1) }
+                            withAnimation(NotchAnimations.standard) { calendar.shiftWeek(by: 1) }
                         } else {
                             Task { await nowPlaying.next() }
                         }
                     },
                     onSkipBackward: {
                         if onCalendarPage {
-                            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { calendar.shiftWeek(by: -1) }
+                            withAnimation(NotchAnimations.standard) { calendar.shiftWeek(by: -1) }
                         } else {
                             Task { await nowPlaying.previous() }
                         }
@@ -632,6 +674,23 @@ struct NotchRootView: View {
         .onChange(of: nowPlaying.current?.artworkURL) { _, url in
             artworkColor.load(from: url)
         }
+        .onChange(of: transientHUD?.id) { _, _ in
+            if let hud = transientHUD { lastHUD = hud }
+        }
+        // A real `withAnimation` transaction (not `.animation(value:)`) so the
+        // panel's size, its centring in the window, the corner radii and both
+        // contents all animate as one -- exactly like the normal open/close.
+        // `.animation(value:)` left the centring on the final size, so the panel
+        // lurched to one side (right on the way in, left on the way out).
+        .onChange(of: hudActive) { _, active in
+            withAnimation(NotchAnimations.hud) { hudShown = active }
+        }
+        .onChange(of: transientHUD == nil) { _, hudGone in
+            guard hudGone, viewModel.state == .expanded, !pointerOverExpandedPanel() else { return }
+            withAnimation(NotchAnimations.close) {
+                viewModel.handle(.hoverEnded(isPlaying: liveActivity.hasContent))
+            }
+        }
         .onChange(of: liveActivity.topContent?.id) { _, _ in
             if let topContent = liveActivity.topContent {
                 lastPeekContent = topContent
@@ -639,11 +698,50 @@ struct NotchRootView: View {
         }
     }
 
+    /// Whether the mouse is over the (now full-size) expanded panel -- the
+    /// panel is always max-sized and top-centred, so compare against the
+    /// visible `frameSize` rect within it.
+    private func pointerOverExpandedPanel() -> Bool {
+        guard let panel = NSApp.windows.first(where: { $0 is NotchPanel }) else { return false }
+        let size = frameSize
+        let rect = CGRect(
+            x: panel.frame.midX - size.width / 2,
+            y: panel.frame.maxY - size.height,
+            width: size.width,
+            height: size.height
+        )
+        return rect.contains(NSEvent.mouseLocation)
+    }
+
+    /// A brief, peek-worthy, non-expandable activity (Volume, Brightness,
+    /// picked colour) that should surface even while the notch is already
+    /// hover-open.
+    private var hudActive: Bool { transientHUD != nil }
+
+    private var transientHUD: LiveActivityContent? {
+        guard let content = liveActivity.topContent, !content.isExpandable, content.peeksOnChange else { return nil }
+        return content
+    }
+
+    /// Page swap: the new page settles in (fade + slight scale), the old one
+    /// leaves faster, so the swap never shows two pages at full strength.
+    /// Reduce Motion drops the scale.
+    private var pageTransition: AnyTransition {
+        if NSWorkspace.shared.accessibilityDisplayShouldReduceMotion {
+            return .opacity
+        }
+        return .asymmetric(
+            insertion: .opacity.combined(with: .scale(scale: 0.97, anchor: .top)).animation(.easeOut(duration: 0.2)),
+            removal: .opacity.animation(.easeOut(duration: 0.12))
+        )
+    }
+
     /// A quick tuck-and-spring-back when landing on a new Space, so the
     /// notch staying fixed through the swipe (unavoidable — see
     /// `NotchViewModel.spaceChangeTick`) reads as an intentional arrival cue
     /// rather than an accidental float.
     private func playSettleAnimation() {
+        guard !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion else { return }
         withAnimation(NotchAnimations.settleTuck) {
             settleScale = 0.55
         }
@@ -652,20 +750,15 @@ struct NotchRootView: View {
         }
     }
 
-    /// A quick dip-and-recover on the whole panel's opacity and scale,
-    /// layered on top of `cornerRadii`/`frameSize`'s own shrink -- gives
-    /// the close a sense of being pulled back into the notch (scale, `.top`
-    /// anchored) while fading, instead of just shrinking symmetrically in
-    /// place. Doesn't touch background/content transitions individually
-    /// (see `closeFadeOpacity`'s own doc for why that's the safe way to do
-    /// this).
+    /// One spring: the whole panel starts slightly under-scale and settles
+    /// to 1 with the close curve, layered on `cornerRadii`/`frameSize`'s own
+    /// shrink so the close reads as pulled back into the notch. No opacity
+    /// change -- a collapsed notch must match the stock one (Invariant 7),
+    /// and an earlier easeOut dip was cut off by a second delayed animation
+    /// on the same properties.
     private func playCloseFadeAnimation() {
-        withAnimation(.easeOut(duration: 0.18)) {
-            closeFadeOpacity = 0.55
-            closeScale = 0.85
-        }
-        withAnimation(NotchAnimations.close.delay(0.05)) {
-            closeFadeOpacity = 1
+        closeScale = 0.96
+        withAnimation(NotchAnimations.close) {
             closeScale = 1
         }
     }
