@@ -779,7 +779,7 @@ Claude Code mechanic: custom slash commands; `/code-review`.
       "Denied" until Atelier relaunches (seen on-device 2026-09-24; probably macOS caching the
       camera answer per process). Parked -- add a "may need a relaunch" note or re-read differently.
 - [x] Grant All no longer shows for Accessibility alone; window frame autosaved; sidebar can't lose its highlight
-- [ ] Focus not returned to the previous app after Settings closes
+- [x] Focus returns to the previous app after Settings closes
 - [x] Custom template menu-bar icon (`MenuBarIcon`, drawn in code) — check how it reads on-device
 
 ### ⬜ Native-polish backlog (from ui-review-tahoe, 2026-09-24)
@@ -787,7 +787,7 @@ Claude Code mechanic: custom slash commands; `/code-review`.
 - [x] VoiceOver-adjustable scrubbers (playback position, Volume, Brightness)
 - [x] Trackpad haptics (`NotchHaptics`: tab switch, mirror toggle, scrub release)
 - [x] Symbol/number morphs (`numericText` on Volume/Brightness/monitor %, `.symbolEffect` on transport)
-- [ ] 9-10pt text bump (only Calendar/Weather 9->10 done; HUD pills are width-constrained, needs on-device check); concentric corner radii pass
+- [ ] 9-10pt text bump (done: Calendar, Weather, Volume/Brightness/ColorPicker pills, which all scale down if tight; the 8pt teleprompter ring label is left); concentric corner radii pass parked -- cards use 16pt inside the 20pt panel corner at 26/12pt insets, needs a screenshot to judge
 - [x] Done in the `fix/native-polish-pass` branch: real-minute clock, locale-aware
       formats, macOS VoiceOver wording, Reduce Motion, tooltips, Shelf empty state
 

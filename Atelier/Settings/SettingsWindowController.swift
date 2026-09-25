@@ -14,9 +14,16 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
     static let shared = SettingsWindowController()
 
     private var window: NSWindow?
+    /// Whatever app was in front when Settings opened, so closing Settings
+    /// hands focus back to it instead of leaving nothing active.
+    private var previousApp: NSRunningApplication?
 
     /// `pane` opens (or switches an already-open window to) that pane.
     func show(pane: SettingsPane? = nil) {
+        if window == nil {
+            let front = NSWorkspace.shared.frontmostApplication
+            previousApp = front?.processIdentifier == ProcessInfo.processInfo.processIdentifier ? nil : front
+        }
         // A Dock icon appears while Settings is open; it goes away on close.
         NSApp.setActivationPolicy(.regular)
 
@@ -51,5 +58,7 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
         window?.delegate = nil
         window = nil
         NSApp.setActivationPolicy(.accessory)
+        previousApp?.activate()
+        previousApp = nil
     }
 }
