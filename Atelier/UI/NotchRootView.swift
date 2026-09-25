@@ -244,7 +244,17 @@ struct NotchRootView: View {
                         // container stays `.transition(.identity)` (ADR 0014).
                         ZStack(alignment: .top) {
                             Group {
-                                if AtelierSettings.shelfEnabled, viewModel.currentPage == .shelf {
+                                if let hud = transientHUD {
+                                    // Volume/brightness (etc.) changed while the notch is hover-open.
+                                    // The system HUD is suppressed, so without this there is no
+                                    // feedback at all. Same bar as the peek, centred in the page
+                                    // area; the player returns when the source clears it.
+                                    hud.peekView()
+                                        // The peek bakes in the notch clearance; the tab bar row
+                                        // above already provides it here.
+                                        .padding(.top, -(viewModel.collapsedSize.height + 2))
+                                        .frame(maxHeight: .infinity, alignment: .center)
+                                } else if AtelierSettings.shelfEnabled, viewModel.currentPage == .shelf {
                                     ShelfView(store: shelfStore, rootDirectory: shelfStore.rootDirectory, notchHeight: 0)
                                         .onAppear { shelfStore.sweepExpired() }
                                 } else if AtelierSettings.systemMonitorEnabled, viewModel.currentPage == .systemMonitor {
@@ -290,6 +300,7 @@ struct NotchRootView: View {
                             }
                             .id(viewModel.currentPage)
                             .transition(pageTransition)
+                            .animation(.easeOut(duration: 0.15), value: transientHUD == nil)
                         }
                     }
                     // Root cause of the idle clock bleeding past the
@@ -639,6 +650,14 @@ struct NotchRootView: View {
                 lastPeekContent = topContent
             }
         }
+    }
+
+    /// A brief, peek-worthy, non-expandable activity (Volume, Brightness,
+    /// picked colour) that should surface even while the notch is already
+    /// hover-open.
+    private var transientHUD: LiveActivityContent? {
+        guard let content = liveActivity.topContent, !content.isExpandable, content.peeksOnChange else { return nil }
+        return content
     }
 
     /// Page swap: the new page settles in (fade + slight scale), the old one
