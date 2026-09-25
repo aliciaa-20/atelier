@@ -35,4 +35,18 @@ struct TeleprompterLinesTests {
         let many = TeleprompterLines(starts: Array(0..<10).map { $0 * 3 }, totalWords: 30)
         #expect(many.visibleLines(around: 5.2, behind: 2, ahead: 3) == 3..<9)
     }
+
+    // Scrolling the script by hand needs the inverse of `linePosition`.
+    @Test func wordPositionIsTheInverseOfLinePosition() {
+        for word in [0.0, 1.0, 2.0, 4.0, 6.5, 9.0, 11.0, 12.0] {
+            let line = lines.linePosition(forWord: word)
+            #expect(abs(lines.wordPosition(forLine: line) - word) < 0.000_001, "word \(word)")
+        }
+    }
+
+    @Test func wordPositionClampsAndHandlesNoLines() {
+        #expect(lines.wordPosition(forLine: -2) == 0)
+        #expect(lines.wordPosition(forLine: 99) == 12)
+        #expect(TeleprompterLines.empty.wordPosition(forLine: 3) == 0)
+    }
 }

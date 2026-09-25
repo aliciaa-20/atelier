@@ -32,6 +32,18 @@ struct TeleprompterLines: Equatable {
         return Double(lo) + min(fraction, 1)
     }
 
+    /// Inverse of `linePosition(forWord:)`: the (fractional) word index at a
+    /// (fractional) line position, clamped to the script. Lets a hand scroll
+    /// measured in lines move the word position.
+    func wordPosition(forLine line: Double) -> Double {
+        guard !starts.isEmpty else { return 0 }
+        let clamped = min(max(line, 0), Double(starts.count))
+        let index = min(Int(clamped), starts.count - 1)
+        let lineStart = Double(starts[index])
+        let lineEnd = index + 1 < starts.count ? Double(starts[index + 1]) : Double(totalWords)
+        return lineStart + (lineEnd - lineStart) * min(clamped - Double(index), 1)
+    }
+
     func currentLine(forWord word: Double) -> Int {
         guard !starts.isEmpty else { return 0 }
         return min(Int(linePosition(forWord: word)), starts.count - 1)

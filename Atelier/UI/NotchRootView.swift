@@ -101,6 +101,13 @@ struct NotchRootView: View {
     /// everything else already uses reads more consistent.
     /// True while the expanded notch is showing the Calendar tab -- the
     /// horizontal swipe changes week there rather than skipping a track.
+    /// Teleprompter page while paused: a vertical swipe scrolls the script,
+    /// so it must not also close the notch (hover-out still does).
+    private var teleprompterOwnsVerticalSwipe: Bool {
+        viewModel.state == .expanded && AtelierSettings.teleprompterEnabled
+            && viewModel.currentPage == .teleprompter && !teleprompter.wantsNotchOpen
+    }
+
     private var onCalendarPage: Bool {
         viewModel.state == .expanded && AtelierSettings.calendarEnabled && viewModel.currentPage == .calendar
     }
@@ -474,7 +481,8 @@ struct NotchRootView: View {
                 NotchGestureModifier(
                     capabilities: NotchGestureCapabilities(
                         canOpen: viewModel.state == .collapsed || viewModel.state == .pill,
-                        canClose: viewModel.state == .expanded || viewModel.state == .peeking || viewModel.state == .shelf,
+                        canClose: (viewModel.state == .expanded || viewModel.state == .peeking || viewModel.state == .shelf)
+                            && !teleprompterOwnsVerticalSwipe,
                         // Not `liveActivity.topContent?.isExpandable` --
                         // `NowPlayingLiveActivitySource` deliberately
                         // publishes nil while paused (so the pill

@@ -68,6 +68,11 @@ struct TeleprompterPageView: View {
             .accessibilityValue(model.lineText(current))
         }
         .allowsHitTesting(false)
+        // Paused: scroll the script by hand (ignored by the model while
+        // playing). Content follows the fingers, like any scroll view.
+        .background(TeleprompterScrollCatcher { deltaY in
+            model.scrollLines(by: -Double(deltaY) / lineHeight)
+        })
     }
 
     /// Focus Guide: current line full, read lines dim, upcoming lines mid.
