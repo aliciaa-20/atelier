@@ -1,6 +1,6 @@
 # 002 — Use the damped `page` spring for tab switches and non-hover state changes
 
-- **Status**: TODO (depends on 001)
+- **Status**: DONE (unverified on-device)
 - **Commit**: a793545
 - **Severity**: MEDIUM
 - **Category**: Purpose & frequency / Cohesion

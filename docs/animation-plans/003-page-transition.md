@@ -1,6 +1,6 @@
 # 003 — Give page swaps an explicit transition
 
-- **Status**: TODO (depends on 002)
+- **Status**: DONE (unverified on-device)
 - **Commit**: a793545
 - **Severity**: MEDIUM
 - **Category**: Physicality & origin

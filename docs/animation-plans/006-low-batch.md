@@ -1,6 +1,6 @@
 # 006 — Reduce Motion on settle, waveform retarget, parallax coalescing
 
-- **Status**: TODO
+- **Status**: DONE (unverified on-device)
 - **Commit**: a793545
 - **Severity**: LOW
 - **Category**: Accessibility / Performance
