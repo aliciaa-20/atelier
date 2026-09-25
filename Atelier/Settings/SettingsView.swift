@@ -29,8 +29,18 @@ enum SettingsPane: String, CaseIterable, Identifiable {
 /// merges with the window toolbar and adds a blurred scroll-edge band that
 /// panes scrolled underneath on load, hiding their first section. With no
 /// toolbar there is no band, so nothing can hide.
+extension Notification.Name {
+    /// Posted with a `SettingsPane` as the object to switch an already-open
+    /// Settings window to that pane.
+    static let atelierSelectSettingsPane = Notification.Name("AtelierSelectSettingsPane")
+}
+
 struct SettingsView: View {
-    @State private var selection: SettingsPane? = .general
+    @State private var selection: SettingsPane?
+
+    init(initialPane: SettingsPane = .general) {
+        _selection = State(initialValue: initialPane)
+    }
 
     var body: some View {
         HStack(spacing: 0) {
@@ -56,5 +66,8 @@ struct SettingsView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .frame(minWidth: 620, minHeight: 420)
+        .onReceive(NotificationCenter.default.publisher(for: .atelierSelectSettingsPane)) { note in
+            if let pane = note.object as? SettingsPane { selection = pane }
+        }
     }
 }

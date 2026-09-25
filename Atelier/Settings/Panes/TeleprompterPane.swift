@@ -39,8 +39,8 @@ struct TeleprompterPane: View {
                         Text("Paste or type your script here")
                             .font(.body)
                             .foregroundStyle(.tertiary)
-                            .padding(.top, 8)
-                            .padding(.leading, 6)
+                            .padding(.top, 0)
+                            .padding(.leading, 4)
                             .allowsHitTesting(false)
                     }
                 }
@@ -129,7 +129,8 @@ struct TeleprompterPane: View {
         )
         .contentShape(Rectangle())
         .dropDestination(for: URL.self, action: handleDrop, isTargeted: { dropTargeted = $0 })
-        .animation(.easeOut(duration: 0.15), value: dropTargeted)
+        .scaleEffect(dropTargeted ? 1.015 : 1)
+        .animation(.spring(duration: 0.3, bounce: 0.25), value: dropTargeted)
         .accessibilityElement(children: .contain)
     }
 

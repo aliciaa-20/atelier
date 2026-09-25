@@ -60,6 +60,7 @@ struct TeleprompterPageView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             .clipped()
             .mask(edgeFade)
+            .mask(sideFade)
             // One element for VoiceOver: the current line, not every Text.
             // Inside the ticker so the value follows the scroll instead of
             // going stale while playing.
@@ -82,6 +83,21 @@ struct TeleprompterPageView: View {
         return 0.7
     }
 
+    /// A few points of horizontal fade, so a word wider than the panel dissolves
+    /// at the edge instead of being cut off hard.
+    private var sideFade: some View {
+        LinearGradient(
+            stops: [
+                .init(color: .clear, location: 0),
+                .init(color: .black, location: 0.03),
+                .init(color: .black, location: 0.97),
+                .init(color: .clear, location: 1)
+            ],
+            startPoint: .leading,
+            endPoint: .trailing
+        )
+    }
+
     private var edgeFade: some View {
         LinearGradient(
             stops: [
@@ -98,7 +114,7 @@ struct TeleprompterPageView: View {
     /// The shared empty-state style: soft card, one SF Symbol, one short line.
     private var emptyState: some View {
         Button {
-            SettingsWindowController.shared.show()
+            SettingsWindowController.shared.show(pane: .teleprompter)
         } label: {
             ZStack {
                 RoundedRectangle(cornerRadius: 16, style: .continuous)

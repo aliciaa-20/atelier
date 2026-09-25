@@ -15,19 +15,22 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
 
     private var window: NSWindow?
 
-    func show() {
+    /// `pane` opens (or switches an already-open window to) that pane.
+    func show(pane: SettingsPane? = nil) {
         // A Dock icon appears while Settings is open; it goes away on close.
         NSApp.setActivationPolicy(.regular)
 
         if window == nil {
-            window = makeWindow()
+            window = makeWindow(initialPane: pane ?? .general)
             window?.center()
+        } else if let pane {
+            NotificationCenter.default.post(name: .atelierSelectSettingsPane, object: pane)
         }
         NSApp.activate()
         window?.makeKeyAndOrderFront(nil)
     }
 
-    private func makeWindow() -> NSWindow {
+    private func makeWindow(initialPane: SettingsPane) -> NSWindow {
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 680, height: 480),
             styleMask: [.titled, .closable, .miniaturizable, .resizable],
@@ -37,7 +40,7 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
         window.title = "Atelier Settings"
         // ARC, not AppKit, owns this window's lifetime (see `windowWillClose`).
         window.isReleasedWhenClosed = false
-        window.contentView = NSHostingView(rootView: SettingsView())
+        window.contentView = NSHostingView(rootView: SettingsView(initialPane: initialPane))
         window.delegate = self
         return window
     }

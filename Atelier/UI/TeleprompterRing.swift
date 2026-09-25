@@ -6,6 +6,7 @@ import SwiftUI
 /// separate view: that one is private, 64pt, and carries an icon + label.
 /// ~28pt is tight for text, so the label scales down; confirm on-device.
 struct TeleprompterRing: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let fraction: Double
     /// Centered text, e.g. "2:41" (time remaining).
     let label: String
@@ -23,6 +24,8 @@ struct TeleprompterRing: View {
                 .trim(from: 0, to: CGFloat(min(max(fraction, 0), 1)))
                 .stroke(Color.white, style: StrokeStyle(lineWidth: Self.lineWidth, lineCap: .round))
                 .rotationEffect(.degrees(-90))
+                // Glides between ticks like Apple's own rings.
+                .animation(reduceMotion ? nil : .smooth(duration: 0.4), value: fraction)
             Text(label)
                 .font(.system(size: 8, weight: .semibold).monospacedDigit())
                 .minimumScaleFactor(0.7)
