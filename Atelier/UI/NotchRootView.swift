@@ -395,20 +395,24 @@ struct NotchRootView: View {
                         .transition(.identity)
                 }
 
-                // The HUD is a sibling of the player, not an overlay on it: the
-                // player is taller than the compact frame and gets centred in
-                // the ZStack, so an overlay rode up with it and the bar landed
-                // above the visible area (an empty notch).
+                // The HUD is a sibling of the player, not an overlay on it: an
+                // overlay rides along with the player, which is larger than the
+                // compact frame and centred in the ZStack.
                 if viewModel.state == .expanded, let hud = transientHUD ?? lastHUD {
+                    // Fixed compact size, then pinned to the panel's own frame: the
+                    // ZStack is as big as its tallest/widest child (the player), so
+                    // anything that just fills it would be laid out at player size
+                    // and clipped.
                     hud.peekView()
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                        .frame(width: viewModel.compactPeekSize.width, height: viewModel.compactPeekSize.height)
+                        .frame(width: frameSize.width, height: frameSize.height, alignment: .top)
                         .opacity(hudActive ? 1 : 0)
                         .allowsHitTesting(hudActive)
                         .animation(hudActive ? .easeOut(duration: 0.2).delay(0.08) : .easeOut(duration: 0.15), value: hudActive)
                         .transition(.identity)
                 }
             }
-            .frame(width: frameSize.width, height: frameSize.height, alignment: .top)
+            .frame(width: frameSize.width, height: frameSize.height)
             .clipShape(NotchShape(topCornerRadius: cornerRadii.top, bottomCornerRadius: cornerRadii.bottom))
             .animation(NotchAnimations.hud, value: hudActive)
             // No shadow while `.collapsed` -- Invariant 7 requires that

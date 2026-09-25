@@ -3,6 +3,11 @@ import AppKit
 struct SpotifySource: NowPlayingSource {
     private static let bundleID = "com.spotify.client"
 
+    /// Every script below also re-checks `application "Spotify" is running`
+    /// *inside* AppleScript: `isAvailable` alone races -- Spotify posts a
+    /// playback notification while quitting, we poll, it exits between the
+    /// check and the Apple Event, and the event relaunches it (confirmed:
+    /// quitting Spotify with Atelier open brought it straight back).
     var isAvailable: Bool {
         NSWorkspace.shared.runningApplications.contains { $0.bundleIdentifier == Self.bundleID }
     }
@@ -14,27 +19,27 @@ struct SpotifySource: NowPlayingSource {
 
     func playPause() async {
         guard isAvailable else { return }
-        _ = AppleScriptRunner.run(#"tell application "Spotify" to playpause"#)
+        _ = AppleScriptRunner.run(#"if application "Spotify" is running then tell application "Spotify" to playpause"#)
     }
 
     func next() async {
         guard isAvailable else { return }
-        _ = AppleScriptRunner.run(#"tell application "Spotify" to next track"#)
+        _ = AppleScriptRunner.run(#"if application "Spotify" is running then tell application "Spotify" to next track"#)
     }
 
     func previous() async {
         guard isAvailable else { return }
-        _ = AppleScriptRunner.run(#"tell application "Spotify" to previous track"#)
+        _ = AppleScriptRunner.run(#"if application "Spotify" is running then tell application "Spotify" to previous track"#)
     }
 
     func seek(to time: TimeInterval) async {
         guard isAvailable else { return }
-        _ = AppleScriptRunner.run(#"tell application "Spotify" to set player position to \#(time)"#)
+        _ = AppleScriptRunner.run(#"if application "Spotify" is running then tell application "Spotify" to set player position to \#(time)"#)
     }
 
     func toggleShuffle() async {
         guard isAvailable else { return }
-        _ = AppleScriptRunner.run(#"tell application "Spotify" to set shuffling to not shuffling"#)
+        _ = AppleScriptRunner.run(#"if application "Spotify" is running then tell application "Spotify" to set shuffling to not shuffling"#)
     }
 
     /// Field order must match `SpotifyOutputParser`: state, name, artist,
@@ -43,6 +48,7 @@ struct SpotifySource: NowPlayingSource {
     /// directly, so there's no ambiguity about how AppleScript's compiler
     /// treats a raw control character in source text.
     private static let fetchScript = #"""
+    if application "Spotify" is not running then return ""
     set sep to (ASCII character 31)
     tell application "Spotify"
         set playerState to player state as text
