@@ -19,7 +19,7 @@ struct WaveformView: View {
 
     private static let barCount = 6
     private static let minimumScale: CGFloat = 0.32
-    private static let animationDuration: TimeInterval = 0.2
+    private static let animationDuration: TimeInterval = 0.12
     private static let timerInterval: TimeInterval = 0.12
 
     @State private var scales: [CGFloat] = Array(repeating: WaveformView.minimumScale, count: WaveformView.barCount)
@@ -32,7 +32,7 @@ struct WaveformView: View {
                     .fill(color.gradient)
                     .frame(width: barWidth)
                     .scaleEffect(y: scales[index], anchor: .center)
-                    .animation(.easeInOut(duration: Self.animationDuration), value: scales[index])
+                    .animation(.easeOut(duration: Self.animationDuration), value: scales[index])
             }
         }
         .frame(width: CGFloat(Self.barCount) * barWidth + CGFloat(Self.barCount - 1) * barSpacing, height: height)

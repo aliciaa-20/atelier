@@ -45,6 +45,22 @@ enum NotchAnimations {
     static var close: Animation {
         reduceMotion ? .easeInOut(duration: 0.25) : .spring(response: 0.6, dampingFraction: 0.94)
     }
+    /// Small state changes (tab dots, week shifts): damped, no overshoot.
+    static var standard: Animation {
+        reduceMotion ? .easeOut(duration: 0.2) : .spring(response: 0.3, dampingFraction: 0.85)
+    }
+    /// Tab/page changes and other non-hover state changes: a hint of bounce only.
+    static var page: Animation {
+        reduceMotion ? .easeOut(duration: 0.2) : .spring(duration: 0.4, bounce: 0.15)
+    }
+    /// Press feedback on buttons: fast, slightly bouncy.
+    static var press: Animation {
+        reduceMotion ? .easeOut(duration: 0.12) : .spring(response: 0.2, dampingFraction: 0.7)
+    }
+    /// Drag-handle grow/shrink (scrubber thumb).
+    static var grab: Animation {
+        reduceMotion ? .easeOut(duration: 0.12) : .spring(response: 0.3, dampingFraction: 0.75)
+    }
     static let settleTuck: Animation = .easeOut(duration: 0.12)
     static var settleSpringBack: Animation {
         reduceMotion ? .easeOut(duration: 0.12) : .spring(response: 0.35, dampingFraction: 0.5)

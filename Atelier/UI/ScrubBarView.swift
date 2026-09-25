@@ -40,7 +40,7 @@ struct ScrubBarView: View {
                         dragFraction = nil
                     }
             )
-            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: dragging)
+            .animation(NotchAnimations.grab, value: dragging)
         }
         .frame(height: 8)
     }

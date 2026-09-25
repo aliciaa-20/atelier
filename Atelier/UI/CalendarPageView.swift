@@ -194,7 +194,7 @@ struct CalendarPageView: View {
         let isToday = calendar.isDateInToday(day)
         let hasEvents = !source.events(on: day).isEmpty
         return Button {
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+            withAnimation(NotchAnimations.standard) {
                 source.selectDay(day)
             }
         } label: {

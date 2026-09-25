@@ -33,7 +33,7 @@ private struct Parallax3DModifier: ViewModifier {
                     guard viewSize.width > 0, viewSize.height > 0 else { return }
                     let x = (location.x / viewSize.width) * 2 - 1
                     let y = (location.y / viewSize.height) * 2 - 1
-                    withAnimation(.interactiveSpring(response: 0.1, dampingFraction: 0.5)) {
+                    withAnimation(.interactiveSpring(response: 0.1, dampingFraction: 0.8)) {
                         offset = CGSize(width: x, height: y)
                         isHovering = true
                     }

@@ -391,7 +391,7 @@ final class NotchController {
                 if shouldPeek {
                     triggerPeek(with: .playbackToggled)
                 } else {
-                    withAnimation(NotchAnimations.open) {
+                    withAnimation(NotchAnimations.page) {
                         viewModel.handle(.isPlayingChanged(hasContent))
                     }
                 }
