@@ -13,6 +13,11 @@ machine: MacBook Pro M3 (Mac15,3), macOS 26.6.
 > lives at `~/Downloads/CLAUDE.md` and is inherited by directory traversal. It has
 > nothing to do with Atelier. Ignore it.
 
+## Progress tracking
+
+`docs/ROADMAP.md` is the single source of truth for status (there is no `STAGES.md`;
+it was retired 2026-09-26). This overrides the global "create STAGES.md" preference.
+
 ## Who I'm working with
 
 Alicia is new to Swift, macOS development, and Claude Code. This project is
@@ -207,6 +212,10 @@ credited via [Ebullioscopic/Atoll's own README](https://github.com/Ebullioscopic
 
 Additional sources found directly (not via Atoll's acknowledgments), for
 specific backlog items:
+- [**Notchy**](https://notchy.dev) — closed-source, free; credited for product
+  ideas only (stacked live activities on the pill, timers, clipboard history,
+  synced lyrics). Its 74-feature approach is the opposite of our lightweight
+  differentiator; its "0.1% idle CPU" is an unverified marketing claim.
 - [**CueNotch**](https://cuenotch.com) — primary reference for Phase 17's
   teleprompter/Ghost Mode; commercial, credited for the product idea only.
 - [**jpomykala/NotchPrompter**](https://github.com/jpomykala/NotchPrompter) —

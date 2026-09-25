@@ -10,4 +10,4 @@ Build the app and restart the running copy so I can see the change:
 4. Find the built app:
    `xcodebuild -scheme Atelier -configuration Debug -showBuildSettings 2>/dev/null | grep -m1 " BUILT_PRODUCTS_DIR"`
 5. `open "$BUILT_PRODUCTS_DIR/Atelier.app"`
-6. Tell me in one line what to look at.
+6. Tell me in one line which branch is running (`git branch --show-current`) and what to look at.
