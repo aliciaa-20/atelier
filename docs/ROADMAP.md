@@ -5,7 +5,7 @@ something runnable, a green test suite, and a commit. Source of truth for the
 overall plan is [the design spec](superpowers/specs/2026-08-31-atelier-notch-design.md);
 this file tracks progress against it.
 
-**Where we are:** Phases 0–12 and 14 (camera mirror) shipped, Phase 17 stages 1–3 (teleprompter tab + Ghost Mode + hotkeys) shipped, stage 4 voice sync built and unit-tested but awaiting on-device verification, Phase 16 (Settings window) mostly shipped (Phase 12 so far: color picker + Calendar tab + weather; quick notes/timers not started). Phase 13 (system resource monitor),
+**Where we are:** Phases 0–12 and 14 (camera mirror) shipped, Phase 17 stages 1–3 (teleprompter tab + Ghost Mode + hotkeys) shipped, stage 4 voice sync shipped on its branch (unit-tested, core flow verified on-device; edge-case checks still optional), Phase 16 (Settings window) mostly shipped (Phase 12 so far: color picker + Calendar tab + weather; quick notes/timers not started). Phase 13 (system resource monitor),
 Phase 16 (stable signing still open; the menu-bar icon is a placeholder until the app icon exists), and Phase 18 (Liquid Glass notch background) are all 🟨 partial — see
 their entries below for what's still open (Phase 18 has one known
 unresolved visual bug on close). Phases 9 and 10 detail below is kept as
@@ -799,7 +799,7 @@ Claude Code mechanic: custom slash commands; `/code-review`.
 
 ---
 
-### 🟨 Phase 17 — Teleprompter / Ghost Mode (stages 1-3 done; voice sync built, awaiting on-device checks; later slices remain)
+### 🟨 Phase 17 — Teleprompter / Ghost Mode (stages 1-3 done; voice sync built, core flow verified on-device; later slices remain)
 *Ships: a scrolling script tab, screen-share/recording invisibility, and a
 script library. Voice sync and AI coaching are explicitly later slices of
 this same phase, not separate phases — see FEATURES.md §10 for the full
@@ -811,7 +811,7 @@ tier breakdown and why.*
       Google Meet screen share (macOS 27.0); QuickTime/`screencapture`/Zoom not yet tested (ADR 0019 #5).
 - [ ] **Script library** — folders + search, `ShelfStore`-shaped
       JSON-manifest storage.
-- [ ] **Voice-synced scrolling** (built, not yet verified on-device) — on-device `SFSpeechRecognizer` word tracking (`ScriptMatcher`),
+- [ ] **Voice-synced scrolling** (built, core flow verified on-device; edge cases such as >1 min reads, AirPods mid-read, VoiceOver not yet run) — on-device `SFSpeechRecognizer` word tracking (`ScriptMatcher`),
       glide toward the spoken position, "Listening" pill, mic + speech permissions (ADR 0020).
       Built and unit-tested (282 tests); on-device checks listed in STAGES.md still open.
 - [ ] *(lower priority)* **AI rehearsal coach** — needs an LLM backend +
