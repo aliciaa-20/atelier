@@ -5,7 +5,7 @@ something runnable, a green test suite, and a commit. Source of truth for the
 overall plan is [the design spec](superpowers/specs/2026-08-31-atelier-notch-design.md);
 this file tracks progress against it.
 
-**Where we are:** Phases 0–12 and 14 (camera mirror) shipped, Phase 17 stages 1–3 (teleprompter tab + Ghost Mode + hotkeys) shipped with voice sync next, Phase 16 (Settings window) mostly shipped (Phase 12 so far: color picker + Calendar tab + weather; quick notes/timers not started). Phase 13 (system resource monitor),
+**Where we are:** Phases 0–12 and 14 (camera mirror) shipped, Phase 17 stages 1–3 (teleprompter tab + Ghost Mode + hotkeys) shipped, stage 4 voice sync built and unit-tested but awaiting on-device verification, Phase 16 (Settings window) mostly shipped (Phase 12 so far: color picker + Calendar tab + weather; quick notes/timers not started). Phase 13 (system resource monitor),
 Phase 16 (Automation UX, stable signing, menu-bar icon still open), and Phase 18 (Liquid Glass notch background) are all 🟨 partial — see
 their entries below for what's still open (Phase 18 has one known
 unresolved visual bug on close). Phases 9 and 10 detail below is kept as
@@ -794,7 +794,7 @@ Claude Code mechanic: custom slash commands; `/code-review`.
 
 ---
 
-### 🟨 Phase 17 — Teleprompter / Ghost Mode (stages 1-3 done; voice sync and later slices remain)
+### 🟨 Phase 17 — Teleprompter / Ghost Mode (stages 1-3 done; voice sync built, awaiting on-device checks; later slices remain)
 *Ships: a scrolling script tab, screen-share/recording invisibility, and a
 script library. Voice sync and AI coaching are explicitly later slices of
 this same phase, not separate phases — see FEATURES.md §10 for the full
@@ -806,10 +806,9 @@ tier breakdown and why.*
       Google Meet screen share (macOS 27.0); QuickTime/`screencapture`/Zoom not yet tested (ADR 0019 #5).
 - [ ] **Script library** — folders + search, `ShelfStore`-shaped
       JSON-manifest storage.
-- [ ] **Voice-synced scrolling** — `SFSpeechRecognizer` streaming pace
-      tracking. Needs its own design pass before starting (real-time audio
-      pipeline, latency/accuracy tuning) — don't fold into the same PR as
-      items above.
+- [ ] **Voice-synced scrolling** (built, not yet verified on-device) — on-device `SFSpeechRecognizer` word tracking (`ScriptMatcher`),
+      glide toward the spoken position, "Listening" pill, mic + speech permissions (ADR 0020).
+      Built and unit-tested (278 tests); on-device checks listed in STAGES.md still open.
 - [ ] *(lower priority)* **AI rehearsal coach** — needs an LLM backend +
       likely Vision-framework posture analysis. Discuss stack/privacy
       tradeoffs before scoping; this is a different trust model than the
