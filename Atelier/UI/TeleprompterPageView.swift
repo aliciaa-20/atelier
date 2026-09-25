@@ -31,10 +31,8 @@ struct TeleprompterPageView: View {
             .onChange(of: fontSize) { _, size in model.updateLayout(width: geo.size.width, fontSize: size, mono: mono) }
             .onChange(of: mono) { _, isMono in model.updateLayout(width: geo.size.width, fontSize: fontSize, mono: isMono) }
         }
-        // The empty state is a card (uniform card gap); the reader is text
-        // and keeps the page inset.
-        .padding(.horizontal, model.script.isEmpty ? NotchLayout.cardInset : NotchLayout.pageHorizontalInset)
-        .padding(.bottom, model.script.isEmpty ? NotchLayout.cardInset : 8)
+        .padding(.horizontal, NotchLayout.pageHorizontalInset)
+        .padding(.bottom, NotchLayout.pageBottomInset)
     }
 
     private func reader(height: CGFloat) -> some View {

@@ -51,10 +51,11 @@ struct BrightnessActivityContent: LiveActivityContent {
 
                 ScrubBarView(fillFraction: CGFloat(percent) / 100, tint: .white, label: "Brightness", onScrub: onScrub)
             }
-            .padding(.leading, 25)
-            .padding(.trailing, 24)
-            .padding(.bottom, 6)
-            .padding(.top, notchHeight + 2)
+            // Same uniform edge gap as the track peek (see NotchLayout);
+            // 9 + 16 + 9 = 34, `NotchController.compactPeekContentHeight`.
+            .padding(.horizontal, NotchLayout.peekHorizontalPadding)
+            .padding(.bottom, NotchLayout.peekEdgeGap)
+            .padding(.top, notchHeight + NotchLayout.peekEdgeGap)
         )
     }
 }

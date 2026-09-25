@@ -95,7 +95,7 @@ final class NotchController {
     /// `PeekPlayerView`'s own content — a single artwork+title/artist+
     /// waveform row (34, governed by the two-line text block: 16+2+16)
     /// + top/bottom padding (4+9).
-    private static let peekContentHeight: CGFloat = 46.4
+    private static let peekContentHeight: CGFloat = 52
     /// Volume/Brightness's peek has no title/artist text (Phase 8) --
     /// just an icon + scrub bar, so it doesn't need `peekExtraWidth`/
     /// `peekContentHeight`'s room for two lines of text. Real macOS's own
@@ -107,7 +107,7 @@ final class NotchController {
     private static let compactPeekExtraWidth: CGFloat = 13.2
     /// Icon+bar row (~18) + top/bottom padding (2+6), against
     /// `peekContentHeight`'s 47 (sized for two lines of text instead).
-    private static let compactPeekContentHeight: CGFloat = 25.4
+    private static let compactPeekContentHeight: CGFloat = 34
     // Not private: `VolumeSource`/`BrightnessSource` match their own
     // self-clearing decay to this exact duration -- see their own
     // `decayDuration` doc comments for why a shorter, independent timer
