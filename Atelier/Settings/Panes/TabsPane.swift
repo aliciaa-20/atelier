@@ -122,6 +122,7 @@ private extension NotchPage {
         case .systemMonitor: "System Monitor"
         case .calendar: "Calendar"
         case .camera: "Camera Mirror"
+        case .teleprompter: "Teleprompter"
         }
     }
 
@@ -132,6 +133,7 @@ private extension NotchPage {
         case .systemMonitor: "gauge.with.dots.needle.33percent"
         case .calendar: "calendar"
         case .camera: "camera"
+        case .teleprompter: "text.alignleft"
         }
     }
 
@@ -143,6 +145,7 @@ private extension NotchPage {
         case .systemMonitor: AtelierSettings.systemMonitorEnabledKey
         case .calendar: AtelierSettings.calendarEnabledKey
         case .camera: AtelierSettings.cameraEnabledKey
+        case .teleprompter: AtelierSettings.teleprompterEnabledKey
         }
     }
 }
