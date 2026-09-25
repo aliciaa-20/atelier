@@ -224,7 +224,7 @@ private struct PressScaleButtonStyle: ButtonStyle {
 /// `ArtworkColorLoader` share one fetch per URL instead of racing two.
 struct ArtworkView: View {
     let url: URL?
-    var cornerRadius: CGFloat = 8
+    var cornerRadius: CGFloat = 10
     @State private var image: NSImage?
     @Environment(\.artworkNamespace) private var artworkNamespace
 
@@ -242,7 +242,7 @@ struct ArtworkView: View {
             }
         }
         .animation(.easeOut(duration: 0.2), value: image.map(ObjectIdentifier.init))
-        .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+        .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
         .modifier(SharedArtworkModifier(namespace: artworkNamespace))
         .task(id: url) {
             guard let url,
@@ -256,7 +256,7 @@ struct ArtworkView: View {
     }
 
     private var placeholder: some View {
-        RoundedRectangle(cornerRadius: cornerRadius)
+        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
             .fill(.white.opacity(0.12))
             .overlay(Image(systemName: "music.note").foregroundStyle(.white.opacity(0.5)))
     }
