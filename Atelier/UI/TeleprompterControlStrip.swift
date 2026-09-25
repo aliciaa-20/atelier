@@ -47,10 +47,10 @@ struct TeleprompterControlStrip: View {
             Image(systemName: model.isPlaying ? "pause.fill" : "play.fill")
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(.white)
-                .frame(width: 20, height: 20)
+                .frame(width: 24, height: 24)
                 .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(TeleprompterPressStyle())
         .disabled(model.script.isEmpty)
         .opacity(model.script.isEmpty ? 0.35 : 1)
         .help(model.isPlaying ? "Pause" : "Play")
@@ -89,5 +89,14 @@ struct TeleprompterControlStrip: View {
                 detail: "\(TimeFormatting.mmss(elapsed)) of \(TimeFormatting.mmss(model.scroll.secondsTotal))"
             )
         }
+    }
+}
+
+/// Subtle press feedback (polish rule): a slight dim, no bounce. Same idea
+/// as `CameraPressStyle`, which is private to the camera page.
+private struct TeleprompterPressStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .opacity(configuration.isPressed ? 0.6 : 1)
     }
 }
