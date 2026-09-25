@@ -808,7 +808,7 @@ tier breakdown and why.*
       JSON-manifest storage.
 - [ ] **Voice-synced scrolling** (built, not yet verified on-device) — on-device `SFSpeechRecognizer` word tracking (`ScriptMatcher`),
       glide toward the spoken position, "Listening" pill, mic + speech permissions (ADR 0020).
-      Built and unit-tested (278 tests); on-device checks listed in STAGES.md still open.
+      Built and unit-tested (282 tests); on-device checks listed in STAGES.md still open.
 - [ ] *(lower priority)* **AI rehearsal coach** — needs an LLM backend +
       likely Vision-framework posture analysis. Discuss stack/privacy
       tradeoffs before scoping; this is a different trust model than the

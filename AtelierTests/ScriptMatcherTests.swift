@@ -89,4 +89,32 @@ struct ScriptMatcherTests {
         matcher.reset(cursor: -3)
         #expect(matcher.cursor == 0)
     }
+
+    // Review finding 1: a real script repeats long words within 30 words.
+    // 0 the, 1 team, 2 shipped, 3 the, 4 release, 5 on, 6 friday, 7 and, 8 then, 9 the,
+    // 10 team, 11 celebrated, 12 the, 13 release, 14 together, 15 with, 16 pizza, 17 tonight
+    private let repeating = "the team shipped the release on friday and then the team celebrated the release together with pizza tonight"
+        .split(separator: " ").map(String.init)
+
+    @Test func anIdenticalResendDoesNotAdvanceAgain() {
+        var matcher = ScriptMatcher(scriptWords: repeating)
+        let heard = ["the", "team", "shipped", "the", "release"]
+        #expect(matcher.update(spoken: heard) == 5)
+        #expect(matcher.update(spoken: heard) == nil)
+        #expect(matcher.cursor == 5)
+    }
+
+    @Test func anAdLibbedLongWordDoesNotJumpAhead() {
+        var matcher = ScriptMatcher(scriptWords: repeating)
+        matcher.reset(cursor: 2)
+        #expect(matcher.update(spoken: ["um", "basically", "pizza"]) == nil)
+        #expect(matcher.cursor == 2)
+    }
+
+    @Test func rereadingAnEarlierLineDoesNotJumpToALaterCopy() {
+        var matcher = ScriptMatcher(scriptWords: repeating)
+        matcher.reset(cursor: 5)
+        #expect(matcher.update(spoken: ["shipped", "the", "release"]) == nil)
+        #expect(matcher.cursor == 5)
+    }
 }

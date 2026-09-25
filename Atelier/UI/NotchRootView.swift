@@ -385,11 +385,16 @@ struct NotchRootView: View {
             // max footprint already includes its height.
             .overlay(alignment: .bottom) {
                 if AtelierSettings.teleprompterEnabled, viewModel.currentPage == .teleprompter,
-                   viewModel.state == .expanded, teleprompter.voiceSyncEnabled, teleprompter.isPlaying {
-                    TeleprompterListeningPill(speech: .shared)
-                        .offset(y: NotchLayout.teleprompterPillHeight)
-                        .transition(.opacity)
-                        .allowsHitTesting(false)   // Invariant 4
+                   viewModel.state == .expanded {
+                    if let notice = teleprompter.voiceNotice {
+                        TeleprompterVoiceNoticePill(text: notice)
+                            .offset(y: NotchLayout.teleprompterPillHeight)
+                            .allowsHitTesting(false)   // Invariant 4
+                    } else if teleprompter.voiceSyncEnabled, teleprompter.isPlaying {
+                        TeleprompterListeningPill(speech: .shared)
+                            .offset(y: NotchLayout.teleprompterPillHeight)
+                            .allowsHitTesting(false)   // Invariant 4
+                    }
                 }
             }
             // No shadow while `.collapsed` -- Invariant 7 requires that

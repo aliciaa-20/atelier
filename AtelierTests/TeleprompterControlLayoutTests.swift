@@ -10,8 +10,9 @@ struct TeleprompterControlLayoutTests {
 
     @Test func followsTheStoredOrderAndSplitsAtTheNotch() {
         let layout = TeleprompterControlLayout.resolve(stored: ["ring", "notch", "speed", "play"])
-        #expect(layout.left == [.ring])
-        #expect(layout.right == [.speed, .play, .voice])
+        // Each side holds at most two controls, so the marker is pulled to 2 | 2.
+        #expect(layout.left == [.ring, .speed])
+        #expect(layout.right == [.play, .voice])
     }
 
     @Test func unknownNamesAndDuplicatesAreIgnored() {
@@ -40,13 +41,13 @@ struct TeleprompterControlLayoutTests {
             let order = TeleprompterControlLayout.normalized(stored)
             #expect(order.count == 5)
             #expect(Set(order) == ["play", "speed", "ring", "voice", "notch"])
-            #expect([1, 2, 3].contains(order.firstIndex(of: "notch")!))
+            #expect(order.firstIndex(of: "notch") == 2)
         }
     }
 
     @Test func movingARowDownPutsItAfterTheTarget() {
         let order = TeleprompterControlLayout.move("play", onto: "notch", in: ["play", "speed", "notch", "ring"])
-        #expect(order == ["speed", "notch", "play", "ring", "voice"])
+        #expect(order == ["speed", "play", "notch", "ring", "voice"])
         let layout = TeleprompterControlLayout.resolve(stored: order)
         #expect(Set(layout.left + layout.right) == Set(TeleprompterControl.allCases))
     }

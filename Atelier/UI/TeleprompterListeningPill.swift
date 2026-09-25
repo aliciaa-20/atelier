@@ -1,5 +1,30 @@
 import SwiftUI
 
+/// The same pill shape carrying a short note ("Voice sync stopped") for a few
+/// seconds when voice sync can't start or dies mid-read, so the cause is
+/// visible on the notch and not only in a tooltip.
+struct TeleprompterVoiceNoticePill: View {
+    let text: String
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "exclamationmark.circle")
+                .font(.system(size: 10, weight: .semibold))
+            Text(text)
+                .font(.system(size: 10, weight: .medium, design: .monospaced))
+        }
+        .foregroundStyle(.white.opacity(0.85))
+        .padding(.horizontal, 14)
+        .frame(height: NotchLayout.teleprompterPillHeight)
+        .background(
+            UnevenRoundedRectangle(bottomLeadingRadius: 10, bottomTrailingRadius: 10)
+                .fill(.black)
+        )
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(text)
+    }
+}
+
 /// Small black pill hanging below the teleprompter while voice sync is
 /// listening: a live waveform plus a mono "Listening" label (CueNotch look).
 /// It exists only while listening, so its level updates cost nothing otherwise.

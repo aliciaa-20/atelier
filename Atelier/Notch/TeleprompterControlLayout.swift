@@ -45,7 +45,11 @@ struct TeleprompterControlLayout: Equatable {
             items.insert(notchToken, at: min(2, items.count))
         }
         let controls = items.filter { $0 != notchToken }
-        let notchIndex = min(max(items.firstIndex(of: notchToken) ?? 2, 1), controls.count - 1)
+        // At least one control per side, at most two: a flank is only ~100pt
+        // wide, and the speed capsule plus two buttons would overflow it.
+        let lower = max(1, controls.count - 2)
+        let upper = min(controls.count - 1, 2)
+        let notchIndex = min(max(items.firstIndex(of: notchToken) ?? 2, lower), max(lower, upper))
         return Array(controls[..<notchIndex]) + [notchToken] + Array(controls[notchIndex...])
     }
 
