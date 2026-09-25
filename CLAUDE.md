@@ -90,6 +90,7 @@ Four layers with deliberate seams. The two pure ones carry the test suite.
 | Window | `Notch/NotchPanel.swift`, `Notch/NotchController.swift` | borderless `NSPanel` over the notch |
 | Pure logic | `Notch/NotchGeometry.swift`, `Notch/NotchState.swift`, `Notch/NotchPage.swift`, `Notch/CameraHoldOpen.swift`, `Notch/TabOrder.swift` | **unit tested**, no AppKit imports |
 | UI | `UI/*.swift` | SwiftUI, driven by `NotchState` |
+| Shared UI tokens | `UI/NotchLayout.swift`, `UI/NotchAnimations.swift`, `UI/NotchHaptics.swift`, `UI/DimmedText.swift` | Page/card/peek insets and corner radii (one `peekEdgeGap`, card radius = panel corner - gap), named springs (`open`/`close`/`page`/`standard`/`press`/`grab`/`hud`), trackpad haptics, AA-contrast secondary text (honours Increase Contrast). Add values here, not inline |
 | Data | `NowPlaying/*.swift` | `NowPlayingSource` protocol + per-app implementations |
 | System | `System/*.swift` | `MediaKeyInterceptor` (`CGEventTap`), `AccessibilityPermission`, `CalendarPermission`, `CalendarAppLauncher` (AppleScript into Calendar.app) — manual-verification only, like `NowPlayingSource`'s AppleScript pieces |
 | Widgets | `Widgets/*/*.swift` | `LiveActivitySource` conformers (Battery, Volume, Brightness, AirPods, ScreenRecording, ColorPicker) plus non-`LiveActivitySource` tab data sources (`Calendar/CalendarSource` — read-only EventKit, `CalendarMath` is pure and testable; `Weather/WeatherSource` — CoreLocation + Open-Meteo, cached 30 min, no poll loop, `WeatherModel` is pure and unit-tested; `Camera/CameraMirrorSource` — `AVCaptureSession` + preview layer, runs only while the mirror is live and tapped on, `System/CameraPermission` is its TCC helper) — one folder per widget, manual-verification only like `System/*.swift` (except `ColorPicker`'s hex-formatting math, which is pure and unit-tested) |
@@ -109,7 +110,9 @@ plus one registration. If it does, the protocol is wrong.
    They are pure value types. If you need AppKit in there, the boundary is wrong.
 2. **Never scripting-query a media app that isn't already running.** Check
    `NSWorkspace.shared.runningApplications` for `com.spotify.client` first, or we
-   launch Spotify on the user unprompted.
+   launch Spotify on the user unprompted. The check alone races (Spotify posts a
+   notification while quitting and the Apple Event relaunches it), so every script
+   also starts with `if application "Spotify" is running`.
 3. **The panel is always sized to the maximum expanded footprint.** Only the
    SwiftUI content animates. Resizing the window per state causes visible jank.
 4. **Non-interactive regions get `.allowsHitTesting(false)`.** Transparent SwiftUI
@@ -127,6 +130,20 @@ plus one registration. If it does, the protocol is wrong.
    interpreter's own `NotchGesturePhase` vocabulary by the AppKit-side
    `NotchGestureModifier` before crossing the boundary. If you need AppKit
    in the interpreter, the boundary is wrong.
+
+### Lessons from the 2026-09-25 motion/polish pass
+
+- **Animation bugs: get a screen recording first** (`screencapture -v`, or ask for one)
+  and read it frame by frame; stills and guesses cost ~10 rounds on the HUD morph. See
+  ADR 0021 for the `withAnimation`-transaction vs `.animation(value:)` finding.
+- Size changes that must stay centred go through `withAnimation`, not
+  `.animation(_, value:)`.
+- `NotchShape` insets its vertical edges by the top radius: visible gap = page inset - 14.
+  Card radius is `panelBottomRadius - pageBottomInset` (8) so the gap reads even round the curve.
+- Volume/brightness live in the hover-open notch too (`transientHUD`); never let a
+  hover-exit be dropped while non-expandable content is on top.
+- VoiceOver: live-activity views get one combined label, decorative waveforms are hidden,
+  `HUDAnnouncer` speaks volume/brightness (the system HUD is suppressed).
 
 ## Reference existing notch apps
 
