@@ -10,7 +10,7 @@ disable-model-invocation: true
 
 The full "get this into a PR" sequence this project runs every time,
 bundled into one skill instead of re-typed each session: docs sync,
-commit, push, PR. Matches the `/pr` command's own steps but starts one
+commit, push, PR. Replaces the retired `/pr` command, and starts one
 stage earlier (committing outstanding work), since "ship this" often means
 there's still uncommitted work to fold in.
 
