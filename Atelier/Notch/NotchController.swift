@@ -120,6 +120,31 @@ final class NotchController {
     /// is `NSWindow`'s normal default.
     private func applyLiveSettings() {
         panel.sharingType = AtelierSettings.ghostModeEnabled ? .none : .readOnly
+
+        if AtelierSettings.teleprompterEnabled, AtelierSettings.teleprompterHotkeysEnabled {
+            GlobalHotkeys.shared.register { [weak self] action in self?.handleHotkey(action) }
+        } else {
+            GlobalHotkeys.shared.unregister()
+        }
+    }
+
+    private func handleHotkey(_ action: GlobalHotkeys.Action) {
+        let model = TeleprompterModel.shared
+        switch action {
+        case .playPause:
+            // Open the notch on the Teleprompter tab first, so pressing the
+            // key with the notch collapsed is visible. Opening resets the
+            // page to the first tab, so select ours *after* it opens.
+            if viewModel.state != .expanded {
+                withAnimation(NotchAnimations.open) { viewModel.handle(.hoverStarted) }
+            }
+            viewModel.selectPage(.teleprompter)
+            model.toggle()
+        case .faster:
+            model.stepWPM(by: 10)
+        case .slower:
+            model.stepWPM(by: -10)
+        }
     }
 
     init() {
