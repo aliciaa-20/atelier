@@ -60,11 +60,13 @@ struct TeleprompterPageView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             .clipped()
             .mask(edgeFade)
+            // One element for VoiceOver: the current line, not every Text.
+            // Inside the ticker so the value follows the scroll instead of
+            // going stale while playing.
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Teleprompter script")
+            .accessibilityValue(model.lineText(current))
         }
-        // One element for VoiceOver: the current line, not every Text.
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Teleprompter script")
-        .accessibilityValue(model.lineText(model.lines.currentLine(forWord: model.scroll.position(at: .now))))
         .allowsHitTesting(false)
     }
 
