@@ -9,6 +9,7 @@ import SwiftUI
 @MainActor
 final class NotchController {
     private let panel = NotchPanel()
+    private var settingsObserver: NSObjectProtocol?
     private let viewModel: NotchViewModel
     private let nowPlayingCoordinator = NowPlayingCoordinator()
     private let liveActivityCoordinator: LiveActivityCoordinator
@@ -112,6 +113,14 @@ final class NotchController {
     // `decayDuration` doc comments for why a shorter, independent timer
     // caused a visible mid-peek glitch.
     static let peekDuration: Duration = .seconds(2.5)
+
+    /// Settings that take effect on the panel itself, applied at launch and
+    /// again whenever any default changes (cheap and idempotent).
+    /// `.none` hides the panel from screen sharing and recording; `.readOnly`
+    /// is `NSWindow`'s normal default.
+    private func applyLiveSettings() {
+        panel.sharingType = AtelierSettings.ghostModeEnabled ? .none : .readOnly
+    }
 
     init() {
         let shelfRoot = FileManager.default
@@ -278,6 +287,13 @@ final class NotchController {
         )
         panel.setFrame(maxRect, display: true)
         panel.orderFrontRegardless()
+
+        applyLiveSettings()
+        settingsObserver = NotificationCenter.default.addObserver(
+            forName: UserDefaults.didChangeNotification, object: nil, queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in self?.applyLiveSettings() }
+        }
 
         // NotchController lives for the whole app run (owned by AtelierApp),
         // so this observation never needs to be torn down.
