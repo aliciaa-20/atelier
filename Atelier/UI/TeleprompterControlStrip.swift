@@ -1,0 +1,93 @@
+import SwiftUI
+
+/// Play/pause + speed on the left of the camera cutout, ghost icon + the
+/// time ring on the right, all inside the notch band (CueNotch's layout).
+/// `notchWidth`/`height` are the real notch, so the flanks line up with it.
+struct TeleprompterControlStrip: View {
+    @ObservedObject var model: TeleprompterModel
+    let notchWidth: CGFloat
+    let height: CGFloat
+    @AppStorage(AtelierSettings.ghostModeKey) private var ghostMode = false
+
+    private static let speedPresets: [Int] = [60, 80, 100, 120, 140, 160, 180, 200, 240, 280]
+
+    var body: some View {
+        HStack(spacing: 0) {
+            HStack(spacing: 8) {
+                playPauseButton
+                speedMenu
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            // The camera cutout: nothing to draw, nothing to click.
+            Color.clear
+                .frame(width: notchWidth)
+                .allowsHitTesting(false)
+
+            HStack(spacing: 8) {
+                if ghostMode {
+                    Image(systemName: "eye.slash")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(.white.opacity(0.6))
+                        .help("Ghost Mode is on: hidden from screen sharing")
+                        .accessibilityLabel("Ghost Mode on")
+                }
+                ring
+            }
+            .frame(maxWidth: .infinity, alignment: .trailing)
+        }
+        .padding(.horizontal, 14)
+        .frame(height: height)
+    }
+
+    private var playPauseButton: some View {
+        Button {
+            model.toggle()
+        } label: {
+            Image(systemName: model.isPlaying ? "pause.fill" : "play.fill")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(.white)
+                .frame(width: 20, height: 20)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(model.script.isEmpty)
+        .opacity(model.script.isEmpty ? 0.35 : 1)
+        .help(model.isPlaying ? "Pause" : "Play")
+        .accessibilityLabel(model.isPlaying ? "Pause script" : "Play script")
+    }
+
+    private var speedMenu: some View {
+        Menu {
+            ForEach(Self.speedPresets, id: \.self) { wpm in
+                Button("\(wpm) WPM") { model.setWPM(Double(wpm)) }
+            }
+        } label: {
+            Text("\(Int(model.scroll.wpm))")
+                .font(.system(size: 9, weight: .semibold).monospacedDigit())
+                .foregroundStyle(.white.opacity(0.85))
+                .padding(.horizontal, 5)
+                .padding(.vertical, 2)
+                .background(Capsule().fill(Color.white.opacity(0.14)))
+        }
+        .menuStyle(.button)
+        .buttonStyle(.plain)
+        .menuIndicator(.hidden)
+        .fixedSize()
+        .help("Reading speed, words per minute")
+        .accessibilityLabel("Reading speed")
+        .accessibilityValue("\(Int(model.scroll.wpm)) words per minute")
+    }
+
+    private var ring: some View {
+        TeleprompterTicker(interval: 1, active: model.isPlaying) { now in
+            let remaining = model.scroll.secondsRemaining(at: now)
+            let elapsed = model.scroll.secondsElapsed(at: now)
+            TeleprompterRing(
+                fraction: model.scroll.progress(at: now),
+                label: TimeFormatting.mmss(remaining),
+                detail: "\(TimeFormatting.mmss(elapsed)) of \(TimeFormatting.mmss(model.scroll.secondsTotal))"
+            )
+        }
+    }
+}

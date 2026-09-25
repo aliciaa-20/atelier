@@ -7,6 +7,11 @@ import CoreGraphics
 enum NotchLayout {
     static let pageHorizontalInset: CGFloat = 26
 
+    /// Whole-panel height of the Teleprompter tab, notch band included
+    /// (NotchPrompter's 150pt). Fits inside the player's footprint, so no
+    /// other page's geometry changes.
+    static let teleprompterHeight: CGFloat = 150
+
     /// Idle Home's weather detail card (glyph/temp row, quip, 5-day row).
     /// Starting value -- tune on-device.
     static let idleWeatherDetailContentHeight: CGFloat = 144
