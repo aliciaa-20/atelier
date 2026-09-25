@@ -5,7 +5,7 @@ something runnable, a green test suite, and a commit. Source of truth for the
 overall plan is [the design spec](superpowers/specs/2026-08-31-atelier-notch-design.md);
 this file tracks progress against it.
 
-**Where we are:** Phases 0–12 and 14 (camera mirror) shipped, Phase 16 (Settings window) mostly shipped (Phase 12 so far: color picker + Calendar tab + weather; quick notes/timers not started). Phase 13 (system resource monitor),
+**Where we are:** Phases 0–12 and 14 (camera mirror) shipped, Phase 17 stages 1–3 (teleprompter tab + Ghost Mode + hotkeys) shipped with voice sync next, Phase 16 (Settings window) mostly shipped (Phase 12 so far: color picker + Calendar tab + weather; quick notes/timers not started). Phase 13 (system resource monitor),
 Phase 16 (Automation UX, stable signing, menu-bar icon still open), and Phase 18 (Liquid Glass notch background) are all 🟨 partial — see
 their entries below for what's still open (Phase 18 has one known
 unresolved visual bug on close). Phases 9 and 10 detail below is kept as
