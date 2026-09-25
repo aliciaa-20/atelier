@@ -12,7 +12,8 @@ voice. Design language follows CueNotch; mechanics borrow from NotchPrompter and
   not a separate window. Ghost Mode is `panel.sharingType = .none`.
 - **Size:** 320 x 150pt total (NotchPrompter's 150pt), including the notch band.
   Its own `teleprompterSize`, like `shelfSize`/`calendarSize`; the panel stays sized to
-  the largest page (Invariant 3). About 118pt is text.
+  the largest page (Invariant 3). The tab-dot row already sits under the notch band,
+  so the text area is ~80-88pt (3-4 lines).
 - **Script source:** typed/pasted in a new Settings "Teleprompter" pane, plus drop a
   `.txt`, `.md`, `.doc`, `.docx` or `.rtf` file there. One script in this spec; the
   library (folders + search) is a later slice.
@@ -55,7 +56,7 @@ voice. Design language follows CueNotch; mechanics borrow from NotchPrompter and
 **Pure (`Notch/` or `Teleprompter/`, Foundation only, unit-tested):**
 `TeleprompterScript` (text -> words/lines, word count), `TeleprompterScroll` (fractional
 word position, WPM -> position math, progress, current line, time remaining),
-`PaceSource` (protocol: manual timer now, speech later), `ScriptMatcher` (stage 4:
+`TeleprompterLines` (line starts <-> fractional line position), `ScriptMatcher` (stage 4:
 forward-only fuzzy alignment of recognised words), `TeleprompterHoldOpen` (keeps the
 notch open while reading; modelled on `CameraHoldOpen`).
 
@@ -71,8 +72,10 @@ Mode, voice sync, hotkeys).
 ## Data flow
 
 `ScriptStore` -> `TeleprompterScript` -> `TeleprompterScroll` (position). A `PaceSource`
-moves the position: the manual source ticks it at the WPM rate; the speech source sets
-it from recognised words via `ScriptMatcher`. The view reads the position for the text
+moves the position: the clock drives it (`TeleprompterScroll` derives position from a
+start date and WPM, so nothing ticks); the speech source (stage 4) sets it from
+recognised words via `ScriptMatcher` using `seek(to:at:)`. A `PaceSource` protocol is
+added only if stage 4 turns out to need one. The view reads the position for the text
 offset, ring fraction (position / total) and time remaining.
 
 ## Behavior and invariants
