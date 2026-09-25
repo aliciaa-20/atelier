@@ -323,7 +323,7 @@ struct NotchRootView: View {
                     // view swap, so a second key press mid-fade just retargets.
                     .opacity(hudActive ? 0 : 1)
                     .allowsHitTesting(!hudActive)
-                    .animation(.easeOut(duration: 0.15), value: hudActive)
+                    .animation(hudActive ? NotchAnimations.hudPlayerFade.hudIn : NotchAnimations.hudPlayerFade.hudOut, value: hudActive)
                     .overlay(alignment: .top) {
                         if AtelierSettings.teleprompterEnabled, viewModel.currentPage == .teleprompter {
                             TeleprompterControlStrip(
@@ -408,7 +408,7 @@ struct NotchRootView: View {
                         .frame(width: frameSize.width, height: frameSize.height, alignment: .top)
                         .opacity(hudActive ? 1 : 0)
                         .allowsHitTesting(hudActive)
-                        .animation(hudActive ? .easeOut(duration: 0.2).delay(0.08) : .easeOut(duration: 0.15), value: hudActive)
+                        .animation(hudActive ? NotchAnimations.hudBarFade.hudIn : NotchAnimations.hudBarFade.hudOut, value: hudActive)
                         .transition(.identity)
                 }
             }
