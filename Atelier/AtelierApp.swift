@@ -18,6 +18,7 @@ struct AtelierApp: App {
     private let notchController: NotchController?
 
     @AppStorage(AtelierSettings.colorPickerEnabledKey) private var colorPickerEnabled = true
+    @AppStorage(AtelierSettings.ghostModeKey) private var ghostMode = false
 
     init() {
         AtelierSettings.registerDefaults()
@@ -48,6 +49,10 @@ struct AtelierApp: App {
 
                 Divider()
             }
+
+            Toggle("Ghost Mode", isOn: $ghostMode)
+
+            Divider()
 
             // ⌘, works while this menu is open; a global ⌘, would need a
             // real main menu, which an accessory app doesn't have.

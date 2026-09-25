@@ -88,6 +88,7 @@ private extension NotchPage {
         case .systemMonitor: "System Monitor"
         case .calendar: "Calendar"
         case .camera: "Camera"
+        case .teleprompter: "Teleprompter"
         }
     }
 }

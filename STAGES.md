@@ -71,7 +71,16 @@ First network call in the app — note in README/ADR.
 - [x] W2. Home weather glance + tap-for-detail card (5 days). Calendar week-strip icons tried and dropped (too cluttered)
 - [x] W3. Docs (ADR 0015, README, CLAUDE.md, FEATURES, ROADMAP)
 
-Later (separate STAGES): camera mirror (Phase 14) -> Settings (Phase 16) -> teleprompter (Phase 17).
+Camera mirror (Phase 14) and Settings (Phase 16) shipped. Teleprompter (Phase 17) below.
+
+## Teleprompter (Phase 17)
+
+Spec: `docs/superpowers/specs/2026-09-25-teleprompter-design.md`. Plan (stages 1-3): `docs/superpowers/plans/2026-09-25-teleprompter-stages-1-3.md`. ADR 0019. Code for stages 1-3 is on `feat/teleprompter` (239 tests pass); stages 1-3 checked on-device by Alicia (see below and ADR 0019).
+
+- [x] 1. Pure logic (`TeleprompterScript/Scroll/Lines`, hold-open) + script import + script store, tested
+- [x] 2. The tab: control strip (reorderable, matched control sizes), progress ring, reading view, hand-scroll, Settings pane — built and checked on-device (VoiceOver + CPU/battery check still open)
+- [x] 3. Ghost Mode + global hotkeys — Ghost Mode verified hiding the notch in a Google Meet screen share (macOS 27.0; QuickTime/`screencapture`/Zoom not tested), hotkeys work
+- [ ] 4. Voice sync (`SFSpeechRecognizer`, `ScriptMatcher`, mic/speech permissions, "Listening…" pill) — not started, gets its own plan
 
 Settings (Phase 16) must include **user-reorderable tabs** (asked 2026-09-24). Notes for that plan:
 `NotchPage` is a fixed `CaseIterable` order today (home, shelf, systemMonitor, calendar), and

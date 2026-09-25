@@ -9,6 +9,7 @@ import SwiftUI
 @MainActor
 final class NotchController {
     private let panel = NotchPanel()
+    private var settingsObserver: NSObjectProtocol?
     private let viewModel: NotchViewModel
     private let nowPlayingCoordinator = NowPlayingCoordinator()
     private let liveActivityCoordinator: LiveActivityCoordinator
@@ -113,6 +114,49 @@ final class NotchController {
     // caused a visible mid-peek glitch.
     static let peekDuration: Duration = .seconds(2.5)
 
+    /// Settings that take effect on the panel itself, applied at launch and
+    /// again whenever any default changes (cheap and idempotent).
+    /// `.none` hides the panel from screen sharing and recording; `.readOnly`
+    /// is `NSWindow`'s normal default.
+    private func applyLiveSettings() {
+        panel.sharingType = AtelierSettings.ghostModeEnabled ? .none : .readOnly
+
+        // Disabling the tab mid-play must not leave hold-open keeping the
+        // notch up with no way to pause.
+        if !AtelierSettings.teleprompterEnabled { TeleprompterModel.shared.pause() }
+
+        if AtelierSettings.teleprompterEnabled, AtelierSettings.teleprompterHotkeysEnabled {
+            GlobalHotkeys.shared.register { [weak self] action in self?.handleHotkey(action) }
+        } else {
+            GlobalHotkeys.shared.unregister()
+        }
+    }
+
+    private func handleHotkey(_ action: GlobalHotkeys.Action) {
+        let model = TeleprompterModel.shared
+        switch action {
+        case .playPause:
+            // Nothing to play: don't open the notch for it (nothing would
+            // retract it, since `wantsNotchOpen` never changes).
+            guard model.canPlay else { return }
+            // Open the notch on the Teleprompter tab first, so pressing the
+            // key with the notch collapsed is visible. Opening resets the
+            // page to the first tab, so select ours *after* it opens.
+            if viewModel.state != .expanded {
+                withAnimation(NotchAnimations.open) { viewModel.handle(.hoverStarted) }
+            }
+            // E.g. mid file-drag the notch stays in `.shelf`: nothing would be
+            // visible, so don't start playback behind it.
+            guard viewModel.state == .expanded else { return }
+            viewModel.selectPage(.teleprompter)
+            model.toggle()
+        case .faster:
+            model.stepWPM(by: 10)
+        case .slower:
+            model.stepWPM(by: -10)
+        }
+    }
+
     init() {
         let shelfRoot = FileManager.default
             .urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
@@ -122,7 +166,7 @@ final class NotchController {
         shelfStore.sweepExpired()
 
         guard let screen = NSScreen.notchedOrMain else {
-            viewModel = NotchViewModel(collapsedSize: .zero, expandedSize: .zero, idleHomeSize: .zero, pillSize: .zero, peekSize: .zero, compactPeekSize: .zero, shelfSize: .zero, calendarSize: .zero)
+            viewModel = NotchViewModel(collapsedSize: .zero, expandedSize: .zero, idleHomeSize: .zero, pillSize: .zero, peekSize: .zero, compactPeekSize: .zero, shelfSize: .zero, calendarSize: .zero, teleprompterSize: .zero)
             let hudOrder = SystemHUDOrder()
             let volumeSource = VolumeSource(notchHeight: 0, hudOrder: hudOrder)
             let brightnessSource = BrightnessSource(notchHeight: 0, hudOrder: hudOrder)
@@ -239,6 +283,10 @@ final class NotchController {
             width: Self.expandedWidth,
             height: collapsedRect.height + Self.calendarContentHeight
         )
+        let teleprompterSize = CGSize(
+            width: NotchLayout.teleprompterWidth,
+            height: NotchLayout.teleprompterHeight
+        )
         viewModel = NotchViewModel(
             collapsedSize: collapsedRect.size,
             expandedSize: expandedSize,
@@ -247,15 +295,17 @@ final class NotchController {
             peekSize: peekSize,
             compactPeekSize: compactPeekSize,
             shelfSize: shelfSize,
-            calendarSize: calendarSize
+            calendarSize: calendarSize,
+            teleprompterSize: teleprompterSize
         )
 
         // Invariant 3: the panel is the maximum footprint of any page.
-        let maxHeight = max(expandedSize.height, calendarSize.height)
+        let maxHeight = max(expandedSize.height, calendarSize.height, teleprompterSize.height)
+        let maxWidth = max(expandedSize.width, teleprompterSize.width)
         let maxRect = CGRect(
-            x: collapsedRect.midX - expandedSize.width / 2,
+            x: collapsedRect.midX - maxWidth / 2,
             y: collapsedRect.maxY - maxHeight,
-            width: expandedSize.width,
+            width: maxWidth,
             height: maxHeight
         )
 
@@ -273,6 +323,14 @@ final class NotchController {
         )
         panel.setFrame(maxRect, display: true)
         panel.orderFrontRegardless()
+
+        applyLiveSettings()
+        settingsObserver = NotificationCenter.default.addObserver(
+            forName: UserDefaults.didChangeNotification, object: nil, queue: .main
+        ) { [weak self] _ in
+            // Delivered on `.main` already, so no extra task hop.
+            MainActor.assumeIsolated { self?.applyLiveSettings() }
+        }
 
         // NotchController lives for the whole app run (owned by AtelierApp),
         // so this observation never needs to be torn down.
