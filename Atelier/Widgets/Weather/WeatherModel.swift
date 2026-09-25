@@ -42,7 +42,7 @@ struct WeatherCondition: Equatable {
         case 71, 73, 75, 77:
             return .init(symbol: "cloud.snow.fill", label: "Snow", quip: "Snow day energy")
         case 80, 81, 82:
-            return .init(symbol: "cloud.heavy.rain.fill", label: "Showers", quip: "Sudden rain, no warning")
+            return .init(symbol: "cloud.heavyrain.fill", label: "Showers", quip: "Sudden rain, no warning")
         case 85, 86:
             return .init(symbol: "cloud.snow.fill", label: "Snow showers", quip: "Snow day energy")
         case 95, 96, 99:
