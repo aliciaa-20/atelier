@@ -125,6 +125,13 @@ final class NotchController {
         // notch up with no way to pause.
         if !AtelierSettings.teleprompterEnabled { TeleprompterModel.shared.pause() }
 
+        // Voice sync: the setting is the persisted preference, the model owns
+        // the effective state (it flips the setting back off if permission or
+        // the recognizer isn't available). No-op when they already agree.
+        if AtelierSettings.teleprompterEnabled {
+            Task { await TeleprompterModel.shared.setVoiceSync(AtelierSettings.teleprompterVoiceSync) }
+        }
+
         if AtelierSettings.teleprompterEnabled, AtelierSettings.teleprompterHotkeysEnabled {
             GlobalHotkeys.shared.register { [weak self] action in self?.handleHotkey(action) }
         } else {
