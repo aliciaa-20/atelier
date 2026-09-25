@@ -36,11 +36,12 @@ activation" is only mic loudness, not word tracking).
    you read while Zoom is frontmost.
 5. **Ghost Mode is `panel.sharingType = .none`, applied live** from settings
    (`NotchController.applyLiveSettings`). It hides the *whole* panel, including
-   from the user's own screenshots. **Verification status: PENDING.** Apple
-   changed capture behaviour in macOS 15, so whether `.none` still hides the
-   panel from ScreenCaptureKit-based capture on macOS 26 must be confirmed with
-   a real screen recording (QuickTime, `screencapture`, a Zoom/Meet share)
-   before Ghost Mode is called done. Record the result here.
+   from the user's own screenshots. **Verified 2026-09-25 (Alicia, macOS 27.0 per
+   `sw_vers`): the notch is hidden in a Google Meet screen share.** Apple
+   changed capture behaviour in macOS 15, which is why this was checked rather
+   than assumed. Not yet tested: QuickTime screen recording, `screencapture`,
+   Zoom/Teams, OBS; the Settings copy promises "screen sharing and recordings",
+   so test those before relying on it for anything sensitive.
 6. **Global hotkeys use Carbon `RegisterEventHotKey`**, not the `HotKey`
    package (no dependencies) and not the Accessibility-gated `CGEventTap`
    (Carbon needs no permission). Keys ⌃⌥P, ⌃⌥↑, ⌃⌥↓: not ⌃⌥Space (macOS input
@@ -51,10 +52,15 @@ activation" is only mic loudness, not word tracking).
    BOM detection to Windows-1252 then Latin-1 (`usedEncoding` alone only
    detects BOM files).
 
+8. **A manual pause keeps the notch open; only a finished script retracts it.**
+   Pausing (e.g. ⌃⌥P) with the pointer outside must not collapse the notch:
+   a presenter pausing for a question keeps their place in view.
+   `TeleprompterModel.hasFinished` gates the auto-retract.
+
 ## Consequences
 
 - Voice sync (stage 4) has its own plan; the "Listening…" pill hanging below the
   panel needs ~20pt beyond 150pt, so the max footprint may grow slightly.
 - Ring text (~8pt in a 28pt ring) and the flank controls' fit are settled
   on-device.
-- Ghost Mode's privacy claim depends on the verification in decision 5.
+- Ghost Mode's privacy claim rests on the Meet result in decision 5 only.

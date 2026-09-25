@@ -494,7 +494,10 @@ struct NotchRootView: View {
             // Same for the teleprompter: playback ended while the pointer
             // is already outside, so do the retract hold-open skipped.
             .onChange(of: teleprompter.wantsNotchOpen) { _, wants in
-                guard !wants, !pointerInside, viewModel.state == .expanded, viewModel.currentPage == .teleprompter else { return }
+                // Only after the script ran to its end: a manual pause (e.g. the
+                // hotkey) keeps the notch up so the presenter keeps their place.
+                guard !wants, !pointerInside, viewModel.state == .expanded, viewModel.currentPage == .teleprompter,
+                      teleprompter.hasFinished() else { return }
                 withAnimation(NotchAnimations.close) {
                     viewModel.handle(.hoverEnded(isPlaying: liveActivity.hasContent))
                 }

@@ -24,6 +24,13 @@ final class TeleprompterModel: ObservableObject {
     /// so the hover-out that triggers the resume doesn't retract the notch.
     var wantsNotchOpen: Bool { isPlaying || pausedForPointer }
 
+    /// True once the script has run to its end (as opposed to being paused
+    /// by hand). The root view retracts the notch after a finish, not after a
+    /// manual pause, so a presenter who pauses keeps their place in view.
+    func hasFinished(now: Date = .now) -> Bool {
+        scroll.isFinished(at: now)
+    }
+
     /// False for an empty script: nothing to play, so nothing should open
     /// the notch for it (the global hotkey checks this).
     var canPlay: Bool { !script.isEmpty }
@@ -124,11 +131,6 @@ final class TeleprompterModel: ObservableObject {
         // Held by the pointer counts as playing: pausing must stop it for
         // good, not resume under the pointer.
         if wantsNotchOpen { pause(now: now) } else { play(now: now) }
-    }
-
-    func restart(now: Date = .now) {
-        scroll.seek(to: 0, at: now)
-        scheduleFinish(now: now)
     }
 
     func setWPM(_ wpm: Double, now: Date = .now) {
