@@ -50,6 +50,7 @@ struct NotchTabBar: View {
                 // interactive element at all, so the previous version was
                 // entirely unreachable via VoiceOver (couldn't switch tabs).
                 Button {
+                    if page != currentPage { NotchHaptics.alignment() }
                     onSelect(page)
                 } label: {
                     Capsule()

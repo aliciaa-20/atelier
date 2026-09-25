@@ -74,7 +74,7 @@ struct WeatherDetailView: View {
                         ForEach(upcoming, id: \.dayKey) { day in
                             VStack(spacing: 2) {
                                 Text(weekday(day))
-                                    .font(.system(size: 9, weight: .medium))
+                                    .font(.system(size: 10, weight: .medium))
                                     .foregroundStyle(.white.opacity(0.45))
                                 Image(systemName: day.condition.symbol)
                                     .symbolRenderingMode(.multicolor)

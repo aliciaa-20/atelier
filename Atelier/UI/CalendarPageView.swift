@@ -200,7 +200,7 @@ struct CalendarPageView: View {
         } label: {
             VStack(spacing: 2) {
                 Text(day, format: .dateTime.weekday(.narrow))
-                    .font(.system(size: 9, weight: .medium))
+                    .font(.system(size: 10, weight: .medium))
                     .foregroundStyle(.white.opacity(0.45))
                 Text(day, format: .dateTime.day())
                     .font(.system(size: 13, weight: isSelected ? .bold : .medium))
