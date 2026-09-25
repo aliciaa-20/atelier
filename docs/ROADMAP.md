@@ -787,7 +787,7 @@ Claude Code mechanic: custom slash commands; `/code-review`.
 - [x] VoiceOver-adjustable scrubbers (playback position, Volume, Brightness)
 - [x] Trackpad haptics (`NotchHaptics`: tab switch, mirror toggle, scrub release)
 - [x] Symbol/number morphs (`numericText` on Volume/Brightness/monitor %, `.symbolEffect` on transport)
-- [ ] 9-10pt text bump (done: Calendar, Weather, Volume/Brightness/ColorPicker pills, which all scale down if tight; the 8pt teleprompter ring label is left); concentric radii done: Shelf/Camera/Teleprompter cards share `NotchLayout.cardInset` (10) and `cardCornerRadius` (panel 20 - 10), artwork corners use the ~22% ratio (pill/peek/expanded/lock screen)
+- [ ] 9-10pt text bump (done: Calendar, Weather, Volume/Brightness/ColorPicker pills, which all scale down if tight; the 8pt teleprompter ring label is left); edge gaps: cards share `pageHorizontalInset` (26) / `pageBottomInset` (12) / `cardCornerRadius` (16); peek + HUD panels use one `peekEdgeGap` (9) to every edge with the artwork radius concentric (14 - 9); other artwork corners ~22%
 - [x] Done in the `fix/native-polish-pass` branch: real-minute clock, locale-aware
       formats, macOS VoiceOver wording, Reduce Motion, tooltips, Shelf empty state
 

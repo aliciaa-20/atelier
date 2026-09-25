@@ -28,7 +28,7 @@ struct ShelfView: View {
                     RoundedRectangle(cornerRadius: NotchLayout.cardCornerRadius, style: .continuous)
                         .fill(Color.white.opacity(0.06))
                 )
-                .padding(.horizontal, NotchLayout.cardInset)
+                .padding(.horizontal, NotchLayout.pageHorizontalInset)
                 .allowsHitTesting(false)
             } else {
                 ScrollView(.horizontal, showsIndicators: false) {
@@ -44,7 +44,7 @@ struct ShelfView: View {
             }
         }
         .padding(.top, notchHeight + 8)
-        .padding(.bottom, NotchLayout.cardInset)
+        .padding(.bottom, NotchLayout.pageBottomInset)
     }
 }
 

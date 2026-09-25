@@ -75,9 +75,10 @@ struct NotchRootView: View {
         case .pill:
             return (top: 6, bottom: 11)
         case .expanded:
+            if transientHUD != nil { return (top: NotchLayout.peekTopRadius, bottom: NotchLayout.peekBottomRadius) }
             return (top: 14, bottom: NotchLayout.panelBottomRadius)
         case .peeking:
-            return (top: 6, bottom: 14)
+            return (top: NotchLayout.peekTopRadius, bottom: NotchLayout.peekBottomRadius)
         case .shelf:
             return (top: 14, bottom: NotchLayout.panelBottomRadius)
         }
@@ -113,6 +114,9 @@ struct NotchRootView: View {
             let content = liveActivity.topContent ?? lastPeekContent
             return content?.isExpandable == false ? viewModel.compactPeekSize : viewModel.peekSize
         case .expanded:
+            // A volume/brightness HUD while hover-open: the compact peek size
+            // instead of the full player footprint, then back.
+            if transientHUD != nil { return viewModel.compactPeekSize }
             // Idle Home (nothing playing, Home tab) gets its own shorter
             // footprint -- far less to show than a real player or the
             // shelf grid, so it shouldn't claim the same vertical space.
@@ -205,7 +209,15 @@ struct NotchRootView: View {
                         .transition(.identity)
                 }
 
-                if viewModel.state == .expanded {
+                if viewModel.state == .expanded, let hud = transientHUD {
+                    // Volume/brightness (etc.) changed while the notch is hover-open.
+                    // The system HUD is suppressed, so without this there is no
+                    // feedback at all. The panel shrinks to the compact peek size
+                    // (`frameSize`) and shows the same bar; the player returns when
+                    // the source clears it.
+                    hud.peekView()
+                        .transition(.identity)
+                } else if viewModel.state == .expanded {
                     VStack(spacing: 0) {
                         // Both Shelf and System Monitor toggled off in
                         // Settings leaves only Home -- no point showing a
@@ -244,17 +256,7 @@ struct NotchRootView: View {
                         // container stays `.transition(.identity)` (ADR 0014).
                         ZStack(alignment: .top) {
                             Group {
-                                if let hud = transientHUD {
-                                    // Volume/brightness (etc.) changed while the notch is hover-open.
-                                    // The system HUD is suppressed, so without this there is no
-                                    // feedback at all. Same bar as the peek, centred in the page
-                                    // area; the player returns when the source clears it.
-                                    hud.peekView()
-                                        // The peek bakes in the notch clearance; the tab bar row
-                                        // above already provides it here.
-                                        .padding(.top, -(viewModel.collapsedSize.height + 2))
-                                        .frame(maxHeight: .infinity, alignment: .center)
-                                } else if AtelierSettings.shelfEnabled, viewModel.currentPage == .shelf {
+                                if AtelierSettings.shelfEnabled, viewModel.currentPage == .shelf {
                                     ShelfView(store: shelfStore, rootDirectory: shelfStore.rootDirectory, notchHeight: 0)
                                         .onAppear { shelfStore.sweepExpired() }
                                 } else if AtelierSettings.systemMonitorEnabled, viewModel.currentPage == .systemMonitor {
@@ -300,7 +302,6 @@ struct NotchRootView: View {
                             }
                             .id(viewModel.currentPage)
                             .transition(pageTransition)
-                            .animation(.easeOut(duration: 0.15), value: transientHUD == nil)
                         }
                     }
                     // Root cause of the idle clock bleeding past the
@@ -392,6 +393,7 @@ struct NotchRootView: View {
             }
             .frame(width: frameSize.width, height: frameSize.height)
             .clipShape(NotchShape(topCornerRadius: cornerRadii.top, bottomCornerRadius: cornerRadii.bottom))
+            .animation(NotchAnimations.open, value: transientHUD == nil)
             // No shadow while `.collapsed` -- Invariant 7 requires that
             // state to be visually indistinguishable from the stock notch,
             // which casts none. Every other state is already a departure
@@ -427,7 +429,9 @@ struct NotchRootView: View {
                 // hover-driven transition needed. `nil` topContent
                 // (nothing peeking right now) keeps the original
                 // hover-to-open behavior for the plain notch/pill.
-                guard liveActivity.topContent?.isExpandable ?? true else { return }
+                // Already hover-open (e.g. a volume HUD took over): exits must
+                // still get through, or the notch never retracts.
+                guard viewModel.state == .expanded || (liveActivity.topContent?.isExpandable ?? true) else { return }
 
                 if hovering {
                     withAnimation(NotchAnimations.open) {
@@ -435,6 +439,10 @@ struct NotchRootView: View {
                     }
                 } else {
                     if menuTracking { return }
+                    // The HUD shrinks the panel, so the pointer usually ends up
+                    // outside it. Don't close under the HUD; the check below
+                    // retracts when it ends and the pointer really is away.
+                    if transientHUD != nil { return }
                     // Camera hold-open: only hover-out is suppressed; swipe-close
                     // and tab changes still close/stop (see `CameraHoldOpen`).
                     if CameraHoldOpen.shouldSuppressRetract(
@@ -645,11 +653,32 @@ struct NotchRootView: View {
         .onChange(of: nowPlaying.current?.artworkURL) { _, url in
             artworkColor.load(from: url)
         }
+        .onChange(of: transientHUD == nil) { _, hudGone in
+            guard hudGone, viewModel.state == .expanded, !pointerOverExpandedPanel() else { return }
+            withAnimation(NotchAnimations.close) {
+                viewModel.handle(.hoverEnded(isPlaying: liveActivity.hasContent))
+            }
+        }
         .onChange(of: liveActivity.topContent?.id) { _, _ in
             if let topContent = liveActivity.topContent {
                 lastPeekContent = topContent
             }
         }
+    }
+
+    /// Whether the mouse is over the (now full-size) expanded panel -- the
+    /// panel is always max-sized and top-centred, so compare against the
+    /// visible `frameSize` rect within it.
+    private func pointerOverExpandedPanel() -> Bool {
+        guard let panel = NSApp.windows.first(where: { $0 is NotchPanel }) else { return false }
+        let size = frameSize
+        let rect = CGRect(
+            x: panel.frame.midX - size.width / 2,
+            y: panel.frame.maxY - size.height,
+            width: size.width,
+            height: size.height
+        )
+        return rect.contains(NSEvent.mouseLocation)
     }
 
     /// A brief, peek-worthy, non-expandable activity (Volume, Brightness,

@@ -37,8 +37,8 @@ struct CameraMirrorPageView: View {
         }
         .buttonStyle(CameraPressStyle())
         .focusEffectDisabled()
-        .padding(.horizontal, NotchLayout.cardInset)
-        .padding(.bottom, NotchLayout.cardInset)
+        .padding(.horizontal, NotchLayout.pageHorizontalInset)
+        .padding(.bottom, NotchLayout.pageBottomInset)
         .animation(.easeInOut(duration: 0.2), value: source.phase)
         .accessibilityLabel(source.isLive ? "Camera mirror, on" : "Camera mirror, off")
         .help(source.isLive ? "Turn camera off" : "Turn camera on")
