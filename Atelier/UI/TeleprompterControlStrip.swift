@@ -74,6 +74,10 @@ struct TeleprompterControlStrip: View {
         .buttonStyle(.plain)
         .menuIndicator(.hidden)
         .fixedSize()
+        // A `Menu` label is bridged to AppKit and can keep showing the old
+        // number until something else re-renders it; a new id per speed
+        // rebuilds it immediately.
+        .id(Int(model.scroll.wpm))
         .help("Reading speed, words per minute")
         .accessibilityLabel("Reading speed")
         .accessibilityValue("\(Int(model.scroll.wpm)) words per minute")

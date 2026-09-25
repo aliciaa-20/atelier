@@ -56,19 +56,27 @@ final class TeleprompterModel: ObservableObject {
 
     // MARK: Script and layout
 
-    /// Re-reads the script and starts over, paused, at the top: a script
-    /// edited mid-play must never leave the position past the new end.
-    func reloadScript() {
+    /// Re-reads the script. Editing keeps your place and keeps playing (a
+    /// shorter script clamps the position to its end, and a script that is
+    /// then already finished stops), so fixing a typo mid-read doesn't
+    /// throw you back to the top.
+    func reloadScript(now: Date = .now) {
         let reloaded = TeleprompterScript(text: store.load())
         // Saving the same words again (e.g. opening the Settings pane) must
-        // not stop or rewind a script that is playing.
+        // not disturb anything.
         guard reloaded != script else { return }
+        let wasPlaying = isPlaying
+        let oldPosition = scroll.position(at: now)
         cancelFinishTask()
         script = reloaded
-        scroll = TeleprompterScroll(totalWords: script.wordCount, wpm: scroll.wpm)
-        isPlaying = false
-        pausedForPointer = false
+        scroll = TeleprompterScroll(totalWords: reloaded.wordCount, wpm: scroll.wpm)
+        scroll.seek(to: oldPosition, at: now)
+        // `play` on a finished script would restart it, so only resume when
+        // there is still script left to read.
+        if wasPlaying, !scroll.isFinished(at: now) { scroll.play(at: now) }
+        isPlaying = scroll.isPlaying(at: now)
         relayout()
+        scheduleFinish(now: now)
     }
 
     func updateLayout(width: CGFloat, fontSize: Double, mono: Bool) {
@@ -149,6 +157,15 @@ final class TeleprompterModel: ObservableObject {
         } else if pausedForPointer {
             play(now: now)
         }
+    }
+
+    /// Hand-scrolls a script that isn't playing by a number of display lines
+    /// (positive = further into the script). Ignored while playing; allowed
+    /// while held by the pointer, so it resumes from where you scrolled to.
+    func scrollLines(by delta: Double, now: Date = .now) {
+        guard !isPlaying, !lines.starts.isEmpty else { return }
+        let line = lines.linePosition(forWord: scroll.position(at: now)) + delta
+        scroll.seek(to: lines.wordPosition(forLine: line), at: now)
     }
 
     // MARK: Finish timer

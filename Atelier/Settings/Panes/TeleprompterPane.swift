@@ -24,16 +24,27 @@ struct TeleprompterPane: View {
     var body: some View {
         Form {
             Section("Script") {
-                TextEditor(text: $text)
-                    .font(.body)
-                    .frame(minHeight: 170)
-                    .accessibilityLabel("Script")
-                HStack {
-                    Button("Choose File") { chooseFile() }
-                    Text("or drop a .txt, .md, .doc, .docx or .rtf file anywhere here")
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
+                Text("Add your script: paste or type it below, or drop a file onto the box under it.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                ZStack(alignment: .topLeading) {
+                    TextEditor(text: $text)
+                        .font(.body)
+                        .frame(minHeight: 150)
+                        .accessibilityLabel("Script")
+                        // A text view would otherwise take a dropped file for
+                        // its own (inserting its path); route it to the importer.
+                        .dropDestination(for: URL.self, action: handleDrop, isTargeted: { dropTargeted = $0 })
+                    if text.isEmpty {
+                        Text("Paste or type your script here")
+                            .font(.body)
+                            .foregroundStyle(.tertiary)
+                            .padding(.top, 8)
+                            .padding(.leading, 6)
+                            .allowsHitTesting(false)
+                    }
                 }
+                dropZone
                 if let message {
                     Text(message).font(.callout).foregroundStyle(.secondary)
                 }
@@ -76,17 +87,7 @@ struct TeleprompterPane: View {
         }
         .onChange(of: text) { scheduleSave() }
         .onChange(of: wpm) { _, value in TeleprompterModel.shared.setWPM(value) }
-        .dropDestination(for: URL.self) { urls, _ in
-            guard let url = urls.first else { return false }
-            requestImport(url)
-            return true
-        } isTargeted: { dropTargeted = $0 }
-        .overlay {
-            if dropTargeted {
-                RoundedRectangle(cornerRadius: 10).strokeBorder(Color.accentColor, lineWidth: 2).padding(4)
-                    .allowsHitTesting(false)
-            }
-        }
+        .dropDestination(for: URL.self, action: handleDrop, isTargeted: { dropTargeted = $0 })
         .confirmationDialog("Replace the current script?", isPresented: .init(
             get: { pendingImport != nil },
             set: { if !$0 { pendingImport = nil } }
@@ -96,6 +97,48 @@ struct TeleprompterPane: View {
         } message: { url in
             Text("\(url.lastPathComponent) will replace what's in the editor.")
         }
+    }
+
+    /// The advertised drop target: dashed box that lights up while a file is
+    /// dragged over it.
+    private var dropZone: some View {
+        VStack(spacing: 6) {
+            Image(systemName: dropTargeted ? "arrow.down.doc.fill" : "arrow.down.doc")
+                .font(.system(size: 24, weight: .regular))
+                .foregroundStyle(dropTargeted ? Color.accentColor : .secondary)
+            Text("Drop a file here")
+                .font(.headline)
+            Text(".txt   .md   .doc   .docx   .rtf")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Button("Choose File") { chooseFile() }
+                .padding(.top, 2)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 16)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(dropTargeted ? Color.accentColor.opacity(0.12) : Color.clear)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .strokeBorder(
+                    dropTargeted ? Color.accentColor : Color.secondary.opacity(0.5),
+                    style: StrokeStyle(lineWidth: 1.5, dash: [6, 4])
+                )
+        )
+        .contentShape(Rectangle())
+        .dropDestination(for: URL.self, action: handleDrop, isTargeted: { dropTargeted = $0 })
+        .animation(.easeOut(duration: 0.15), value: dropTargeted)
+        .accessibilityElement(children: .contain)
+    }
+
+    /// Only real files: a dragged web link would otherwise be read over the
+    /// network on the main thread.
+    private func handleDrop(_ urls: [URL], _ location: CGPoint) -> Bool {
+        guard let url = urls.first, url.isFileURL else { return false }
+        requestImport(url)
+        return true
     }
 
     /// Debounced so typing doesn't rewrite the file and reset playback on

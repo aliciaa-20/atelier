@@ -37,17 +37,37 @@ struct TeleprompterModelTests {
         #expect(!model.isPlaying)
     }
 
-    // Review Focus 4: replacing the script mid-play stops and resets.
-    @Test func editingTheScriptWhilePlayingResetsToTheTop() throws {
+    // Review Focus 4 (revised after on-device feedback): editing mid-play
+    // keeps playing from the same place; a shorter script clamps the
+    // position instead of scrolling past its end.
+    @Test func editingTheScriptWhilePlayingKeepsPlayingFromTheSamePlace() throws {
         let (model, store) = try makeModel()
         model.play(now: t0)
-        model.pause(now: t0.addingTimeInterval(3))     // some progress
-        model.play(now: t0.addingTimeInterval(3))
+        let later = t0.addingTimeInterval(1)
+        let before = model.scroll.position(at: later)
+        try store.save("a b c d e f g h i j k l")
+        model.reloadScript(now: later)
+        #expect(model.isPlaying)
+        #expect(model.script.wordCount == 12)
+        #expect(model.scroll.position(at: later) == before)
+    }
+
+    @Test func aShorterEditedScriptClampsThePositionAndStops() throws {
+        let (model, store) = try makeModel()
+        model.play(now: t0)
+        let later = t0.addingTimeInterval(1)          // ~2.3 words in
+        try store.save("x y")
+        model.reloadScript(now: later)                // 2 words: already past the end
+        #expect(!model.isPlaying)
+        #expect(model.scroll.position(at: later) == 2)
+    }
+
+    @Test func aPausedScriptStaysPausedAfterAnEdit() throws {
+        let (model, store) = try makeModel()
         try store.save("brand new script text")
-        model.reloadScript()
+        model.reloadScript(now: t0)
         #expect(!model.isPlaying)
         #expect(model.script.wordCount == 4)
-        #expect(model.scroll.position(at: t0.addingTimeInterval(60)) == 0)
     }
 
     @Test func settleStopsAScriptThatRanOffTheEnd() throws {
@@ -127,5 +147,35 @@ struct TeleprompterModelTests {
         #expect(!empty.canPlay)
         let (full, _) = try makeModel()
         #expect(full.canPlay)
+    }
+
+    // Hand scrolling while not playing.
+    @Test func scrollingByLinesMovesAPausedScript() throws {
+        let (model, _) = try makeModel(script: "alpha beta\ngamma delta\nepsilon zeta")
+        model.scrollLines(by: 1, now: t0)
+        #expect(model.scroll.position(at: t0) == 2)       // start of line 1
+        model.scrollLines(by: 0.5, now: t0)
+        #expect(model.scroll.position(at: t0) == 3)       // halfway through line 1
+        model.scrollLines(by: -10, now: t0)
+        #expect(model.scroll.position(at: t0) == 0)       // clamps at the top
+        model.scrollLines(by: 99, now: t0)
+        #expect(model.scroll.position(at: t0) == 6)       // clamps at the end
+    }
+
+    @Test func scrollingIsIgnoredWhilePlaying() throws {
+        let (model, _) = try makeModel(script: "alpha beta\ngamma delta\nepsilon zeta")
+        model.play(now: t0)
+        model.scrollLines(by: 1, now: t0)
+        #expect(model.scroll.position(at: t0) == 0)
+    }
+
+    @Test func scrollingWhileHeldByThePointerMovesWhereItResumes() throws {
+        let (model, _) = try makeModel(script: "alpha beta\ngamma delta\nepsilon zeta")
+        model.play(now: t0)
+        model.setPointerInside(true, now: t0)
+        model.scrollLines(by: 1, now: t0)
+        #expect(model.scroll.position(at: t0) == 2)
+        model.setPointerInside(false, now: t0)
+        #expect(model.isPlaying)
     }
 }
