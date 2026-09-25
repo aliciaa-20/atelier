@@ -11,7 +11,7 @@ struct TeleprompterModelTests {
             .appendingPathComponent("AtelierModelTests-\(UUID().uuidString)")
         let store = ScriptStore(directory: dir)
         try store.save(script)
-        let model = TeleprompterModel(store: store, persistsWPM: false)
+        let model = TeleprompterModel(store: store, persistsWPM: false, initialWPM: 140)
         model.updateLayout(width: 400, fontSize: 15, mono: false)
         return (model, store)
     }

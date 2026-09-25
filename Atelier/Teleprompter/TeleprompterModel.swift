@@ -42,10 +42,12 @@ final class TeleprompterModel: ObservableObject {
     private var finishTask: Task<Void, Never>?
     private var scriptObserver: NSObjectProtocol?
 
-    init(store: ScriptStore = .shared, persistsWPM: Bool = true) {
+    /// `initialWPM` defaults to the saved speed; tests pass a fixed one so
+    /// they don't depend on whatever the user last chose.
+    init(store: ScriptStore = .shared, persistsWPM: Bool = true, initialWPM: Double = AtelierSettings.teleprompterWPM) {
         self.store = store
         self.persistsWPM = persistsWPM
-        scroll = TeleprompterScroll(totalWords: 0, wpm: AtelierSettings.teleprompterWPM)
+        scroll = TeleprompterScroll(totalWords: 0, wpm: initialWPM)
         scriptObserver = NotificationCenter.default.addObserver(
             forName: ScriptStore.didChange, object: store, queue: .main
         ) { [weak self] _ in
