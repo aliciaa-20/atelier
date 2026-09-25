@@ -132,6 +132,9 @@ final class NotchController {
         let model = TeleprompterModel.shared
         switch action {
         case .playPause:
+            // Nothing to play: don't open the notch for it (nothing would
+            // retract it, since `wantsNotchOpen` never changes).
+            guard model.canPlay else { return }
             // Open the notch on the Teleprompter tab first, so pressing the
             // key with the notch collapsed is visible. Opening resets the
             // page to the first tab, so select ours *after* it opens.

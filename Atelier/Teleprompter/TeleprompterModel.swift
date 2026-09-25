@@ -24,6 +24,10 @@ final class TeleprompterModel: ObservableObject {
     /// so the hover-out that triggers the resume doesn't retract the notch.
     var wantsNotchOpen: Bool { isPlaying || pausedForPointer }
 
+    /// False for an empty script: nothing to play, so nothing should open
+    /// the notch for it (the global hotkey checks this).
+    var canPlay: Bool { !script.isEmpty }
+
     private struct LayoutKey: Equatable {
         var width: CGFloat
         var fontSize: Double
@@ -55,8 +59,12 @@ final class TeleprompterModel: ObservableObject {
     /// Re-reads the script and starts over, paused, at the top: a script
     /// edited mid-play must never leave the position past the new end.
     func reloadScript() {
+        let reloaded = TeleprompterScript(text: store.load())
+        // Saving the same words again (e.g. opening the Settings pane) must
+        // not stop or rewind a script that is playing.
+        guard reloaded != script else { return }
         cancelFinishTask()
-        script = TeleprompterScript(text: store.load())
+        script = reloaded
         scroll = TeleprompterScroll(totalWords: script.wordCount, wpm: scroll.wpm)
         isPlaying = false
         pausedForPointer = false
@@ -103,7 +111,9 @@ final class TeleprompterModel: ObservableObject {
     }
 
     func toggle(now: Date = .now) {
-        if isPlaying { pause(now: now) } else { play(now: now) }
+        // Held by the pointer counts as playing: pausing must stop it for
+        // good, not resume under the pointer.
+        if wantsNotchOpen { pause(now: now) } else { play(now: now) }
     }
 
     func restart(now: Date = .now) {

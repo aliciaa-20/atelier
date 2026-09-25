@@ -94,4 +94,38 @@ struct TeleprompterModelTests {
         #expect(model.lineText(1) == "gamma")
         #expect(model.lineText(99) == "")
     }
+
+
+    // Final review, Important 1: opening Settings re-saves the same text,
+    // which must not stop or rewind a script that is playing.
+    @Test func reloadingAnUnchangedScriptKeepsPlaybackAndPosition() throws {
+        let (model, store) = try makeModel()
+        model.play(now: t0)
+        try store.save("one two three four five six seven eight nine ten")
+        model.reloadScript()
+        #expect(model.isPlaying)
+    }
+
+    // Final review, Important 3: with pause-on-hover, the pointer has
+    // already paused playback, so the button must stop it for good.
+    @Test func toggleWhileHeldByThePointerStopsForGood() throws {
+        let (model, _) = try makeModel()
+        model.play(now: t0)
+        model.setPointerInside(true, now: t0.addingTimeInterval(1))
+        model.toggle(now: t0.addingTimeInterval(2))
+        #expect(!model.isPlaying)
+        #expect(!model.pausedForPointer)
+        #expect(!model.wantsNotchOpen)
+        model.setPointerInside(false, now: t0.addingTimeInterval(3))
+        #expect(!model.isPlaying)
+    }
+
+    // Final review, Important 4: the hotkey must not open the notch for a
+    // script that can't play.
+    @Test func canPlayIsFalseForAnEmptyScript() throws {
+        let (empty, _) = try makeModel(script: " \n ")
+        #expect(!empty.canPlay)
+        let (full, _) = try makeModel()
+        #expect(full.canPlay)
+    }
 }

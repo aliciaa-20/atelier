@@ -21,9 +21,13 @@ activation" is only mic loudness, not word tracking).
    changes and seeks re-anchor, so nothing jumps. The only timer is one sleeping
    task that fires when a playing script ends. No `PaceSource` protocol yet: the
    speech source (stage 4) drives `seek(to:at:)` instead of the clock.
-3. **CoreText wraps, SwiftUI draws one `Text` per line.** `TeleprompterLineWrapper`
+3. **A greedy word wrapper measures, SwiftUI draws one `Text` per line.**
+   `TeleprompterLineWrapper` measures candidate lines with the real font and
    yields each line's first word index; only the visible window of lines is
-   built. A word wider than the panel stays one (overflowing, clipped) line.
+   built. It breaks only between words: a first version used CoreText's
+   framesetter, which also breaks inside hyphenated words and URLs and left
+   lines wider than the panel with clipped tails (caught in the final review).
+   A word wider than the panel gets a line to itself and is clipped.
 4. **Hold-open is always on while playing** (no setting, unlike Camera). Pointer
    pause means "pause while the pointer is over the notch, resume on exit, only
    if it was playing on entry"; `wantsNotchOpen` (playing or pointer-paused) is
