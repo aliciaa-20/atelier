@@ -1,6 +1,6 @@
 # 004 — Replace the fighting close dip with one spring
 
-- **Status**: TODO
+- **Status**: DONE (unverified on-device)
 - **Commit**: a793545
 - **Severity**: MEDIUM
 - **Category**: Interruptibility

@@ -1,6 +1,6 @@
 # 001 — Consolidate inline springs into NotchAnimations tokens
 
-- **Status**: TODO
+- **Status**: DONE (unverified on-device)
 - **Commit**: a793545
 - **Severity**: MEDIUM
 - **Category**: Cohesion & tokens
