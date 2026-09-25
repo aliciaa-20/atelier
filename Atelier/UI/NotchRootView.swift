@@ -325,14 +325,6 @@ struct NotchRootView: View {
                     .allowsHitTesting(!hudActive)
                     .animation(.easeOut(duration: 0.15), value: hudActive)
                     .overlay(alignment: .top) {
-                        if let hud = transientHUD ?? lastHUD {
-                            hud.peekView()
-                                .opacity(hudActive ? 1 : 0)
-                                .allowsHitTesting(hudActive)
-                                .animation(hudActive ? .easeOut(duration: 0.2).delay(0.08) : .easeOut(duration: 0.15), value: hudActive)
-                        }
-                    }
-                    .overlay(alignment: .top) {
                         if AtelierSettings.teleprompterEnabled, viewModel.currentPage == .teleprompter {
                             TeleprompterControlStrip(
                                 model: teleprompter,
@@ -402,8 +394,21 @@ struct NotchRootView: View {
                     Color.clear
                         .transition(.identity)
                 }
+
+                // The HUD is a sibling of the player, not an overlay on it: the
+                // player is taller than the compact frame and gets centred in
+                // the ZStack, so an overlay rode up with it and the bar landed
+                // above the visible area (an empty notch).
+                if viewModel.state == .expanded, let hud = transientHUD ?? lastHUD {
+                    hud.peekView()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                        .opacity(hudActive ? 1 : 0)
+                        .allowsHitTesting(hudActive)
+                        .animation(hudActive ? .easeOut(duration: 0.2).delay(0.08) : .easeOut(duration: 0.15), value: hudActive)
+                        .transition(.identity)
+                }
             }
-            .frame(width: frameSize.width, height: frameSize.height)
+            .frame(width: frameSize.width, height: frameSize.height, alignment: .top)
             .clipShape(NotchShape(topCornerRadius: cornerRadii.top, bottomCornerRadius: cornerRadii.bottom))
             .animation(NotchAnimations.hud, value: hudActive)
             // No shadow while `.collapsed` -- Invariant 7 requires that
