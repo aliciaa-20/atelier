@@ -71,7 +71,16 @@ First network call in the app — note in README/ADR.
 - [x] W2. Home weather glance + tap-for-detail card (5 days). Calendar week-strip icons tried and dropped (too cluttered)
 - [x] W3. Docs (ADR 0015, README, CLAUDE.md, FEATURES, ROADMAP)
 
-Later (separate STAGES): camera mirror (Phase 14) -> Settings (Phase 16) -> teleprompter (Phase 17).
+Camera mirror (Phase 14) and Settings (Phase 16) shipped. Teleprompter (Phase 17) below.
+
+## Teleprompter (Phase 17)
+
+Spec: `docs/superpowers/specs/2026-09-25-teleprompter-design.md`. Plan (stages 1-3): `docs/superpowers/plans/2026-09-25-teleprompter-stages-1-3.md`. ADR 0019. Code for stages 1-3 is on `feat/teleprompter` (214 tests pass); **on-device verification is still pending** (marked below).
+
+- [x] 1. Pure logic (`TeleprompterScript/Scroll/Lines`, hold-open) + script import + script store, tested
+- [ ] 2. The tab: control strip, progress ring, reading view, Settings pane — built; **needs on-device check** (strip alignment, ring text fit, speed menu in the panel, every-tab screenshots)
+- [ ] 3. Ghost Mode + global hotkeys — built; **Ghost Mode must be verified against a real screen recording (ADR 0019 #5) before it is called done**; hotkeys need a real key-press check
+- [ ] 4. Voice sync (`SFSpeechRecognizer`, `ScriptMatcher`, mic/speech permissions, "Listening…" pill) — not started, gets its own plan
 
 Settings (Phase 16) must include **user-reorderable tabs** (asked 2026-09-24). Notes for that plan:
 `NotchPage` is a fixed `CaseIterable` order today (home, shelf, systemMonitor, calendar), and
