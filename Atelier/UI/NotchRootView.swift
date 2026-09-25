@@ -409,7 +409,9 @@ struct NotchRootView: View {
                         .opacity(hudActive ? 1 : 0)
                         .allowsHitTesting(hudActive)
                         .animation(hudActive ? NotchAnimations.hudBarFade.hudIn : NotchAnimations.hudBarFade.hudOut, value: hudActive)
-                        .transition(.identity)
+                        // Notch closing while the bar is up: fade it out instead of
+                        // snapping to the pill's percent text.
+                        .transition(.asymmetric(insertion: .identity, removal: .opacity.animation(.easeOut(duration: 0.2))))
                 }
             }
             .frame(width: frameSize.width, height: frameSize.height)
