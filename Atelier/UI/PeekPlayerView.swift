@@ -42,7 +42,7 @@ struct PeekPlayerView: View {
             // needs to be more subtle to read as concentric with it
             // rather than competing with a second, differently-scaled
             // rounded shape right next to it.
-            ArtworkView(url: info.artworkURL, cornerRadius: 5)
+            ArtworkView(url: info.artworkURL, cornerRadius: 34 * 0.21)
                 .frame(width: 34, height: 34)
 
             VStack(alignment: .leading, spacing: 2) {
