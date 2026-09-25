@@ -147,7 +147,6 @@ struct TeleprompterControlStrip: View {
 private struct TeleprompterPressStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .notchFocusRing(cornerRadius: 13)
             .opacity(configuration.isPressed ? 0.6 : 1)
     }
 }
