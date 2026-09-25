@@ -23,15 +23,19 @@ struct BrightnessActivityContent: LiveActivityContent {
             HStack(spacing: 4) {
                 Image(systemName: symbolName)
                     .foregroundStyle(.white)
-                    .font(.system(size: 9))
+                    .font(.system(size: 10))
                 Text("\(percent)%")
-                    .font(.system(size: 9, weight: .medium))
+                    .font(.system(size: 10, weight: .medium))
                     .monospacedDigit()
+                    .contentTransition(.numericText(value: Double(percent)))
+                    .animation(.snappy(duration: 0.2), value: percent)
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
                     .foregroundStyle(.white)
             }
             .frame(maxWidth: .infinity)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Brightness \(percent) percent")
         )
     }
 
@@ -46,13 +50,15 @@ struct BrightnessActivityContent: LiveActivityContent {
                     .foregroundStyle(.white)
                     .font(.system(size: 13))
                     .frame(width: 16)
+                    .accessibilityHidden(true)
 
-                ScrubBarView(fillFraction: CGFloat(percent) / 100, tint: .white, onScrub: onScrub)
+                ScrubBarView(fillFraction: CGFloat(percent) / 100, tint: .white, label: "Brightness", onScrub: onScrub)
             }
-            .padding(.leading, 25)
-            .padding(.trailing, 24)
-            .padding(.bottom, 6)
-            .padding(.top, notchHeight + 2)
+            // Same uniform edge gap as the track peek (see NotchLayout);
+            // 9 + 16 + 9 = 34, `NotchController.compactPeekContentHeight`.
+            .padding(.horizontal, NotchLayout.peekHorizontalPadding)
+            .padding(.bottom, NotchLayout.peekEdgeGap)
+            .padding(.top, notchHeight + NotchLayout.peekEdgeGap)
         )
     }
 }

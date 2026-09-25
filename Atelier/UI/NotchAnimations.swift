@@ -45,6 +45,36 @@ enum NotchAnimations {
     static var close: Animation {
         reduceMotion ? .easeInOut(duration: 0.25) : .spring(response: 0.6, dampingFraction: 0.94)
     }
+    /// Small state changes (tab dots, week shifts): damped, no overshoot.
+    static var standard: Animation {
+        reduceMotion ? .easeOut(duration: 0.2) : .spring(response: 0.3, dampingFraction: 0.85)
+    }
+    /// Tab/page changes and other non-hover state changes: a hint of bounce only.
+    static var page: Animation {
+        reduceMotion ? .easeOut(duration: 0.2) : .spring(duration: 0.4, bounce: 0.15)
+    }
+    /// Press feedback on buttons: fast, slightly bouncy.
+    static var press: Animation {
+        reduceMotion ? .easeOut(duration: 0.12) : .spring(response: 0.2, dampingFraction: 0.7)
+    }
+    /// Drag-handle grow/shrink (scrubber thumb).
+    static var grab: Animation {
+        reduceMotion ? .easeOut(duration: 0.12) : .spring(response: 0.3, dampingFraction: 0.75)
+    }
+    /// The player <-> compact volume/brightness HUD swap, the way Dynamic
+    /// Island does it: ONE critically damped spring (damping 1.0, no
+    /// overshoot -- it isn't a flick, so no bounce) drives the panel size AND
+    /// both contents together. Content scales 0.92 <-> 1 and blurs 6pt <-> 0
+    /// while it fades, so the cross-dissolve never shows two sharp layers at
+    /// once; the panel morph carries the eye. No timelines, delays or
+    /// staggered fades, so a second key press mid-swap just retargets the same
+    /// spring from where it is (interruptible), and going back is the exact
+    /// reverse path.
+    static var hud: Animation {
+        reduceMotion ? .easeInOut(duration: 0.15) : .spring(duration: 0.4, bounce: 0)
+    }
+    static var hudContentScale: CGFloat { reduceMotion ? 1 : 0.92 }
+    static var hudContentBlur: CGFloat { reduceMotion ? 0 : 6 }
     static let settleTuck: Animation = .easeOut(duration: 0.12)
     static var settleSpringBack: Animation {
         reduceMotion ? .easeOut(duration: 0.12) : .spring(response: 0.35, dampingFraction: 0.5)
