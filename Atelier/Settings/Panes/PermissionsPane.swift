@@ -32,6 +32,8 @@ private struct PermissionSnapshot {
     let accessibility: PermissionState
     let calendar: PermissionState
     let camera: PermissionState
+    let microphone: PermissionState
+    let speech: PermissionState
     let location: PermissionState
 
     static func current() -> PermissionSnapshot {
@@ -46,6 +48,20 @@ private struct PermissionSnapshot {
             }(),
             camera: {
                 switch CameraPermission.status {
+                case .authorized: .granted
+                case .notDetermined: .notDetermined
+                default: .denied
+                }
+            }(),
+            microphone: {
+                switch MicrophonePermission.status {
+                case .authorized: .granted
+                case .notDetermined: .notDetermined
+                default: .denied
+                }
+            }(),
+            speech: {
+                switch SpeechPermission.status {
                 case .authorized: .granted
                 case .notDetermined: .notDetermined
                 default: .denied
@@ -68,7 +84,8 @@ struct PermissionsPane: View {
 
     private var needsAnything: Bool {
         snapshot.accessibility != .granted || snapshot.calendar == .notDetermined
-            || snapshot.camera == .notDetermined || snapshot.location == .notDetermined
+            || snapshot.camera == .notDetermined || snapshot.microphone == .notDetermined
+            || snapshot.speech == .notDetermined || snapshot.location == .notDetermined
     }
 
     var body: some View {
@@ -112,6 +129,26 @@ struct PermissionsPane: View {
                     openSettings: CameraPermission.openSystemSettings
                 )
                 PermissionRow(
+                    title: "Microphone",
+                    detail: "Voice sync in the Teleprompter",
+                    state: snapshot.microphone,
+                    grant: {
+                        _ = await MicrophonePermission.requestAccess()
+                        snapshot = .current()
+                    },
+                    openSettings: MicrophonePermission.openSystemSettings
+                )
+                PermissionRow(
+                    title: "Speech Recognition",
+                    detail: "Voice sync in the Teleprompter (on-device)",
+                    state: snapshot.speech,
+                    grant: {
+                        _ = await SpeechPermission.requestAccess()
+                        snapshot = .current()
+                    },
+                    openSettings: SpeechPermission.openSystemSettings
+                )
+                PermissionRow(
                     title: "Location",
                     detail: "Local weather",
                     state: snapshot.location,
@@ -142,6 +179,8 @@ extension PermissionsPane {
         defer { isGrantingAll = false }
 
         if snapshot.camera == .notDetermined { _ = await CameraPermission.requestAccess() }
+        if snapshot.microphone == .notDetermined { _ = await MicrophonePermission.requestAccess() }
+        if snapshot.speech == .notDetermined { _ = await SpeechPermission.requestAccess() }
         if snapshot.calendar == .notDetermined { _ = await CalendarPermission.requestAccess() }
         if snapshot.location == .notDetermined { await LocationPermission.requestAccess() }
         snapshot = .current()

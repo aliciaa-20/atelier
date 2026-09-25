@@ -32,6 +32,10 @@
 	<string>Atelier shows a live mirror of your camera in the notch. The camera is only on while the mirror is showing, and nothing is recorded or saved.</string>
 	<key>NSCalendarsFullAccessUsageDescription</key>
 	<string>Atelier reads your calendar to show your week and upcoming events in the notch. It never changes or adds events.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Atelier listens through the microphone so the teleprompter can follow your voice. Audio is only captured while voice sync is listening, is processed on this Mac, and is never recorded or saved.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Atelier uses on-device speech recognition to work out where you are in your script. Nothing is sent to Apple or anyone else.</string>
 	<key>NSLocationUsageDescription</key>
 	<string>Atelier uses your approximate location, once in a while, to show the weather in the notch. It is only used to ask a weather service for a forecast.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
