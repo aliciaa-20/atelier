@@ -82,6 +82,7 @@ struct CameraMirrorPageView: View {
 private struct CameraPressStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
+            .notchFocusRing(cornerRadius: NotchLayout.cardCornerRadius)
             .opacity(configuration.isPressed ? 0.85 : 1)
     }
 }
