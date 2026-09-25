@@ -25,6 +25,9 @@ struct NotchRootView: View {
     /// whenever the notch leaves `.expanded`.
     @State private var weatherDetailOpen = false
     @State private var settleScale: CGFloat = 1
+    /// The last HUD shown, kept so it can fade out instead of vanishing when
+    /// its source clears it.
+    @State private var lastHUD: LiveActivityContent?
     /// Shared by the pill/peek/expanded artwork (`ArtworkView`) so the cover
     /// appears to travel between them.
     @Namespace private var artworkNamespace
@@ -76,11 +79,11 @@ struct NotchRootView: View {
             return (top: 6, bottom: 11)
         case .expanded:
             if transientHUD != nil { return (top: NotchLayout.peekTopRadius, bottom: NotchLayout.peekBottomRadius) }
-            return (top: 14, bottom: NotchLayout.panelBottomRadius)
+            return (top: NotchLayout.panelTopRadius, bottom: NotchLayout.panelBottomRadius)
         case .peeking:
             return (top: NotchLayout.peekTopRadius, bottom: NotchLayout.peekBottomRadius)
         case .shelf:
-            return (top: 14, bottom: NotchLayout.panelBottomRadius)
+            return (top: NotchLayout.panelTopRadius, bottom: NotchLayout.panelBottomRadius)
         }
     }
 
@@ -209,15 +212,7 @@ struct NotchRootView: View {
                         .transition(.identity)
                 }
 
-                if viewModel.state == .expanded, let hud = transientHUD {
-                    // Volume/brightness (etc.) changed while the notch is hover-open.
-                    // The system HUD is suppressed, so without this there is no
-                    // feedback at all. The panel shrinks to the compact peek size
-                    // (`frameSize`) and shows the same bar; the player returns when
-                    // the source clears it.
-                    hud.peekView()
-                        .transition(.identity)
-                } else if viewModel.state == .expanded {
+                if viewModel.state == .expanded {
                     VStack(spacing: 0) {
                         // Both Shelf and System Monitor toggled off in
                         // Settings leaves only Home -- no point showing a
@@ -320,6 +315,23 @@ struct NotchRootView: View {
                     // the shared wrapper, rather than in each page
                     // individually, so no future page can reintroduce it.
                     .frame(maxHeight: .infinity, alignment: .top)
+                    // A volume/brightness HUD over the hover-open notch: the
+                    // player fades out and the HUD fades in over it (stagger, so
+                    // never both at full strength) while the panel morphs to the
+                    // compact size (`frameSize`, `NotchAnimations.hud`). One
+                    // continuous, interruptible opacity animation rather than a
+                    // view swap, so a second key press mid-fade just retargets.
+                    .opacity(hudActive ? 0 : 1)
+                    .allowsHitTesting(!hudActive)
+                    .animation(.easeOut(duration: 0.15), value: hudActive)
+                    .overlay(alignment: .top) {
+                        if let hud = transientHUD ?? lastHUD {
+                            hud.peekView()
+                                .opacity(hudActive ? 1 : 0)
+                                .allowsHitTesting(hudActive)
+                                .animation(hudActive ? .easeOut(duration: 0.2).delay(0.08) : .easeOut(duration: 0.15), value: hudActive)
+                        }
+                    }
                     .overlay(alignment: .top) {
                         if AtelierSettings.teleprompterEnabled, viewModel.currentPage == .teleprompter {
                             TeleprompterControlStrip(
@@ -393,7 +405,7 @@ struct NotchRootView: View {
             }
             .frame(width: frameSize.width, height: frameSize.height)
             .clipShape(NotchShape(topCornerRadius: cornerRadii.top, bottomCornerRadius: cornerRadii.bottom))
-            .animation(NotchAnimations.open, value: transientHUD == nil)
+            .animation(NotchAnimations.hud, value: hudActive)
             // No shadow while `.collapsed` -- Invariant 7 requires that
             // state to be visually indistinguishable from the stock notch,
             // which casts none. Every other state is already a departure
@@ -653,6 +665,9 @@ struct NotchRootView: View {
         .onChange(of: nowPlaying.current?.artworkURL) { _, url in
             artworkColor.load(from: url)
         }
+        .onChange(of: transientHUD?.id) { _, _ in
+            if let hud = transientHUD { lastHUD = hud }
+        }
         .onChange(of: transientHUD == nil) { _, hudGone in
             guard hudGone, viewModel.state == .expanded, !pointerOverExpandedPanel() else { return }
             withAnimation(NotchAnimations.close) {
@@ -684,6 +699,8 @@ struct NotchRootView: View {
     /// A brief, peek-worthy, non-expandable activity (Volume, Brightness,
     /// picked colour) that should surface even while the notch is already
     /// hover-open.
+    private var hudActive: Bool { transientHUD != nil }
+
     private var transientHUD: LiveActivityContent? {
         guard let content = liveActivity.topContent, !content.isExpandable, content.peeksOnChange else { return nil }
         return content
