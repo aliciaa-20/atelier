@@ -58,7 +58,7 @@ struct NotchTabBar: View {
                             width: page == currentPage ? Self.selectedDotWidth : Self.dotSize,
                             height: Self.dotSize
                         )
-                        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: currentPage)
+                        .animation(NotchAnimations.standard, value: currentPage)
                         .frame(width: Self.tapTargetSize, height: Self.tapTargetSize)
                         .contentShape(Rectangle())
                 }

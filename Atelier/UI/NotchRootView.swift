@@ -25,21 +25,9 @@ struct NotchRootView: View {
     /// whenever the notch leaves `.expanded`.
     @State private var weatherDetailOpen = false
     @State private var settleScale: CGFloat = 1
-    /// A brief dip-and-recover applied to the *whole already-composited*
-    /// panel on close -- not a per-branch `.opacity`/`.transition` on
-    /// background or content separately. Those were tried (twice) to get a
-    /// "fade" feel and both reintroduced real bugs: fading the glass
-    /// background while its own shape was resizing rendered a wrong-sized
-    /// rectangle, and fading content independently let it render past the
-    /// clip during removal. A single opacity value on the outer view,
-    /// after background+content are already combined into one image,
-    /// can't drift out of sync with itself -- same reasoning as
-    /// `settleScale` below, reused for the same reason.
-    @State private var closeFadeOpacity: CGFloat = 1
-    /// Paired with `closeFadeOpacity` -- a scale dip anchored `.top` (the
-    /// same anchor the real notch sits at) so the panel visibly gets
-    /// pulled back toward the notch's own position while it fades, not
-    /// just shrinking symmetrically in place. Separate from `settleScale`
+    /// A small scale dip anchored `.top` (the same anchor the real notch
+    /// sits at) so the panel visibly gets pulled back toward the notch's
+    /// own position on close, not just shrinking symmetrically in place. Separate from `settleScale`
     /// (Space-change tuck) so the two triggers can't stomp each other's
     /// in-flight animation.
     @State private var closeScale: CGFloat = 1
@@ -221,7 +209,7 @@ struct NotchRootView: View {
                         // switcher with one destination.
                         if NotchTabBar.activePages.count > 1 {
                             NotchTabBar(currentPage: viewModel.currentPage) { page in
-                                withAnimation(NotchAnimations.open) {
+                                withAnimation(NotchAnimations.page) {
                                     viewModel.selectPage(page)
                                 }
                             }
@@ -389,7 +377,6 @@ struct NotchRootView: View {
             .shadow(color: .black.opacity(viewModel.state == .collapsed ? 0 : 0.25), radius: 8, y: 2)
             .scaleEffect(settleScale, anchor: .top)
             .scaleEffect(closeScale, anchor: .top)
-            .opacity(closeFadeOpacity)
             .contentShape(Rectangle())
             .onHover { hovering in
                 pointerInside = hovering
@@ -543,14 +530,14 @@ struct NotchRootView: View {
                     },
                     onSkipForward: {
                         if onCalendarPage {
-                            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { calendar.shiftWeek(by: 1) }
+                            withAnimation(NotchAnimations.standard) { calendar.shiftWeek(by: 1) }
                         } else {
                             Task { await nowPlaying.next() }
                         }
                     },
                     onSkipBackward: {
                         if onCalendarPage {
-                            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { calendar.shiftWeek(by: -1) }
+                            withAnimation(NotchAnimations.standard) { calendar.shiftWeek(by: -1) }
                         } else {
                             Task { await nowPlaying.previous() }
                         }
@@ -644,6 +631,7 @@ struct NotchRootView: View {
     /// `NotchViewModel.spaceChangeTick`) reads as an intentional arrival cue
     /// rather than an accidental float.
     private func playSettleAnimation() {
+        guard !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion else { return }
         withAnimation(NotchAnimations.settleTuck) {
             settleScale = 0.55
         }
@@ -652,20 +640,15 @@ struct NotchRootView: View {
         }
     }
 
-    /// A quick dip-and-recover on the whole panel's opacity and scale,
-    /// layered on top of `cornerRadii`/`frameSize`'s own shrink -- gives
-    /// the close a sense of being pulled back into the notch (scale, `.top`
-    /// anchored) while fading, instead of just shrinking symmetrically in
-    /// place. Doesn't touch background/content transitions individually
-    /// (see `closeFadeOpacity`'s own doc for why that's the safe way to do
-    /// this).
+    /// One spring: the whole panel starts slightly under-scale and settles
+    /// to 1 with the close curve, layered on `cornerRadii`/`frameSize`'s own
+    /// shrink so the close reads as pulled back into the notch. No opacity
+    /// change -- a collapsed notch must match the stock one (Invariant 7),
+    /// and an earlier easeOut dip was cut off by a second delayed animation
+    /// on the same properties.
     private func playCloseFadeAnimation() {
-        withAnimation(.easeOut(duration: 0.18)) {
-            closeFadeOpacity = 0.55
-            closeScale = 0.85
-        }
-        withAnimation(NotchAnimations.close.delay(0.05)) {
-            closeFadeOpacity = 1
+        closeScale = 0.96
+        withAnimation(NotchAnimations.close) {
             closeScale = 1
         }
     }

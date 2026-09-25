@@ -210,7 +210,7 @@ private struct PressScaleButtonStyle: ButtonStyle {
         configuration.label
             .scaleEffect(configuration.isPressed && !reduceMotion ? 0.88 : 1)
             .opacity(configuration.isPressed ? 0.7 : 1)
-            .animation(reduceMotion ? nil : .spring(response: 0.2, dampingFraction: 0.6), value: configuration.isPressed)
+            .animation(reduceMotion ? nil : NotchAnimations.press, value: configuration.isPressed)
     }
 }
 
@@ -343,7 +343,7 @@ struct ScrubberView: View {
                             dragging = false
                         }
                 )
-                .animation(.spring(response: 0.3, dampingFraction: 0.7), value: dragging)
+                .animation(NotchAnimations.grab, value: dragging)
                 // Only ease poll-driven updates; a live drag must track the
                 // finger 1:1, not lag behind an animation.
                 .animation(dragging ? nil : .easeOut(duration: 0.2), value: displayedElapsed)
