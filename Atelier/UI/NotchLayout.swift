@@ -14,7 +14,7 @@ enum NotchLayout {
 
     /// Wider than the 320pt player: a landscape reading area fits more words
     /// per line. The panel is sized to the widest page (Invariant 3).
-    static let teleprompterWidth: CGFloat = 400
+    static let teleprompterWidth: CGFloat = 440
 
     /// Idle Home's weather detail card (glyph/temp row, quip, 5-day row).
     /// Starting value -- tune on-device.
