@@ -24,4 +24,15 @@ extension NowPlayingInfo {
             sourceBundleID: sourceBundleID, isShuffling: isShuffling
         )
     }
+
+    /// Used by sources whose artwork doesn't come back as a ready-made URL
+    /// (Apple Music hands back raw bytes; the source caches them to disk and
+    /// fills in the resulting `file://` URL here).
+    func with(artworkURL: URL?) -> NowPlayingInfo {
+        NowPlayingInfo(
+            title: title, artist: artist, album: album, artworkURL: artworkURL,
+            isPlaying: isPlaying, duration: duration, elapsed: elapsed,
+            sourceBundleID: sourceBundleID, isShuffling: isShuffling
+        )
+    }
 }
