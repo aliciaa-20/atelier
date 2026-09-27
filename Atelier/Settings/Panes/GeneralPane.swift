@@ -4,6 +4,7 @@ import SwiftUI
 struct GeneralPane: View {
     @AppStorage(AtelierSettings.peekOnTrackChangeKey) private var peekOnTrackChange = true
     @AppStorage(AtelierSettings.gesturesEnabledKey) private var gesturesEnabled = true
+    @AppStorage(AtelierSettings.nowPlayingSwipeSkipKey) private var nowPlayingSwipeSkip = true
 
     @State private var launchState = LaunchAtLogin.state
     @State private var launchError: String?
@@ -29,6 +30,8 @@ struct GeneralPane: View {
             Section("Behavior") {
                 Toggle("Peek on track change", isOn: $peekOnTrackChange)
                 Toggle("Enable gestures", isOn: $gesturesEnabled)
+                Toggle("Swipe to skip track", isOn: $nowPlayingSwipeSkip)
+                    .disabled(!gesturesEnabled)
             }
         }
         .formStyle(.grouped)

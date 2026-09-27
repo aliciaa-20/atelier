@@ -8,6 +8,10 @@ import SwiftUI
 struct CalendarPageView: View {
     @ObservedObject var source: CalendarSource
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    // Menu doesn't take a ButtonStyle, so hover-dim is the nearest
+    // equivalent to the press feedback every Button elsewhere gets
+    // (ui-review-tahoe finding).
+    @State private var isCalendarFilterHovering = false
 
     private var calendar: Calendar { .current }
 
@@ -85,7 +89,10 @@ struct CalendarPageView: View {
                 .foregroundStyle(.white.opacity(0.6))
                 .frame(width: 24, height: 20)
                 .contentShape(Rectangle())
+                .opacity(isCalendarFilterHovering ? 0.7 : 1)
+                .animation(reduceMotion ? nil : NotchAnimations.press, value: isCalendarFilterHovering)
         }
+        .onHover { isCalendarFilterHovering = $0 }
         .menuStyle(.button)
         .buttonStyle(.plain)
         .menuIndicator(.hidden)

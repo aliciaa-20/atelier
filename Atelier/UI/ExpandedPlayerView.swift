@@ -68,32 +68,6 @@ struct ExpandedPlayerView: View {
             Spacer(minLength: 4)
             controlsSection(for: info)
         }
-        // Suggested in a ui-review-tahoe pass as a nice-to-have, since
-        // ADR 0003 already lets this panel become key. Best-effort: this
-        // panel is `.nonactivatingPanel` and never explicitly calls
-        // `makeKey()` (ADR 0003's whole point was avoiding that), so
-        // whether `.focusable()` actually gets key events here without a
-        // prior click is unconfirmed -- manual verification only, like
-        // everything else that needs a real notch/real interaction.
-        //
-        // `.focusEffectDisabled()` suppresses the default system focus
-        // ring -- confirmed on-device as a bright rectangle around the
-        // whole player, which reads as a stray visual bug on a panel this
-        // small and doesn't fit Invariant 7's stock-notch-like restraint.
-        .focusable()
-        .focusEffectDisabled()
-        .onKeyPress(.space) {
-            onPlayPause()
-            return .handled
-        }
-        .onKeyPress(.leftArrow) {
-            onSeek(max(0, info.elapsed - 10))
-            return .handled
-        }
-        .onKeyPress(.rightArrow) {
-            onSeek(min(info.duration, info.elapsed + 10))
-            return .handled
-        }
     }
 
     /// Shrunk from an earlier pass (50pt artwork, 15/13pt text, 170pt text
@@ -205,7 +179,10 @@ struct ExpandedPlayerView: View {
 /// (and iOS Control Center's own transport buttons, which dim/scale
 /// slightly). A light scale + opacity dip on press, no animation on
 /// release beyond the implicit spring back to 1.0/1.0.
-private struct PressScaleButtonStyle: ButtonStyle {
+///
+/// Not `private`: `LockScreenMusicCardView`'s transport row reuses this
+/// rather than growing a near-duplicate press style.
+struct PressScaleButtonStyle: ButtonStyle {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     func makeBody(configuration: Configuration) -> some View {
@@ -244,6 +221,12 @@ struct ArtworkView: View {
         .animation(.easeOut(duration: 0.2), value: image.map(ObjectIdentifier.init))
         .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
         .modifier(SharedArtworkModifier(namespace: artworkNamespace))
+        // Decorative: every call site already sits beside a text label
+        // (title/artist) that says the same thing. Found in a ui-review-tahoe
+        // pass -- PillPlayerView/PeekPlayerView were covered by a parent
+        // .accessibilityElement(children: .ignore), but ExpandedPlayerView
+        // and LockScreenMusicCardView placed this bare.
+        .accessibilityHidden(true)
         .task(id: url) {
             guard let url,
                   let data = await ArtworkImageCache.shared.data(for: url),
@@ -272,6 +255,12 @@ private struct OutputDeviceMenu: View {
     let currentDeviceID: AudioDeviceID?
     let onSelect: (AudioDeviceID) -> Void
 
+    // Menu doesn't take a ButtonStyle, so there's no isPressed to read --
+    // hover-dim is the nearest equivalent feedback (found in a
+    // ui-review-tahoe pass: every Button elsewhere dims/scales, this didn't).
+    @State private var isHovering = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     private var currentDeviceIsAirPods: Bool {
         devices.first(where: { $0.id == currentDeviceID })?.isAirPods ?? false
     }
@@ -291,7 +280,10 @@ private struct OutputDeviceMenu: View {
             }
         } label: {
             Image(systemName: currentDeviceIsAirPods ? "headphones" : "speaker.wave.2.fill")
+                .opacity(isHovering ? 0.7 : 1)
+                .animation(reduceMotion ? nil : NotchAnimations.press, value: isHovering)
         }
+        .onHover { isHovering = $0 }
         .menuStyle(.borderlessButton)
         .menuIndicator(.hidden)
         .fixedSize()
