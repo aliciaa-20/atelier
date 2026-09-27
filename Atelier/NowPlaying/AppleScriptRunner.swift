@@ -6,6 +6,13 @@ import Foundation
 /// the main actor.
 enum AppleScriptRunner {
     static func run(_ source: String) -> String? {
+        runDescriptor(source)?.stringValue
+    }
+
+    /// Same execution as `run(_:)`, but hands back the raw descriptor instead
+    /// of coercing to a string — needed for results that aren't plain text,
+    /// like an AppleScript list of mixed types or raw artwork `data`.
+    static func runDescriptor(_ source: String) -> NSAppleEventDescriptor? {
         guard let script = NSAppleScript(source: source) else { return nil }
         var errorInfo: NSDictionary?
         let result = script.executeAndReturnError(&errorInfo)
@@ -13,6 +20,6 @@ enum AppleScriptRunner {
             print("AppleScriptRunner error: \(errorInfo)")
             return nil
         }
-        return result.stringValue
+        return result
     }
 }

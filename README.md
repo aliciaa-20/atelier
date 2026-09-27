@@ -46,12 +46,12 @@ belongs there, not bolted on.
   content, no polling when nothing's playing), so a menu-bar accessory
   doesn't act like a background hog
 
-Built on Spotify today, behind a seam designed so any other player is a
-drop-in away.
+Supports Spotify and Apple Music, auto-detecting whichever is actually
+playing, behind a seam designed so any other player is a drop-in away.
 
 ## Status
 
-- **282 tests passing**
+- **298 tests passing**
 - Live phase-by-phase progress: [`docs/ROADMAP.md`](docs/ROADMAP.md)
 - Full feature survey: [`docs/FEATURES.md`](docs/FEATURES.md)
 - Known gap: AirPods support is disabled (a crash in Apple's own
@@ -86,7 +86,7 @@ System Settings). Home can be moved like any tab (but not turned off); the notch
 
 | Permission | Why |
 |---|---|
-| Automation | Reads now-playing data from Spotify, and jumps Calendar.app to a day, via Apple Events |
+| Automation | Reads now-playing data from Spotify and Apple Music, and jumps Calendar.app to a day, via Apple Events |
 | Calendars (full access) | Read-only: shows your week and events in the Calendar tab. Atelier never adds or edits events |
 | Camera | Shows the live mirror in the Camera tab. Only requested on your first tap; if denied, the tab offers a shortcut to System Settings |
 | Location (While Using) | Approximate location, one-shot, to fetch the forecast for the Home weather glance. If denied, weather is simply hidden |
@@ -94,9 +94,12 @@ System Settings). Home can be moved like any tab (but not turned off); the notch
 | Accessibility | Intercepts volume/brightness/mute keys for the custom HUD |
 | System Audio Recording Only | Powers the live waveform via a system-wide audio tap ([why not per-app](docs/decisions/0012-whole-system-audio-tap.md)) |
 
-**Network:** the only outbound requests are Spotify artwork and the weather
+**Network:** the only outbound requests are Spotify artwork, the weather
 forecast from `api.open-meteo.com` (rounded coordinates only; no account or
-key). See [ADR 0015](docs/decisions/0015-weather-open-meteo-corelocation.md).
+key — [ADR 0015](docs/decisions/0015-weather-open-meteo-corelocation.md)),
+and — only for Apple Music streaming tracks, which don't expose artwork via
+AppleScript — a lookup to `itunes.apple.com` by track/artist/album, no key
+([ADR 0022](docs/decisions/0022-apple-music-artwork-itunes-search-fallback.md)).
 
 Decline any of these and Atelier degrades gracefully instead of failing
 silently. (Why Apple Events over the private `MediaRemote` framework?

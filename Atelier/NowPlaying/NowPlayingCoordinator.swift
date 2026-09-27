@@ -17,14 +17,21 @@ final class NowPlayingCoordinator: ObservableObject {
 
     private static let idleInterval = Duration.seconds(1)
     private static let expandedInterval = Duration.milliseconds(250)
-    private static let spotifyPlaybackStateChanged = Notification.Name("com.spotify.client.PlaybackStateChanged")
+    /// One distributed notification per wrapped source, so a track change on
+    /// either app still refreshes instantly instead of waiting on the next
+    /// poll tick — this is what keeps auto-detecting between two apps cheap
+    /// rather than needing a tighter poll interval.
+    private static let playbackChangeNotifications = [
+        Notification.Name("com.spotify.client.PlaybackStateChanged"),
+        Notification.Name("com.apple.Music.playerInfo"),
+    ]
 
     private let source: NowPlayingSource
     private var pollTask: Task<Void, Never>?
-    private var notificationTask: Task<Void, Never>?
+    private var notificationTasks: [Task<Void, Never>] = []
     private var interval = NowPlayingCoordinator.idleInterval
 
-    init(source: NowPlayingSource = SpotifySource()) {
+    init(source: NowPlayingSource = MultiNowPlayingSource(sources: [SpotifySource(), AppleMusicSource()])) {
         self.source = source
     }
 
@@ -37,12 +44,13 @@ final class NowPlayingCoordinator: ObservableObject {
             }
         }
 
-        notificationTask?.cancel()
-        notificationTask = Task {
-            let notifications = DistributedNotificationCenter.default()
-                .notifications(named: Self.spotifyPlaybackStateChanged)
-            for await _ in notifications {
-                apply(await source.fetch())
+        notificationTasks.forEach { $0.cancel() }
+        notificationTasks = Self.playbackChangeNotifications.map { name in
+            Task {
+                let notifications = DistributedNotificationCenter.default().notifications(named: name)
+                for await _ in notifications {
+                    apply(await source.fetch())
+                }
             }
         }
     }
@@ -50,8 +58,8 @@ final class NowPlayingCoordinator: ObservableObject {
     func stop() {
         pollTask?.cancel()
         pollTask = nil
-        notificationTask?.cancel()
-        notificationTask = nil
+        notificationTasks.forEach { $0.cancel() }
+        notificationTasks = []
     }
 
     func setExpanded(_ expanded: Bool) {
