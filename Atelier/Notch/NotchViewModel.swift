@@ -35,6 +35,11 @@ final class NotchViewModel: ObservableObject {
     /// `NotchRootView.frameSize` picks it (state alone can't say which page
     /// is showing); the panel itself is already sized to the tallest of these.
     let calendarSize: CGSize
+    /// The Camera tab's own, larger footprint -- requested directly (twice)
+    /// to make the mirror preview bigger than the player's default content
+    /// size. Same pattern as `calendarSize`: only `NotchRootView.frameSize`
+    /// picks it, the panel itself is already sized to the tallest of these.
+    let cameraSize: CGSize
 
     /// Bumped each time `NotchController` observes the user landing on a
     /// different Space. There's no public API to detect a three-finger swipe
@@ -45,7 +50,7 @@ final class NotchViewModel: ObservableObject {
     /// moment you arrive, so the fixed position reads as deliberate.
     @Published private(set) var spaceChangeTick: Int = 0
 
-    init(collapsedSize: CGSize, expandedSize: CGSize, idleHomeSize: CGSize, pillSize: CGSize, peekSize: CGSize, compactPeekSize: CGSize, shelfSize: CGSize, calendarSize: CGSize, teleprompterSize: CGSize) {
+    init(collapsedSize: CGSize, expandedSize: CGSize, idleHomeSize: CGSize, pillSize: CGSize, peekSize: CGSize, compactPeekSize: CGSize, shelfSize: CGSize, calendarSize: CGSize, cameraSize: CGSize, teleprompterSize: CGSize) {
         self.collapsedSize = collapsedSize
         self.expandedSize = expandedSize
         self.idleHomeSize = idleHomeSize
@@ -54,6 +59,7 @@ final class NotchViewModel: ObservableObject {
         self.compactPeekSize = compactPeekSize
         self.shelfSize = shelfSize
         self.calendarSize = calendarSize
+        self.cameraSize = cameraSize
         self.teleprompterSize = teleprompterSize
     }
 
