@@ -57,7 +57,13 @@ struct TeleprompterListeningPill: View {
         .animation(reduceMotion ? nil : .linear(duration: 0.08), value: speech.level)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Listening for your voice")
+        .accessibilityValue(isSpeaking ? "Speaking" : "Quiet")
     }
+
+    /// Found in a ui-review-tahoe pass: the label only ever said "on", never
+    /// whether the mic was actually picking anything up. A coarse threshold
+    /// rather than the raw level, so VoiceOver doesn't chatter on every tick.
+    private var isSpeaking: Bool { speech.level > 0.15 }
 
     /// Reduce Motion: a fixed, calm shape instead of a live waveform.
     private func barHeight(_ weight: CGFloat) -> CGFloat {

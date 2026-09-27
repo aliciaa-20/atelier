@@ -173,7 +173,7 @@ final class NotchController {
         shelfStore.sweepExpired()
 
         guard let screen = NSScreen.notchedOrMain else {
-            viewModel = NotchViewModel(collapsedSize: .zero, expandedSize: .zero, idleHomeSize: .zero, pillSize: .zero, peekSize: .zero, compactPeekSize: .zero, shelfSize: .zero, calendarSize: .zero, teleprompterSize: .zero)
+            viewModel = NotchViewModel(collapsedSize: .zero, expandedSize: .zero, idleHomeSize: .zero, pillSize: .zero, peekSize: .zero, compactPeekSize: .zero, shelfSize: .zero, calendarSize: .zero, cameraSize: .zero, teleprompterSize: .zero)
             let hudOrder = SystemHUDOrder()
             let volumeSource = VolumeSource(notchHeight: 0, hudOrder: hudOrder)
             let brightnessSource = BrightnessSource(notchHeight: 0, hudOrder: hudOrder)
@@ -290,6 +290,16 @@ final class NotchController {
             width: Self.expandedWidth,
             height: collapsedRect.height + Self.calendarContentHeight
         )
+        // Requested directly (twice): bigger than the default expanded
+        // content size -- first 30% over `expandedSize`'s height, then
+        // another 25% on both axes on top of that (1.3 * 1.25 = 1.625
+        // height, 1.25 width). `NotchRootView.frameSize` is what actually
+        // applies this per page (same as `calendarSize`); it's threaded
+        // through here too so the panel itself (below) is sized to fit it.
+        let cameraSize = CGSize(
+            width: expandedSize.width * 1.25,
+            height: expandedSize.height * 1.625
+        )
         let teleprompterSize = CGSize(
             width: NotchLayout.teleprompterWidth,
             height: NotchLayout.teleprompterHeight
@@ -303,12 +313,13 @@ final class NotchController {
             compactPeekSize: compactPeekSize,
             shelfSize: shelfSize,
             calendarSize: calendarSize,
+            cameraSize: cameraSize,
             teleprompterSize: teleprompterSize
         )
 
         // Invariant 3: the panel is the maximum footprint of any page.
-        let maxHeight = max(expandedSize.height, calendarSize.height, teleprompterSize.height + NotchLayout.teleprompterPillHeight)
-        let maxWidth = max(expandedSize.width, teleprompterSize.width)
+        let maxHeight = max(expandedSize.height, calendarSize.height, cameraSize.height, teleprompterSize.height + NotchLayout.teleprompterPillHeight)
+        let maxWidth = max(expandedSize.width, cameraSize.width, teleprompterSize.width)
         let maxRect = CGRect(
             x: collapsedRect.midX - maxWidth / 2,
             y: collapsedRect.maxY - maxHeight,
