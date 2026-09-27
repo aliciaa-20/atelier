@@ -96,7 +96,7 @@ Four layers with deliberate seams. The two pure ones carry the test suite.
 | Pure logic | `Notch/NotchGeometry.swift`, `Notch/NotchState.swift`, `Notch/NotchPage.swift`, `Notch/CameraHoldOpen.swift`, `Notch/TabOrder.swift` | **unit tested**, no AppKit imports |
 | UI | `UI/*.swift` | SwiftUI, driven by `NotchState` |
 | Shared UI tokens | `UI/NotchLayout.swift`, `UI/NotchAnimations.swift`, `UI/NotchHaptics.swift`, `UI/DimmedText.swift` | Page/card/peek insets and corner radii (one `peekEdgeGap`, card radius = panel corner - gap), named springs (`open`/`close`/`page`/`standard`/`press`/`grab`/`hud`), trackpad haptics, AA-contrast secondary text (honours Increase Contrast). Add values here, not inline |
-| Data | `NowPlaying/*.swift` | `NowPlayingSource` protocol + per-app implementations |
+| Data | `NowPlaying/*.swift` | `NowPlayingSource` protocol + per-app implementations (`SpotifySource`, `AppleMusicSource`) arbitrated by `MultiNowPlayingSource`/`NowPlayingArbiter` (pure, unit-tested — sticky pick of whichever app is actually playing). `AppleMusicSource` falls back to the iTunes Search API for streaming-track artwork, since Music.app's AppleScript only exposes artwork for downloaded tracks (ADR 0022) |
 | System | `System/*.swift` | `MediaKeyInterceptor` (`CGEventTap`), `AccessibilityPermission`, `CalendarPermission`, `CalendarAppLauncher` (AppleScript into Calendar.app) — manual-verification only, like `NowPlayingSource`'s AppleScript pieces |
 | Widgets | `Widgets/*/*.swift` | `LiveActivitySource` conformers (Battery, Volume, Brightness, AirPods, ScreenRecording, ColorPicker) plus non-`LiveActivitySource` tab data sources (`Calendar/CalendarSource` — read-only EventKit, `CalendarMath` is pure and testable; `Weather/WeatherSource` — CoreLocation + Open-Meteo, cached 30 min, no poll loop, `WeatherModel` is pure and unit-tested; `Camera/CameraMirrorSource` — `AVCaptureSession` + preview layer, runs only while the mirror is live and tapped on, `System/CameraPermission` is its TCC helper) — one folder per widget, manual-verification only like `System/*.swift` (except `ColorPicker`'s hex-formatting math, which is pure and unit-tested) |
 | Settings | `Settings/*.swift`, `Settings/Panes/*.swift`, `System/LaunchAtLogin.swift` | `SettingsWindowController` (own `NSWindow`, activation-policy flip, ADR 0018) + SwiftUI sidebar panes (General, Appearance, Tabs, Widgets, Teleprompter, Permissions). Manual-verification only; `TabOrder` (pure, in `Notch/`) is the tested part |
@@ -104,10 +104,10 @@ Four layers with deliberate seams. The two pure ones carry the test suite.
 | Shelf | `Shelf/*.swift` | `ShelfItem` (pure, unit-tested) + `ShelfStore` (file I/O, JSON manifest, lazy expiry sweep — unit-tested against real temp directories, not mocked) |
 | Lock screen | `LockScreen/LockScreenManager.swift`, `LockScreen/LockScreenPanelController.swift`, `System/SkyLightSpaceOperator.swift` | An entirely separate `NSWindow`/lifecycle from `NotchPanel` — macOS hides ordinary user-session windows on lock, so this delegates into a private CGS space (`SkyLightSpaceOperator`, vendored/hardened from Lakr233/SkyLightWindow) instead. Manual-verification only, like `System/*.swift` |
 
-**v1 supports Spotify only.** The `NowPlayingSource` protocol still exists and is
-still the seam — but only `SpotifySource` conforms to it for now. Apple Music is a
-later phase, and adding it must not require changing anything outside a new file
-plus one registration. If it does, the protocol is wrong.
+**Spotify and Apple Music are both supported**, auto-arbitrated (see the Data row
+above and [ADR 0022](docs/decisions/0022-apple-music-artwork-itunes-search-fallback.md)).
+A future third source should still cost only a new file plus one line in
+`MultiNowPlayingSource`'s init — if it costs more, the protocol is wrong.
 
 ### Invariants — do not break these
 

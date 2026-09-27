@@ -893,9 +893,12 @@ confirmed fixed.
 Items not part of the Phase 6–16 feature survey (see
 [FEATURES.md](FEATURES.md)):
 
-- **Apple Music source** — a second `NowPlayingSource` conformer. Must not
-  require changes outside a new file plus one registration; if it does, the
-  protocol is wrong.
+- ~~**Apple Music source** — a second `NowPlayingSource` conformer.~~ Shipped
+  2026-09-27: `AppleMusicSource` + `MultiNowPlayingSource` (auto-detects
+  whichever app is actually playing, `NowPlayingArbiter` is the pure/tested
+  arbitration logic) + an iTunes Search API fallback for streaming-track
+  artwork (Music.app's AppleScript only exposes artwork for downloaded
+  tracks — see [ADR 0022](decisions/0022-apple-music-artwork-itunes-search-fallback.md)).
 - **mediaremote-adapter source** — the Perl bridge for universal coverage
   (including browsers), as an optional source. Weigh against the third-party
   helper that can break on any macOS release. See
