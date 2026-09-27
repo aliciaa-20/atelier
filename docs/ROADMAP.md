@@ -743,6 +743,9 @@ prompt, live mirroring, stop-on-retract and the hold-open setting. See
 - [x] Camera tab, tap-to-start, denied / no-camera states
 - [x] Optional hold-open setting
 - [x] Verified on-device
+- [x] 2026-09-27: larger `cameraSize` footprint while the mirror is live (was
+      undersized relative to other tabs); `frameSize` picks it only when
+      `camera.isLive`, so the tab stays compact like every other tab at idle
 
 See [FEATURES.md §2](FEATURES.md#2-interaction--feel).
 
@@ -796,6 +799,11 @@ Claude Code mechanic: custom slash commands; `/code-review`.
       Color; custom focus ring where `.focusEffectDisabled()` removed it; keyboard shortcut for switching tabs
 - [x] Done in the `fix/native-polish-pass` branch: real-minute clock, locale-aware
       formats, macOS VoiceOver wording, Reduce Motion, tooltips, Shelf empty state
+- [x] 2026-09-27 follow-up: independent "Swipe to skip track" setting, Reduce Motion
+      consistency for `SoftPressButtonStyle`, hover-dim feedback on menu-style controls
+      (Calendar filter, output-device menu), decorative artwork `accessibilityHidden`,
+      lock-screen Next button real press feedback, listening pill VoiceOver value
+      (Speaking/Quiet)
 
 ---
 
