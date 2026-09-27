@@ -28,6 +28,7 @@ enum AtelierSettings {
     static let glassEffectEnabledKey = "glassEffectEnabled"
     static let glassIntensityKey = "glassIntensity"
     static let tabOrderKey = "tabOrder"
+    static let nowPlayingSwipeSkipKey = "nowPlayingSwipeSkip"
 
     static func registerDefaults() {
         UserDefaults.standard.register(defaults: [
@@ -48,7 +49,12 @@ enum AtelierSettings {
             // look) until a user opts in, rather than changing the
             // default notch appearance out from under an existing install.
             glassEffectEnabledKey: false,
-            glassIntensityKey: 0.7
+            glassIntensityKey: 0.7,
+            // On by default -- this is existing behavior (swipe-to-skip
+            // already shipped tied only to the master `gesturesEnabled`
+            // toggle); this setting exists to let someone turn it off
+            // independently, not to opt newcomers in.
+            nowPlayingSwipeSkipKey: true
         ])
     }
 
@@ -193,6 +199,16 @@ enum AtelierSettings {
     /// faint, 1 as the full-strength material.
     static var glassIntensity: Double {
         UserDefaults.standard.double(forKey: glassIntensityKey)
+    }
+
+    /// Horizontal swipe to skip next/previous track, on the main notch panel
+    /// (any page except Calendar, which uses horizontal swipe for week
+    /// navigation instead) and the lock-screen card. Independent of the
+    /// master `gesturesEnabled` toggle so hover open/close can stay on while
+    /// this is switched off (found via a ui-review-tahoe follow-up: it
+    /// shipped always-on with no way to disable just this part).
+    static var nowPlayingSwipeSkipEnabled: Bool {
+        UserDefaults.standard.bool(forKey: nowPlayingSwipeSkipKey)
     }
 
     /// Page raw names in the user's preferred order; empty = default order.
