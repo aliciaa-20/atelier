@@ -37,6 +37,13 @@ struct CameraMirrorPageView: View {
         }
         .buttonStyle(CameraPressStyle())
         .focusEffectDisabled()
+        // Without this, the button sizes to its own intrinsic content
+        // instead of the page's full available footprint -- SystemMonitorPageView
+        // and ShelfView already declare this for themselves (see
+        // NotchRootView's own note on this exact class of bug); Camera
+        // hadn't, so the mirror rendered noticeably smaller than the other
+        // tabs with dead space below it.
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(.horizontal, NotchLayout.pageHorizontalInset)
         .padding(.bottom, NotchLayout.pageBottomInset)
         .animation(.easeInOut(duration: 0.2), value: source.phase)

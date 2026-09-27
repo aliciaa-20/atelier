@@ -144,6 +144,12 @@ struct NotchRootView: View {
             if AtelierSettings.teleprompterEnabled, viewModel.currentPage == .teleprompter {
                 return viewModel.teleprompterSize
             }
+            if AtelierSettings.cameraEnabled, viewModel.currentPage == .camera {
+                // Compact like every other tab until the mirror is actually
+                // live -- only the active preview earns the bigger footprint;
+                // "tap to mirror" shouldn't claim space it isn't using yet.
+                return camera.isLive ? viewModel.cameraSize : viewModel.currentSize
+            }
             return viewModel.currentSize
         case .pill, .collapsed, .shelf:
             return viewModel.currentSize
@@ -587,7 +593,9 @@ struct NotchRootView: View {
                         // On the Calendar page a horizontal swipe changes
                         // week instead (see `onSkipForward` below), so
                         // it's always enabled there.
-                        canSkip: onCalendarPage ? !AtelierSettings.calendarScrollSwipeEnabled : nowPlaying.current != nil,
+                        canSkip: onCalendarPage
+                            ? !AtelierSettings.calendarScrollSwipeEnabled
+                            : (nowPlaying.current != nil && AtelierSettings.nowPlayingSwipeSkipEnabled),
                         canScrub: onCalendarPage && AtelierSettings.calendarScrollSwipeEnabled
                     ),
                     onOpen: {

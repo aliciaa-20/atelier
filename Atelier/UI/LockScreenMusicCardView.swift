@@ -104,7 +104,7 @@ struct LockScreenMusicCardView: View {
         // this card has no expand-by-gesture state of its own (hover does
         // that already), only skip.
         .modifier(NotchGestureModifier(
-            capabilities: NotchGestureCapabilities(canOpen: false, canClose: false, canSkip: true),
+            capabilities: NotchGestureCapabilities(canOpen: false, canClose: false, canSkip: AtelierSettings.nowPlayingSwipeSkipEnabled),
             // Quicker than the notch panel's own 60pt/1.2x -- this card is a
             // much smaller, single-purpose target (skip only, no open/close
             // to disambiguate against), so it can afford to commit to a
@@ -236,7 +236,7 @@ struct LockScreenMusicCardView: View {
             .accessibilityLabel("Next")
             .help("Next")
         }
-        .buttonStyle(.plain)
+        .buttonStyle(PressScaleButtonStyle())
         .foregroundStyle(.white)
     }
 }
