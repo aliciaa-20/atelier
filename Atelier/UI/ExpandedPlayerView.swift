@@ -312,7 +312,7 @@ struct PressScaleButtonStyle: ButtonStyle {
 /// `ArtworkColorLoader` share one fetch per URL instead of racing two.
 struct ArtworkView: View {
     let url: URL?
-    var cornerRadius: CGFloat = 10
+    var cornerRadius: CGFloat = NotchLayout.peekArtworkRadius
     @State private var image: NSImage?
     @Environment(\.artworkNamespace) private var artworkNamespace
 

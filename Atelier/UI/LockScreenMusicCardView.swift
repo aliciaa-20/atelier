@@ -69,6 +69,9 @@ struct LockScreenMusicCardView: View {
     /// A steady ~0.22 ratio (Apple's icon squircle) of `artworkSize` at both steps, not two
     /// unrelated fixed values -- keeps the artwork's own curve looking
     /// consistent as it scales, matching the concentric-shape idea above.
+    /// Deliberately proportional rather than a fixed `NotchLayout` constant: this
+    /// card lives in its own lock-screen window and scales with the lock screen,
+    /// not with the notch panel that `NotchLayout`'s radii are concentric with.
     private var artworkCornerRadius: CGFloat { artworkSize * 0.22 }
     private var titleFontSize: CGFloat { isExpanded ? 14 : 13 }
     private var artistFontSize: CGFloat { isExpanded ? 12 : 11 }
