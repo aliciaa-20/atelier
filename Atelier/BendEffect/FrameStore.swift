@@ -6,7 +6,13 @@ import Foundation
 /// it. Latest-frame mailbox between the capture-queue callback and the
 /// Metal draw callback -- `CVPixelBuffer` isn't `Sendable`, so this is a
 /// lock-guarded box, same reasoning as `CameraMirrorSource.SessionBox`.
-final class FrameStore: @unchecked Sendable {
+///
+/// `nonisolated`: this project's whole-module default-MainActor isolation
+/// would otherwise make these methods MainActor-isolated even though they
+/// are actually called from the capture queue and the Metal draw callback
+/// -- same mismatch fixed in `LidSensor`. The `NSLock` is what actually
+/// makes this safe to call from any thread.
+nonisolated final class FrameStore: @unchecked Sendable {
     private let lock = NSLock()
     private var latest: CVPixelBuffer?
     private var displayTime: UInt64 = 0

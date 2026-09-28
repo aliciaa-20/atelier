@@ -27,12 +27,18 @@ final class DesktopCapture: NSObject, SCStreamOutput, SCStreamDelegate {
     nonisolated(unsafe) var onError: ((Error) -> Void)?
     nonisolated(unsafe) var onFirstFrame: (() -> Void)?
     private let countLock = NSLock()
-    private var count = 0
-    private var outputStream: SCStream?
+    // `nonisolated`: guarded by `countLock`, not the main actor -- touched
+    // from both the `@MainActor` start/stop methods and the capture-queue
+    // delegate callbacks below. This project's whole-module default-
+    // MainActor isolation would otherwise make the delegate callbacks
+    // MainActor-isolated even though ScreenCaptureKit actually invokes them
+    // on `queue`, the same mismatch fixed in `LidSensor`.
+    private nonisolated(unsafe) var count = 0
+    private nonisolated(unsafe) var outputStream: SCStream?
     @MainActor private var generation = 0
     @MainActor private var desiredBending = false
     @MainActor private var updatingRate = false
-    var frameCount: Int {
+    nonisolated var frameCount: Int {
         countLock.lock()
         defer { countLock.unlock() }
         return count
@@ -111,19 +117,22 @@ final class DesktopCapture: NSObject, SCStreamOutput, SCStreamDelegate {
         acceptOutput(from: nil)
         try? await old?.stopCapture()
     }
-    private func acceptOutput(from stream: SCStream?) {
+    private nonisolated func acceptOutput(from stream: SCStream?) {
         countLock.lock()
         defer { countLock.unlock() }
         outputStream = stream
         frames.clear()
     }
-    func stream(_ stream: SCStream, didStopWithError error: Error) {
+    nonisolated func stream(_ stream: SCStream, didStopWithError error: Error) {
+        // `SCStream` isn't `Sendable`; send its identity across the actor
+        // hop instead of the object itself.
+        let streamID = ObjectIdentifier(stream)
         Task { @MainActor [weak self] in
-            guard let self, self.stream === stream else { return }
+            guard let self, self.stream.map(ObjectIdentifier.init) == streamID else { return }
             self.onError?(error)
         }
     }
-    func stream(
+    nonisolated func stream(
         _ stream: SCStream, didOutputSampleBuffer sampleBuffer: CMSampleBuffer, of type: SCStreamOutputType
     ) {
         guard type == .screen, sampleBuffer.isValid,
@@ -139,8 +148,10 @@ final class DesktopCapture: NSObject, SCStreamOutput, SCStreamDelegate {
         let firstFrame = frames.get() == nil
         frames.put(pixelBuffer, displayTime: attachments.first?[.displayTime] as? UInt64 ?? 0)
         if firstFrame {
+            // Same identity-across-the-hop reasoning as `didStopWithError`.
+            let streamID = ObjectIdentifier(stream)
             Task { @MainActor [weak self] in
-                guard let self, self.stream === stream else { return }
+                guard let self, self.stream.map(ObjectIdentifier.init) == streamID else { return }
                 self.onFirstFrame?()
             }
         }

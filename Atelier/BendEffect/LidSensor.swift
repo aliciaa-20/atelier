@@ -5,13 +5,18 @@ import IOKit.hid
 /// transport; Apple's lid report itself is undocumented. Read-only,
 /// non-exclusive, no driver installation or root access. Confirmed live on
 /// this machine (MacBook Pro M3, Mac15,3) -- see the design spec.
-final class LidSensor {
-    // `deinit` runs nonisolated regardless of actor, and `IOHIDManager`/
-    // `IOHIDDevice` aren't `Sendable` -- same reasoning as
-    // `LockScreenManager`'s own observer properties, since these are only
-    // ever touched from `init`/the HID queue (by convention) and `deinit`.
-    private nonisolated(unsafe) let manager = IOHIDManagerCreate(kCFAllocatorDefault, IOOptionBits(kIOHIDOptionsTypeNone))
-    private nonisolated(unsafe) var device: IOHIDDevice?
+///
+/// `nonisolated`: this project builds with whole-module default-MainActor
+/// isolation, but this class's whole design is a background HID queue that
+/// hops to the main actor explicitly (`DispatchQueue.main.async` in
+/// `start()`) for its output -- an implicit MainActor default here would
+/// make the timer's event-handler closure MainActor-isolated even though it
+/// actually runs on `queue`, and the runtime traps on that mismatch (same
+/// class of problem `CameraMirrorSource.configureAndRun` is `nonisolated`
+/// for).
+nonisolated final class LidSensor: @unchecked Sendable {
+    private let manager = IOHIDManagerCreate(kCFAllocatorDefault, IOOptionBits(kIOHIDOptionsTypeNone))
+    private var device: IOHIDDevice?
     private var timer: DispatchSourceTimer?
     private let queue = DispatchQueue(label: "atelier.bendEffect.lid", qos: .userInteractive)
     enum PollingMode { case idle, watching, active }
