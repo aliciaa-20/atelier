@@ -978,13 +978,34 @@ hover-in (`NotchRootView.swift`'s `lastHoverEnterLocation`). Confirmed
 on-device: zero duplicate-coordinate flip pairs in a post-fix capture that
 previously produced six.
 
-**Known issue, unresolved (reported 2026-09-28):** in glass mode, taps
-sometimes don't register — tab switches and the play/pause button reported
-as intermittently unresponsive. Not yet reproduced with a video or
-instrumented. The flicker's real cause (above) turned out unrelated to
-`.glassEffect()` swallowing events, so that theory no longer applies here
-either -- this needs its own video/repro before diagnosing, not an
-assumption borrowed from the flicker fix.
+**Known issue, unresolved (reported 2026-09-28, video captured same day):**
+in glass mode, taps sometimes don't register. Screen recording shows two
+distinct tap gestures on the Camera tab's "Tap to mirror" button, neither
+of which registered -- `CameraMirrorSource.phase` never even flashes to
+`.starting` (set synchronously, before any permission check), so the
+`Button` itself never saw either tap. Not a permissions issue, not a
+silent failure inside `toggle()`.
+
+Ruled out by reading the code directly (not guessed): `NotchDragDetector`
+only installs `NSEvent.addGlobalMonitorForEvents` monitors, which Apple's
+own docs describe as observation-only and structurally unable to consume
+an event; `NotchGestureMonitorRepresentable`'s view explicitly overrides
+`hitTest(_:) { nil }`, so it never claims hit-testing either. Both of
+tonight's obvious AppKit-side suspects are cleared. The flicker's real
+cause (above) also turned out unrelated to `.glassEffect()` swallowing
+events, so that theory doesn't transfer here either.
+
+Leading (unconfirmed) theory, consistent with tonight's pattern: stale
+hit-test geometry on a freshly-switched-to tab whose layout hasn't
+settled yet, same root shape as the hover bug (glass's slower per-frame
+compositing making a normally-imperceptible race visible) but for a
+tab-switch's layout instead of the panel's own grow animation. Not
+verified with instrumentation the way the hover fix was -- next session
+should add one targeted log (tap time + `phase` + tab-switch recency)
+before attempting a fix, not guess again. The recording also shows a
+Spotlight/Siri "Search or Ask" card appearing moments after the failed
+taps; whether that's the click actually leaking through to the OS or an
+unrelated action is not established from the video alone.
 
 **Glass-mode entrance motion: investigated 2026-09-28, not fixed, parked.**
 Content (artwork/title/transport) visibly trickled in element-by-element
@@ -1004,6 +1025,24 @@ A real fix likely means either reducing `.glassEffect()`'s per-frame
 compositing cost (limited control -- it's a system material) or
 redesigning the grow to not shift position at all (fixed left edge
 instead of center anchor) -- a real design change, not a quick patch.
+
+**Untried lever, parked 2026-09-28: bump the deployment target to macOS 27.**
+The target machine updated to macOS 27 (Golden Gate) mid-project (see
+`CLAUDE.md`), but Atelier's Xcode deployment target is still pinned to
+`macos26.0` -- Xcode's installed SDK is already `MacOSX27.0.sdk`, so this
+is a target-version bump, not a toolchain change. Apple's own macOS 27
+release notes describe changed Liquid Glass opacity handling ("diffuses
+complex content more effectively," darkened edge + brighter specular
+highlights -- notably close to what ADR 0023 hand-built as a workaround)
+plus general performance/animation-smoothness improvements. Everything
+debugged tonight (the flicker fix, the parked entrance-trickle
+investigation) already ran against macOS 27's *current* `.glassEffect()`
+behavior at the OS level -- bumping the deployment target doesn't change
+what's running, but may unlock a newer, possibly cheaper glass
+implementation gated behind the target version, and could make the
+hand-built dimming/rim overlay partially redundant. Untested, not a
+guaranteed fix -- worth a fresh session's first on-device check before
+touching the entrance-trickle or click-unresponsiveness bugs again.
 
 **Rework parked (2026-09-24):** it reads as transparency, not glass. Research
 and options in [docs/research/liquid-glass-apple-guidance.md](research/liquid-glass-apple-guidance.md).
