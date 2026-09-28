@@ -1,106 +1,113 @@
+<div align="center">
+
 # Atelier
 
-**A Dynamic Island for your Mac's notch.**
+### A Dynamic Island for your Mac's notch.
 
-Atelier turns dead space above your screen into a living surface — a
-now-playing player on hover, a slim pill while music plays, and quick
-peeks for whatever's happening on your system. Shaped to look like it
-belongs there, not bolted on.
+Atelier turns the dead space above your screen into a living surface —
+a now-playing player on hover, a slim pill while music plays, and a
+quick peek for whatever's happening on your system. Shaped to look
+like it belongs there, not bolted on.
 
-## Features
+</div>
 
-- **Now playing, front and center** — artwork, scrubber, transport
-  controls, and a 6-bar waveform that reacts to the *actual audio
-  playing*, driven by a real-time CoreAudio tap
-- **Drag-and-drop file shelf** — drop a file on the notch, grab it
-  later, auto-swept after 24 hours
-- **System HUD, reimagined** — volume and brightness replace the stock
-  macOS overlay with a matching pill/peek
-- **Live system state** — battery, screen recording, and more surface
-  through one extensible architecture
-- **Lock-screen companion** — the now-playing card follows you past
-  the lock screen itself
-- **Gesture-driven** — swipe to open, close, or skip tracks, tuned
-  with real spring physics
-- **Camera tab** — a live, mirrored self-view of your camera for a quick
-  check before a call. Tap to start; the camera is only on while the mirror is
-  showing and nothing is recorded. Optional setting keeps the notch open while
-  the mirror is on.
-- **Home, Shelf, System Monitor & Calendar tabs** — an idle view for
-  when nothing's playing, a week-strip calendar with a funny line for
-  each day of the week (scroll through days with a swipe; double-tap to open your calendar app)
-- **Teleprompter tab** — a script that scrolls right under the camera at
-  your reading speed (WPM), with play/pause, a speed menu and a time-remaining
-  ring in the notch band. Type or paste a script (or drop a `.txt`, `.md`,
-  `.doc`, `.docx` or `.rtf` file) in Settings → Teleprompter. Optional Ghost
-  Mode hides the notch from screen sharing (still being verified) and opt-in
-  global shortcuts (⌃⌥P play/pause, ⌃⌥↑/↓ speed). While paused you can scroll
-  through the script with the trackpad, drag the top-bar controls into your
-  preferred order (Settings → Teleprompter). Turn on **Follow my voice** (Settings → Teleprompter, or the mic button in the top bar) and the script follows what you say and waits when you stop, using on-device speech recognition and the microphone only while listening.
-- **Weather** — a quiet glance on the idle Home card (tap it for
-  conditions, high/low, a quip, and the next five days). Uses Open-Meteo
-  and your approximate location, refreshed at most every 30 minutes when
-  you open the notch; no background polling
-- **Lightweight by design** — animations and pollers run at capped rates
-  and idle to nothing when not visible (no continuous redraw for static
-  content, no polling when nothing's playing), so a menu-bar accessory
-  doesn't act like a background hog
+---
 
-Supports Spotify and Apple Music, auto-detecting whichever is actually
-playing, behind a seam designed so any other player is a drop-in away.
+## What it does
 
-## Status
+**Now playing, front and center.** Artwork, scrubber, transport
+controls, and a 6-bar waveform that reacts to the *actual audio
+playing* — driven by a real-time system audio tap, not a fake pulse.
+Works with Spotify and Apple Music, automatically following whichever
+one is actually playing.
 
-- **298 tests passing**
-- Live phase-by-phase progress: [`docs/ROADMAP.md`](docs/ROADMAP.md)
-- Full feature survey: [`docs/FEATURES.md`](docs/FEATURES.md)
-- Known gap: AirPods support is disabled (a crash in Apple's own
-  CoreBluetooth bridge, not fixable from app code)
+**A system HUD that finally looks right.** Volume and brightness get
+their own pill and peek instead of the stock macOS overlay — same
+material, same motion language as everything else in the notch.
+
+**A place to park a file.** Drop something on the notch, grab it
+later. Auto-swept after 24 hours, so it never turns into a junk
+drawer.
+
+**Live system state, always in view.** Battery, screen recording, and
+more surface through one shared pill — one glance, no digging through
+menu bars.
+
+**Follows you to the lock screen.** The now-playing card doesn't
+disappear the moment you step away.
+
+**Built for touch and trackpad instincts.** Swipe to open, close, or
+skip tracks — tuned with real spring physics, not a linear animation
+pretending to be one.
+
+**A mirror before you're on camera.** Tap the Camera tab for a live
+self-view before a call. The camera only turns on while you're
+looking, and nothing is ever recorded.
+
+**A calm home base.** Home, Shelf, System Monitor, and Calendar tabs
+give you somewhere to land when nothing's playing — a week strip with
+a line of personality for each day, one swipe away from your full
+calendar.
+
+**A teleprompter that scrolls itself.** Paste a script and read at
+your pace — literally. Turn on **Follow my voice** and the script
+tracks what you're actually saying, on-device, and waits when you
+pause. Ghost Mode keeps it invisible to screen shares and recordings.
+
+**Weather, at a glance.** A quiet read on the idle Home card — tap for
+the full forecast, five days out.
+
+**Light on your battery, on purpose.** Everything idles to nothing
+when it isn't visible. A menu-bar accessory that behaves like one.
+
+---
 
 ## Requirements
 
 - macOS 27.0+
 - Xcode 26+
 
-## Build & Test
-
-```sh
-xcodebuild -scheme Atelier -configuration Debug build
-xcodebuild test -scheme Atelier -destination 'platform=macOS'
-```
-
-Unit tests cover pure logic — geometry, state transitions, gesture
-resolution, parsing, audio normalization. Window/panel focus, hardware
-keys, and the audio tap itself are manual-verification only (see
-`CLAUDE.md`).
-
 ## Settings
 
-Click the menu-bar icon → **Settings** (⌘, while the menu is open). Six panes:
-General (launch at login, peek, gestures), Appearance (Liquid Glass), Tabs
-(enable and drag to reorder), Widgets (Calendar / Camera / Color Picker
-options), Teleprompter (script, speed, font, Ghost Mode, shortcuts) and Permissions (live status of each permission with a shortcut to
-System Settings). Home can be moved like any tab (but not turned off); the notch opens on whichever tab is first.
+Click the menu-bar icon → **Settings** (⌘, while the menu is open).
+
+| Pane | What lives there |
+|---|---|
+| General | Launch at login, peek behavior, gestures |
+| Appearance | Liquid Glass |
+| Tabs | Enable and drag to reorder — Home stays pinned first |
+| Widgets | Calendar, Camera, Color Picker |
+| Teleprompter | Script, reading speed, font, Ghost Mode, shortcuts |
+| Permissions | Live status for everything below, with a shortcut into System Settings |
 
 ## Permissions
 
+Atelier only asks for what a given feature actually needs, when you
+turn that feature on — and degrades gracefully, not silently, if you
+say no.
+
 | Permission | Why |
 |---|---|
-| Automation | Reads now-playing data from Spotify and Apple Music, and jumps Calendar.app to a day, via Apple Events |
-| Calendars (full access) | Read-only: shows your week and events in the Calendar tab. Atelier never adds or edits events |
-| Camera | Shows the live mirror in the Camera tab. Only requested on your first tap; if denied, the tab offers a shortcut to System Settings |
-| Location (While Using) | Approximate location, one-shot, to fetch the forecast for the Home weather glance. If denied, weather is simply hidden |
-| Microphone + Speech Recognition | Teleprompter voice sync: on-device word tracking, only while listening. Requested when you first turn voice sync on; if denied, the teleprompter keeps its manual reading speed and says why |
-| Accessibility | Intercepts volume/brightness/mute keys for the custom HUD |
-| System Audio Recording Only | Powers the live waveform via a system-wide audio tap ([why not per-app](docs/decisions/0012-whole-system-audio-tap.md)) |
+| Automation | Reads now-playing data from Spotify and Apple Music, and jumps Calendar.app to a day |
+| Calendars (full access) | Read-only — shows your week and events. Atelier never adds or edits anything |
+| Camera | Powers the Camera tab's live mirror. Requested only on your first tap |
+| Location (While Using) | Approximate, one-shot, just to fetch a forecast. Weather simply hides if declined |
+| Microphone + Speech Recognition | Teleprompter voice sync — on-device word tracking, only while actively listening |
+| Accessibility | Lets Atelier intercept volume/brightness/mute keys for its own HUD |
+| System Audio Recording Only | Powers the live waveform via a system-wide audio tap |
 
-**Network:** the only outbound requests are Spotify artwork, the weather
-forecast from `api.open-meteo.com` (rounded coordinates only; no account or
-key — [ADR 0015](docs/decisions/0015-weather-open-meteo-corelocation.md)),
-and — only for Apple Music streaming tracks, which don't expose artwork via
-AppleScript — a lookup to `itunes.apple.com` by track/artist/album, no key
-([ADR 0022](docs/decisions/0022-apple-music-artwork-itunes-search-fallback.md)).
+**Network:** the only outbound calls are Spotify/Apple Music artwork,
+a weather lookup against `api.open-meteo.com` (rounded coordinates
+only, no account or key), and — for Apple Music streaming tracks only
+— an artwork lookup against `itunes.apple.com`. Nothing else leaves
+the machine.
 
-Decline any of these and Atelier degrades gracefully instead of failing
-silently. (Why Apple Events over the private `MediaRemote` framework?
-[ADR 0001](docs/decisions/0001-mediaremote-unavailable.md).)
+---
+
+<div align="center">
+
+Built for one Mac. A companion, not a product with a roadmap of ads.
+
+*Full development history and open items live in [`docs/ROADMAP.md`](docs/ROADMAP.md).*
+
+</div>

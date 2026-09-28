@@ -173,19 +173,24 @@ struct ExpandedPlayerView: View {
             HStack {
                 Button(action: onToggleShuffle) {
                     // Color alone (Differentiate Without Color) previously
-                    // carried the on/off state -- the dot below is the same
+                    // carried the on/off state -- the dot is the same
                     // "active" cue the tab bar and calendar event markers
                     // already use, so it reads without relying on hue.
-                    VStack(spacing: 2) {
-                        Image(systemName: "shuffle")
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundStyle(info.isShuffling ? waveformColor : Color.white.opacity(0.65))
-                        Circle()
-                            .fill(info.isShuffling ? waveformColor : Color.clear)
-                            .frame(width: 3, height: 3)
-                    }
-                    .animation(.easeOut(duration: 0.15), value: info.isShuffling)
-                    .frame(width: 24, height: 24)
+                    // Overlaid rather than stacked below the glyph: a VStack
+                    // here reserved vertical space for the dot, which shifted
+                    // the glyph's own center up and put it out of line with
+                    // the volume button's plain single-glyph 24x24 frame.
+                    Image(systemName: "shuffle")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(info.isShuffling ? waveformColor : Color.white.opacity(0.65))
+                        .frame(width: 24, height: 24)
+                        .overlay(alignment: .bottom) {
+                            Circle()
+                                .fill(info.isShuffling ? waveformColor : Color.clear)
+                                .frame(width: 3, height: 3)
+                                .offset(y: 2)
+                        }
+                        .animation(.easeOut(duration: 0.15), value: info.isShuffling)
                 }
                 .accessibilityLabel("Shuffle")
                 .help(info.isShuffling ? "Shuffle: on" : "Shuffle: off")
