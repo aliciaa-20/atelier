@@ -15,6 +15,7 @@ final class BendEffectController: ObservableObject {
 
     @Published private(set) var wantsEnabled: Bool {
         didSet {
+            guard oldValue != wantsEnabled else { return }
             AtelierSettings.bendEffectEnabled = wantsEnabled
             updateSensorSuspension()
         }

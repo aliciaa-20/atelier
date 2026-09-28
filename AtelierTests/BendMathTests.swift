@@ -38,6 +38,16 @@ struct BendMathTests {
         #expect(BendMath.progress(angle: 10, clearAngle: 10) == 0)
     }
 
+    @Test func progressFloorsExactZeroDenominatorRatherThanDividingByZero() {
+        // clearAngle == 12 makes (clearAngle - 12) exactly 0; without the
+        // max(1, ...) floor this is a 0/0 division producing NaN.
+        #expect(BendMath.progress(angle: 12, clearAngle: 12) == 0)
+        #expect(BendMath.progress(angle: 6, clearAngle: 12) == 1)
+        // A fractional angle between the two above should read as a clean
+        // fraction of the floored 1-degree range, not NaN or a clamp artifact.
+        #expect(BendMath.progress(angle: 11.5, clearAngle: 12) == 0.5)
+    }
+
     // MARK: - smooth
 
     @Test func smoothWithZeroDeltaTimeStaysAtCurrent() {

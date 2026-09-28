@@ -205,8 +205,8 @@ struct PermissionsPane: View {
 
 extension PermissionsPane {
     /// One prompt after another, skipping anything already answered.
-    /// Accessibility goes last: its prompt points the user at System
-    /// Settings, so nothing useful can follow it.
+    /// Accessibility and Screen Recording go last: their prompts point the
+    /// user at System Settings, so nothing useful can follow either.
     @MainActor
     fileprivate func grantAll() async {
         isGrantingAll = true
@@ -221,6 +221,7 @@ extension PermissionsPane {
         snapshot = .current()
 
         if snapshot.accessibility != .granted { AccessibilityPermission.requestPrompt() }
+        if snapshot.screenRecording != .granted { ScreenRecordingPermission.requestPrompt() }
     }
 }
 

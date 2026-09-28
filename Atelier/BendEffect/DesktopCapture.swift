@@ -3,9 +3,15 @@ import ScreenCaptureKit
 
 enum CaptureError: LocalizedError {
     case applicationUnavailable
+    case builtInDisplayUnavailable
 
     var errorDescription: String? {
-        "Atelier could not safely exclude its own windows from screen capture. Try enabling the bend effect again."
+        switch self {
+        case .applicationUnavailable:
+            "Atelier could not safely exclude its own windows from screen capture. Try enabling the bend effect again."
+        case .builtInDisplayUnavailable:
+            "The built-in display is unavailable."
+        }
     }
 }
 
@@ -51,7 +57,7 @@ final class DesktopCapture: NSObject, SCStreamOutput, SCStreamDelegate {
         let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: false)
         guard request == generation else { throw CancellationError() }
         guard let display = content.displays.first(where: { $0.displayID == displayID }) else {
-            throw NSError(domain: "The built-in display is unavailable.", code: 1)
+            throw CaptureError.builtInDisplayUnavailable
         }
         let ownApp = content.applications.filter { $0.processID == ProcessInfo.processInfo.processIdentifier }
         // A login launch may have no on-screen windows. Never start an unfiltered
@@ -124,11 +130,14 @@ final class DesktopCapture: NSObject, SCStreamOutput, SCStreamDelegate {
         frames.clear()
     }
     nonisolated func stream(_ stream: SCStream, didStopWithError error: Error) {
-        // `SCStream` isn't `Sendable`; send its identity across the actor
-        // hop instead of the object itself.
-        let streamID = ObjectIdentifier(stream)
+        // `SCStream` isn't `Sendable`. `nonisolated(unsafe)` on this local
+        // binding lets it cross the actor hop; holding this strong
+        // reference until the Task runs also means the original object
+        // can't be freed and a new one reallocated at the same address in
+        // the meantime, so the `===` comparison below can't alias.
+        nonisolated(unsafe) let capturedStream = stream
         Task { @MainActor [weak self] in
-            guard let self, self.stream.map(ObjectIdentifier.init) == streamID else { return }
+            guard let self, self.stream === capturedStream else { return }
             self.onError?(error)
         }
     }
@@ -148,10 +157,10 @@ final class DesktopCapture: NSObject, SCStreamOutput, SCStreamDelegate {
         let firstFrame = frames.get() == nil
         frames.put(pixelBuffer, displayTime: attachments.first?[.displayTime] as? UInt64 ?? 0)
         if firstFrame {
-            // Same identity-across-the-hop reasoning as `didStopWithError`.
-            let streamID = ObjectIdentifier(stream)
+            // Same reasoning as `didStopWithError`.
+            nonisolated(unsafe) let capturedStream = stream
             Task { @MainActor [weak self] in
-                guard let self, self.stream.map(ObjectIdentifier.init) == streamID else { return }
+                guard let self, self.stream === capturedStream else { return }
                 self.onFirstFrame?()
             }
         }
