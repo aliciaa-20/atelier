@@ -46,22 +46,16 @@ struct SystemMonitorActivityContent: LiveActivityContent {
     private var memoryRounded: Int { Int(memoryPercent.rounded()) }
 
     /// Text-only both flanks, same ~18pt-per-side budget
-    /// `BatteryActivityContent.pillView`'s doc comment documents --
-    /// "CPU"/"MEM" labels don't fit that budget alongside a number, so
-    /// each flank is a bare percentage instead: CPU on the left, memory on
-    /// the right, a fixed order rather than a label, same tradeoff
-    /// Battery's own pill makes (time-remaining/percent, no "time"/
-    /// "battery" labels either).
-    /// Both flanks share one `pillPercent` builder rather than duplicated
-    /// modifier chains -- the previous copy-pasted version used identical
-    /// modifiers on paper but still read as visibly different sizes
-    /// on-device between a 1-digit and 2-digit value ("5%" vs "98%"),
-    /// because `frame(maxWidth: 18)` lets `minimumScaleFactor` kick in
-    /// independently per string once its natural width nears the cap.
-    /// A shared fixed-width frame (18 -> 20, still comfortably inside the
-    /// notch's dead-zone budget) removes that per-string variance for the
-    /// entire realistic 0-99% range; only the rare literal 100% reading
-    /// still leans on `minimumScaleFactor` as a fallback.
+    /// `BatteryActivityContent.pillView` uses -- "CPU"/"MEM" labels don't
+    /// fit that budget alongside a number, so each flank is a bare
+    /// percentage instead: CPU on the left, memory on the right, a fixed
+    /// order rather than a label, same tradeoff Battery's own pill makes
+    /// (time-remaining/percent, no "time"/"battery" labels either). A wider
+    /// fixed frame was tried (to stop `minimumScaleFactor` kicking in on
+    /// two/three-digit values) but read as oversized and inconsistent next
+    /// to every other pill on-device -- matching Battery's own
+    /// `frame(maxWidth: 18)` exactly, scale-down included, is the
+    /// established look here, not a bug.
     func pillView() -> AnyView {
         AnyView(
             HStack(spacing: 0) {
@@ -74,13 +68,19 @@ struct SystemMonitorActivityContent: LiveActivityContent {
         )
     }
 
+    /// Matches `BatteryActivityContent`'s own percent text exactly (same
+    /// 12pt font, `maxWidth: 18` instead of a fixed width, same padding) --
+    /// widening this pill's own frame to dodge `minimumScaleFactor` (tried,
+    /// on-device feedback: read as oversized/inconsistent next to every
+    /// other pill in the app) wasn't the fix; matching the established
+    /// convention other pills already use was.
     private func pillPercent(_ value: Int, alignment: Alignment) -> some View {
         Text("\(value)%")
             .font(.system(size: 12, weight: .medium))
             .monospacedDigit()
             .lineLimit(1)
             .minimumScaleFactor(0.6)
-            .frame(width: 20, alignment: alignment)
+            .frame(maxWidth: 18, alignment: alignment)
             .foregroundStyle(.secondary)
     }
 
