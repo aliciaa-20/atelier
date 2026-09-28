@@ -44,6 +44,12 @@ final class GlobalHotkeys {
             guard status == noErr else { return status }
             let id = hotKeyID.id
             let signature = hotKeyID.signature
+            // Carbon delivers every kEventHotKeyPressed event to the most
+            // recently installed handler first; returning noErr here for a
+            // signature that isn't ours would swallow another feature's
+            // hotkey (e.g. BendEffectController's Escape) before it ever
+            // sees the event. Only claim events this handler actually owns.
+            guard signature == GlobalHotkeys.signature else { return OSStatus(eventNotHandledErr) }
             DispatchQueue.main.async {
                 MainActor.assumeIsolated { GlobalHotkeys.shared.fire(id, signature: signature) }
             }
