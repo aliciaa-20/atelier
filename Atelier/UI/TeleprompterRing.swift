@@ -4,7 +4,7 @@ import SwiftUI
 /// Same track/progress construction as `RingGauge` in
 /// `SystemMonitorPageView` (12 o'clock start, round cap, 15% track), but a
 /// separate view: that one is private, 64pt, and carries an icon + label.
-/// ~28pt is tight for text, so the label scales down; confirm on-device.
+/// ~26pt is tight for text, so the label scales down; confirm on-device.
 struct TeleprompterRing: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let fraction: Double
@@ -27,7 +27,12 @@ struct TeleprompterRing: View {
                 // Glides between ticks like Apple's own rings.
                 .animation(reduceMotion ? nil : .smooth(duration: 0.4), value: fraction)
             Text(label)
-                .font(.system(size: 8, weight: .semibold).monospacedDigit())
+                // Bumped 8 -> 10 to match the rest of the 9-10pt text-bump
+                // pass (Calendar/Weather/Volume/Brightness/ColorPicker
+                // pills) -- this was the one left over. `minimumScaleFactor`
+                // is the safety net if a longer time string doesn't fit the
+                // 26pt ring.
+                .font(.system(size: 10, weight: .semibold).monospacedDigit())
                 .minimumScaleFactor(0.7)
                 .lineLimit(1)
                 .foregroundStyle(.white)
