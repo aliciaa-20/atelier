@@ -160,6 +160,15 @@ stash on `main` anymore.
 > explicitly re-confirmed against a live track after the Phase 4 redesign —
 > worth a quick on-device look before calling the layout fully settled.
 
+**Added 2026-09-28:** tapping the title in `ExpandedPlayerView` opens/
+activates whichever app is actually playing (`NowPlayingInfo.sourceBundleID`,
+already populated by both `SpotifySource` and `AppleMusicSource`), via a new
+`NowPlayingSourceAppLauncher` using `NSWorkspace.openApplication` (the
+non-deprecated API — same one boring.notch's own `MusicManager.openMusicApp`
+uses, read via `gh api` per `check-reference-apps-first`). Invariant 2's
+"don't launch a media app that isn't running" doesn't apply here: this info
+only exists because that app is already running and playing.
+
 ---
 
 ## Upcoming

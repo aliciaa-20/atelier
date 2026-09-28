@@ -103,6 +103,13 @@ struct ExpandedPlayerView: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 MarqueeText(text: info.title, font: .system(size: 14, weight: .medium), color: .white, width: 150, height: 18)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        NowPlayingSourceAppLauncher.open(bundleID: info.sourceBundleID)
+                    }
+                    .accessibilityAddTraits(.isButton)
+                    .accessibilityHint("Opens the app it's playing from")
+                    .help("Open in the app it's playing from")
                 MarqueeText(
                     text: info.artist,
                     font: .system(size: 12),
