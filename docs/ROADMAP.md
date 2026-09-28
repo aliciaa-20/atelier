@@ -1161,6 +1161,17 @@ Items not part of the Phase 6–16 feature survey (see
   (including browsers), as an optional source. Weigh against the third-party
   helper that can break on any macOS release. See
   [ADR 0001](decisions/0001-mediaremote-unavailable.md).
+- **Bend Effect: snapshot capture instead of a continuous `SCStream`** — the
+  current port (Phase 19) keeps a live `ScreenCaptureKit` stream open the
+  whole time the effect is armed (throttled 5fps idle / 60fps bending, per
+  upstream BendMac). A sibling open-source project,
+  [altic-dev/FluidFold](https://github.com/altic-dev/FluidFold), instead
+  takes one-shot screenshots while the lid moves through its pre-warm zone
+  and holds no stream open at all by default — a real, isolated CPU/battery
+  win (its `DesktopCapture` equivalent could be swapped without touching
+  the renderer, math, or UI). Not pulled in during the initial port
+  (2026-09-28) to keep that branch scoped to the approved spec; noted here
+  instead of doing it inline as a scope-creep risk on an already-large PR.
 - **CI is broken** — has been red since PR #46 (2026-09-28), which bumped
   the deployment target to macOS 27.0. The GitHub Actions runner is still
   on macOS 26.6.2, so `xcodebuild test` fails with "My Mac's macOS 26.6.2
