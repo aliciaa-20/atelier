@@ -14,7 +14,10 @@ final class BendEffectController: ObservableObject {
     static let shared = BendEffectController()
 
     @Published private(set) var wantsEnabled: Bool {
-        didSet { AtelierSettings.bendEffectEnabled = wantsEnabled }
+        didSet {
+            AtelierSettings.bendEffectEnabled = wantsEnabled
+            updateSensorSuspension()
+        }
     }
     @Published private(set) var enabled = false
     @Published private(set) var starting = false
@@ -42,12 +45,16 @@ final class BendEffectController: ObservableObject {
     private var sleeping = false
     private var needsUserAction = false
     private var reconnectTask: Task<Void, Never>?
+    private static let hotKeySignature: OSType = 0x41544C42  // 'ATLB' -- distinct from GlobalHotkeys' 'ATLR'
     private var progress = 0.0
     private var lastTime = CACurrentMediaTime()
     private var playStart = 0.0
     private var wasFolded = false
 
     private nonisolated(unsafe) var observers: [(NotificationCenter, NSObjectProtocol)] = []
+    /// Reference count of live viewers of `sensorAngle` (the Settings
+    /// pane's Lid Behavior/Preview sections) -- see `updateSensorSuspension`.
+    private var paneObserverCount = 0
 
     private init() {
         wantsEnabled = AtelierSettings.bendEffectEnabled
@@ -59,6 +66,12 @@ final class BendEffectController: ObservableObject {
             if self.enabled || self.starting || becameAvailable { self.settingsChanged() }
         }
         sensor.start()
+        // Off by default: don't poll the HID sensor every 250ms for a
+        // feature nobody has turned on, per CLAUDE.md's "default pollers to
+        // idle/off when their output isn't currently visible or needed".
+        // Resumed by `enable()`/a restored `wantsEnabled`, or while the
+        // Settings pane has the Lid Behavior/Preview sections open.
+        updateSensorSuspension()
         capture.onError = { [weak self] error in
             guard let self else { return }
             if Self.requiresUserAction(error) {
@@ -84,7 +97,7 @@ final class BendEffectController: ObservableObject {
                 guard let self else { return }
                 self.sleeping = false
                 self.sensorAngle = nil
-                self.sensor.setSuspended(false)
+                self.updateSensorSuspension()
                 self.sensor.reconnect()
                 self.scheduleReconnect()
             }
@@ -103,8 +116,20 @@ final class BendEffectController: ObservableObject {
         var spec = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
         InstallEventHandler(
             GetApplicationEventTarget(),
-            { _, _, context in
+            { _, event, context in
                 guard let context else { return OSStatus(eventNotHandledErr) }
+                var hotKeyID = EventHotKeyID()
+                let status = GetEventParameter(
+                    event, EventParamName(kEventParamDirectObject), EventParamType(typeEventHotKeyID),
+                    nil, MemoryLayout<EventHotKeyID>.size, nil, &hotKeyID
+                )
+                // Carbon delivers every kEventHotKeyPressed event to the most
+                // recently installed handler first; returning noErr for a
+                // signature that isn't ours would swallow GlobalHotkeys'
+                // Teleprompter shortcuts before they ever see the event.
+                guard status == noErr, hotKeyID.signature == BendEffectController.hotKeySignature else {
+                    return status == noErr ? OSStatus(eventNotHandledErr) : status
+                }
                 let controller = Unmanaged<BendEffectController>.fromOpaque(context).takeUnretainedValue()
                 MainActor.assumeIsolated { controller.disable(message: "Paused with Escape.") }
                 return noErr
@@ -161,6 +186,24 @@ final class BendEffectController: ObservableObject {
         playStart = CACurrentMediaTime()
         previewPlaying = true
         startTicking()
+    }
+
+    /// Called from `BendEffectPane`'s `onAppear`/`onDisappear` -- the pane
+    /// shows a live `sensorAngle` reading (Lid Behavior, "Use live lid
+    /// angle") even while the effect itself is off, so the sensor needs to
+    /// keep polling while that UI is on screen.
+    func beginObservingSensor() {
+        paneObserverCount += 1
+        updateSensorSuspension()
+    }
+
+    func endObservingSensor() {
+        paneObserverCount = max(0, paneObserverCount - 1)
+        updateSensorSuspension()
+    }
+
+    private func updateSensorSuspension() {
+        sensor.setSuspended(!(wantsEnabled || paneObserverCount > 0))
     }
 
     // Match the visibility threshold so imperceptible lid jitter never starts capture.
@@ -394,7 +437,7 @@ final class BendEffectController: ObservableObject {
             overlay?.show()
             Task { await capture.setBending(true) }
             RegisterEventHotKey(
-                UInt32(kVK_Escape), 0, EventHotKeyID(signature: 0x41544C42, id: 1),
+                UInt32(kVK_Escape), 0, EventHotKeyID(signature: BendEffectController.hotKeySignature, id: 1),
                 GetApplicationEventTarget(), 0, &hotKey)
         } else if !visible && overlay?.isVisible == true {
             overlay?.hide()

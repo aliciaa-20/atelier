@@ -45,8 +45,14 @@ has nothing to do with the notch panel at all.
    vocabulary. `BendEffectController` instead calls Carbon's
    `RegisterEventHotKey`/`InstallEventHandler` directly, the same near-verbatim
    approach BendMac's own `AppModel` used, with its own signature (`'ATLB'`,
-   distinct from `GlobalHotkeys`'s `'ATLR'`) so the two systems can never
-   collide.
+   distinct from `GlobalHotkeys`'s `'ATLR'`). A distinct signature alone is
+   **not** sufficient, though: Carbon delivers every `kEventHotKeyPressed`
+   event to the most recently installed handler first, and a handler that
+   unconditionally returns `noErr` swallows the event before any
+   earlier-installed handler (or vice versa) ever sees it, regardless of
+   signature. Caught in code review — both handlers now read the event's
+   `EventHotKeyID.signature` and return `eventNotHandledErr` for anything
+   that isn't their own, letting Carbon fall through to the other handler.
 
 4. **A menu-bar toggle was added, not just a Settings-only switch.** The
    design spec left this as an open question. Decided in favor of parity

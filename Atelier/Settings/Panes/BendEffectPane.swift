@@ -164,6 +164,10 @@ struct BendEffectPane: View {
             }
         }
         .formStyle(.grouped)
-        .onDisappear { controller.previewPlaying = false }
+        .onAppear { controller.beginObservingSensor() }
+        .onDisappear {
+            controller.previewPlaying = false
+            controller.endObservingSensor()
+        }
     }
 }
