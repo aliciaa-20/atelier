@@ -34,6 +34,9 @@ struct ExpandedPlayerView: View {
     @State private var showingVolumeControl = false
     @State private var volumePercent = 0
     @State private var isMuted = false
+    @Environment(\.colorSchemeContrast) private var contrast
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+    private var isGlassActive: Bool { DimmedText.glassActive(reduceTransparency: reduceTransparency) }
 
     var body: some View {
         Group {
@@ -100,7 +103,14 @@ struct ExpandedPlayerView: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 MarqueeText(text: info.title, font: .system(size: 14, weight: .medium), color: .white, width: 150, height: 18)
-                MarqueeText(text: info.artist, font: .system(size: 12), color: .white.opacity(0.65), width: 150, height: 18)
+                MarqueeText(
+                    text: info.artist,
+                    font: .system(size: 12),
+                    color: .white.opacity(DimmedText.opacity(0.65, contrast: contrast, glassActive: isGlassActive)),
+                    width: 150,
+                    height: 18
+                )
+                .dimmedTextShadow(glassActive: isGlassActive)
             }
 
             Spacer(minLength: 0)
