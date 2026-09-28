@@ -195,6 +195,22 @@ reading, and enabling the effect reaches "Live desktop connected" status.
 Still needs: watching the desktop actually fold during a real lid close,
 permission-revoked-mid-session behavior, and a Reduce Motion check.
 
+**In progress (`feat/bend-effect-snapshot-capture`, 2026-09-29):** the
+snapshot-capture backlog item below -- `DesktopCapture` gains a one-shot
+`snapshot()` (via `SCScreenshotManager`), and `BendEffectController` now
+opens the live `SCStream` lazily, only once `tick()` sees the fold
+actually cross the visible threshold, instead of eagerly in `connect()`.
+While armed but not yet visibly folding, a throttled (250ms,
+`BendMath.shouldRefreshSnapshot`, unit-tested) one-shot snapshot keeps
+`FrameStore` seeded instead. Kept the hybrid scope deliberately (not a
+full FluidFold-style frozen-snapshot fold): the live stream still drives
+the actual bend animation once visible, so desktop content stays live
+mid-fold exactly as before -- only the long idle-armed window loses its
+standing stream. 313/313 tests pass. Needs on-device verification: no
+flicker at the visible-threshold crossing (the snapshot-to-live-frame
+handoff), and no rapid stream restart if the lid lingers right at that
+threshold.
+
 ### 🔜 Phase 5 — Pill + auto-peek
 *Ships: slim pill while music plays; auto-peek on track change, then retract.*
 
@@ -1163,17 +1179,11 @@ Items not part of the Phase 6–16 feature survey (see
   (including browsers), as an optional source. Weigh against the third-party
   helper that can break on any macOS release. See
   [ADR 0001](decisions/0001-mediaremote-unavailable.md).
-- **Bend Effect: snapshot capture instead of a continuous `SCStream`** — the
-  current port (Phase 19) keeps a live `ScreenCaptureKit` stream open the
-  whole time the effect is armed (throttled 5fps idle / 60fps bending, per
-  upstream BendMac). A sibling open-source project,
-  [altic-dev/FluidFold](https://github.com/altic-dev/FluidFold), instead
-  takes one-shot screenshots while the lid moves through its pre-warm zone
-  and holds no stream open at all by default — a real, isolated CPU/battery
-  win (its `DesktopCapture` equivalent could be swapped without touching
-  the renderer, math, or UI). Not pulled in during the initial port
-  (2026-09-28) to keep that branch scoped to the approved spec; noted here
-  instead of doing it inline as a scope-creep risk on an already-large PR.
+- ~~**Bend Effect: snapshot capture instead of a continuous `SCStream`**~~
+  **In progress** on `feat/bend-effect-snapshot-capture` (2026-09-29) —
+  see the Phase 19 note above. Not pulled into the initial port
+  (2026-09-28) to keep that branch scoped to the approved spec; picked up
+  as a focused follow-up instead of scope-creep on an already-large PR.
 - ~~**CI is broken**~~ Was red since PR #46 (2026-09-28), which bumped the
   deployment target to macOS 27.0 — the GitHub Actions runner is still on
   macOS 26.6.2 (confirmed 2026-09-29: no `macos-27` image exists yet,

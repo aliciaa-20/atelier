@@ -21,4 +21,12 @@ enum BendMath {
         let next = current + (target - current) * (1 - exp(-min(dt, 0.1) / 0.075))
         return abs(next - target) < 0.0001 ? target : next
     }
+
+    /// Throttle for idle-armed snapshot refresh (see `DesktopCapture.snapshot()`):
+    /// true on the first call (`lastSnapshotTime == nil`) or once `interval`
+    /// seconds have passed since the last one.
+    static func shouldRefreshSnapshot(now: Double, lastSnapshotTime: Double?, interval: Double) -> Bool {
+        guard let lastSnapshotTime else { return true }
+        return now - lastSnapshotTime >= interval
+    }
 }
