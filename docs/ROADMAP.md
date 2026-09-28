@@ -924,7 +924,7 @@ tier breakdown and why.*
       JSON-manifest storage.
 - [ ] **Voice-synced scrolling** (built, core flow verified on-device; edge cases such as >1 min reads, AirPods mid-read, VoiceOver not yet run) — on-device `SFSpeechRecognizer` word tracking (`ScriptMatcher`),
       glide toward the spoken position, "Listening" pill, mic + speech permissions (ADR 0020).
-      Built and unit-tested (282 tests); remaining on-device edge checks: recognition on a long script, >1 min read (request restart), pill placement/height, permission grant/deny/revoke, VoiceOver, Reduce Motion, AirPods connecting mid-read, CPU ~0% while waiting, mic indicator off when paused.
+      Built and unit-tested (282 tests); remaining on-device edge checks: recognition on a long script, >1 min read (request restart), pill placement/height, permission grant/deny/revoke, VoiceOver, Reduce Motion, AirPods connecting mid-read, CPU ~0% while waiting, mic indicator off when paused, and **recognizing from an AirPods mic as the input device** (only tested against the built-in mic so far — separate from the "AirPods connecting mid-read" device-switch case above).
 - [ ] *(lower priority)* **AI rehearsal coach** — needs an LLM backend +
       likely Vision-framework posture analysis. Discuss stack/privacy
       tradeoffs before scoping; this is a different trust model than the
