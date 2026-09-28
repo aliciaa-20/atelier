@@ -487,9 +487,10 @@ both depend on the shelf existing first) — see
       handler deferred a file copy past `NSItemProvider
       .loadFileRepresentation`'s documented synchronous-validity window
       (fixed by copying to a staging location before hopping actors).
-      **Not yet manually verified on-device** — checkbox stays unchecked
-      until drag-enter/exit, drop, remove, drag-out, and relaunch
-      persistence are actually exercised on real hardware.
+      **Partially verified on-device 2026-09-28**: drag-enter/exit, drop,
+      and drag-out all confirmed working (see the bug writeups below).
+      Checkbox stays unchecked until remove and relaunch persistence are
+      also explicitly exercised.
 
   **Reworked 2026-09-28** per `check-reference-apps-first`: pulled real
   source from both `Lakr233/NotchDrop` and `TheBoredTeam/boring.notch`
@@ -538,15 +539,28 @@ both depend on the shelf existing first) — see
   `ShelfStore.addFile` but never re-synthesizes a name. **Verified on-device
   2026-09-28: filename retained correctly, drag-out works.**
 
-  Two more findings from that same verification pass, not yet fixed:
-  - The shelf shows the file's **type icon**, not a real content thumbnail
-    (e.g. a PDF's actual first page). boring.notch has a `ThumbnailService`
-    (QuickLook-based) for this — a real feature addition, not a bug fix;
-    worth its own pass if wanted.
-  - With many items, horizontal scrolling doesn't engage — `ShelfView`'s
-    `ScrollView(.horizontal)` + `LazyHGrid(rows:)` looks structurally right
-    at a glance; not yet root-caused (candidate: interaction with
-    `NotchGestureModifier`'s scroll-wheel monitors, unconfirmed).
+  Two more findings from that same verification pass, both fixed same day:
+  - The shelf showed the file's type icon, not real content. Added
+    `Shelf/ShelfThumbnailService.swift`, an actor wrapping
+    `QLThumbnailGenerator` with a cache + in-flight-request dedup, adapted
+    from boring.notch's own `ThumbnailService` (dropped its
+    security-scoped-resource handling — Atelier's shelf files are already
+    local copies, not bookmarked references). `ShelfItemCell` now shows the
+    real thumbnail once resolved, falling back to the type icon until then.
+    **Verified on-device: real content previews (e.g. a PDF's actual first
+    page).**
+  - Horizontal scrolling didn't engage with many items. Root cause, found by
+    comparing against boring.notch's actual `ShelfView` (`gh api`): it uses
+    a plain single-row `HStack` in its horizontal `ScrollView`, not a
+    multi-row grid. Atelier's `LazyHGrid(rows: [.adaptive])` computed its
+    row count from whatever height its parent proposed, which isn't
+    reliably bounded to exactly one row here — with enough items it grew
+    extra rows that overflowed *vertically* past the visible area (silently
+    clipped, since the `ScrollView` is horizontal-only) instead of
+    extending horizontally into scrollable space. Switched to a single-row
+    `HStack`, matching the reference exactly — a fixed row can only ever
+    overflow in the one direction that's actually scrollable. **Verified
+    on-device: scrolls correctly with many items.**
 
   - Mission Control still triggers when a drag hovers near the menu bar.
     Investigated further this pass: boring.notch's `DragDetector` is
