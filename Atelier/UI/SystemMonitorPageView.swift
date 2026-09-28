@@ -195,6 +195,12 @@ private struct StatusCard: View {
 
             Spacer(minLength: 0)
         }
+        // Without this, each card hugged its own text content width instead
+        // of matching its sibling -- a `Spacer(minLength: 0)` alone doesn't
+        // force the HStack to fill the row, so "Your Mac is running
+        // smoothly." (longer) rendered a visibly wider box than "Plenty of
+        // memory is free." (shorter). Padding stays the same either way.
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
         .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: NotchLayout.cardCornerRadius, style: .continuous))
