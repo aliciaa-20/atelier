@@ -177,6 +177,22 @@ only exists because that app is already running and playing.
 
 ## Upcoming
 
+### 🟨 Phase 19 — Desktop bend effect (code complete, on-device verification pending)
+
+Full port of [IuCC123/BendMac](https://github.com/IuCC123/BendMac) (MIT):
+the desktop visibly bends and blurs as the lid closes. Whole-built-in-
+display overlay, structurally separate from the notch -- see
+`docs/superpowers/specs/2026-09-28-bend-effect-design.md` and
+`docs/superpowers/plans/2026-09-28-bend-effect-implementation.md`.
+Needs Screen & System Audio Recording permission (ScreenCaptureKit).
+All files ported/wired on branch `feat/bend-effect`, builds clean, full
+test suite green (308/308, `BendMath` unit-tested). Settings pane visually
+confirmed on-device (no crash after fixing a launch-time concurrency bug
+in `LidSensor`/`FrameStore`/`DesktopCapture` -- see commit `6e4ecbe`).
+Still needs: real lid-close verification (sensor reads, capture starts,
+fold animates, overlay tears down cleanly), a Screen Recording permission
+grant walkthrough, and a final whole-branch code review before merge.
+
 ### 🔜 Phase 5 — Pill + auto-peek
 *Ships: slim pill while music plays; auto-peek on track change, then retract.*
 
