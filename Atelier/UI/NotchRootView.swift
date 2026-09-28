@@ -641,32 +641,33 @@ struct NotchRootView: View {
                             viewModel.handle(.dragExited(isPlaying: liveActivity.hasContent))
                         }
                     },
-                    onDrop: { providers in
-                        for provider in providers {
-                            _ = provider.loadFileRepresentation(forTypeIdentifier: "public.item") { url, _ in
-                                guard let url else { return }
-                                // loadFileRepresentation's url is only valid for the duration of
-                                // this handler -- the system may delete the backing file once it
-                                // returns, so copy it to a stable staging location synchronously
-                                // here, before hopping to the MainActor-isolated ShelfStore.
-                                let stagingDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
-                                let staging = stagingDir.appendingPathComponent(url.lastPathComponent)
-                                do {
-                                    try FileManager.default.createDirectory(at: stagingDir, withIntermediateDirectories: true)
-                                    try FileManager.default.copyItem(at: url, to: staging)
-                                } catch {
-                                    return
-                                }
-                                Task { @MainActor in
-                                    // `addFile` now MOVES `staging` into the shelf's
-                                    // real storage location (avoids a second full-file
-                                    // copy on top of the one just made above), which
-                                    // empties `staging` but leaves its now-empty parent
-                                    // `stagingDir` behind -- clean that up so temp
-                                    // directories don't accumulate.
-                                    try? shelfStore.addFile(at: staging, originalFilename: url.lastPathComponent)
-                                    try? FileManager.default.removeItem(at: stagingDir)
-                                }
+                    onDrop: { urls in
+                        for url in urls {
+                            // `NotchDragDetector` hands back the real pasteboard
+                            // file URL directly (see its doc comment for why --
+                            // routing this through `NSItemProvider` +
+                            // `loadFileRepresentation` lost the real filename).
+                            // Still copy to a private staging location before
+                            // handing off to the MainActor-isolated `ShelfStore`
+                            // rather than letting `addFile` move the user's
+                            // original file directly.
+                            let stagingDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+                            let staging = stagingDir.appendingPathComponent(url.lastPathComponent)
+                            do {
+                                try FileManager.default.createDirectory(at: stagingDir, withIntermediateDirectories: true)
+                                try FileManager.default.copyItem(at: url, to: staging)
+                            } catch {
+                                continue
+                            }
+                            Task { @MainActor in
+                                // `addFile` now MOVES `staging` into the shelf's
+                                // real storage location (avoids a second full-file
+                                // copy on top of the one just made above), which
+                                // empties `staging` but leaves its now-empty parent
+                                // `stagingDir` behind -- clean that up so temp
+                                // directories don't accumulate.
+                                try? shelfStore.addFile(at: staging, originalFilename: url.lastPathComponent)
+                                try? FileManager.default.removeItem(at: stagingDir)
                             }
                         }
                         withAnimation(NotchAnimations.open) {

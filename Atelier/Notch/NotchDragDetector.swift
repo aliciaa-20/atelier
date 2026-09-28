@@ -14,7 +14,7 @@ import AppKit
 struct NotchDragModifier: ViewModifier {
     let onDragEntered: () -> Void
     let onDragExited: () -> Void
-    let onDrop: ([NSItemProvider]) -> Void
+    let onDrop: ([URL]) -> Void
 
     func body(content: Content) -> some View {
         content.background(
@@ -26,7 +26,7 @@ struct NotchDragModifier: ViewModifier {
 private struct NotchDragMonitorRepresentable: NSViewRepresentable {
     let onDragEntered: () -> Void
     let onDragExited: () -> Void
-    let onDrop: ([NSItemProvider]) -> Void
+    let onDrop: ([URL]) -> Void
 
     func makeNSView(context: Context) -> NotchDragMonitorView {
         let view = NotchDragMonitorView()
@@ -50,7 +50,7 @@ private struct NotchDragMonitorRepresentable: NSViewRepresentable {
 
     private var onDragEntered: (() -> Void)?
     private var onDragExited: (() -> Void)?
-    private var onDrop: (([NSItemProvider]) -> Void)?
+    private var onDrop: (([URL]) -> Void)?
 
     private let dragPasteboard = NSPasteboard(name: .drag)
     private var pasteboardChangeCount = -1
@@ -78,7 +78,7 @@ private struct NotchDragMonitorRepresentable: NSViewRepresentable {
         installMonitorsIfNeeded()
     }
 
-    func update(onDragEntered: @escaping () -> Void, onDragExited: @escaping () -> Void, onDrop: @escaping ([NSItemProvider]) -> Void) {
+    func update(onDragEntered: @escaping () -> Void, onDragExited: @escaping () -> Void, onDrop: @escaping ([URL]) -> Void) {
         self.onDragEntered = onDragEntered
         self.onDragExited = onDragExited
         self.onDrop = onDrop
@@ -146,8 +146,8 @@ private extension NotchDragMonitorView {
 
     func handleMouseUp() {
         guard isDragging else { return }
-        if isContentDragging, hasEnteredRegion, let providers = draggedItemProviders() {
-            onDrop?(providers)
+        if isContentDragging, hasEnteredRegion, let urls = draggedFileURLs() {
+            onDrop?(urls)
         } else if hasEnteredRegion {
             onDragExited?()
         }
@@ -161,17 +161,21 @@ private extension NotchDragMonitorView {
         dragPasteboard.types?.contains(.fileURL) ?? false
     }
 
-    func draggedItemProviders() -> [NSItemProvider]? {
+    /// Real file URLs straight off the drag pasteboard -- deliberately not
+    /// wrapped in `NSItemProvider`. A prior version routed these through
+    /// `NSItemProvider(contentsOf:)` +
+    /// `loadFileRepresentation(forTypeIdentifier: "public.item")` at the
+    /// call site, which silently renamed dropped files to a generic
+    /// "<type description>.<ext>" name (e.g. "PDF document.pdf" instead of
+    /// the real filename) -- `"public.item"` doesn't exactly match how the
+    /// pasteboard registered the file's UTI, so the system synthesized a
+    /// fresh temp copy instead of handing back the original. We already
+    /// have the real URL here; no synthesis needed.
+    func draggedFileURLs() -> [URL]? {
         guard let urls = dragPasteboard.readObjects(forClasses: [NSURL.self], options: nil) as? [URL], !urls.isEmpty else {
             return nil
         }
-        // compactMap, not map with a `?? NSItemProvider()` fallback: a
-        // fabricated empty provider's `loadFileRepresentation` completes
-        // with no URL, silently swallowing the drop (e.g. a directory, or
-        // any other provider-construction failure) instead of just
-        // dropping that one item.
-        let providers = urls.compactMap { NSItemProvider(contentsOf: $0) }
-        return providers.isEmpty ? nil : providers
+        return urls
     }
 
     func currentScreenRect() -> CGRect? {
