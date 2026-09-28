@@ -1029,8 +1029,8 @@ compositing cost (limited control -- it's a system material) or
 redesigning the grow to not shift position at all (fixed left edge
 instead of center anchor) -- a real design change, not a quick patch.
 
-**Deployment target bumped to macOS 27, tested 2026-09-28 (uncommitted --
-see the session's branch-split note below).** `MACOSX_DEPLOYMENT_TARGET`
+**Deployment target bumped to macOS 27, shipped 2026-09-28 (PR #46).**
+`MACOSX_DEPLOYMENT_TARGET`
 moved from `26.0` to `27.0` (Xcode's SDK was already `MacOSX27.0.sdk`, so
 purely a target-version bump). Build and 298-test suite pass. On-device
 check: the bump alone did **not** fix either bug it was tried against
