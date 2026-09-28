@@ -750,8 +750,14 @@ See [FEATURES.md §7](FEATURES.md#7-system-resource-monitor).
 machine with 46% free -- fixed by reading the OS's own free-memory % (see
 [ADR 0017](decisions/0017-memory-ring-uses-os-free-percentage.md)).
 - [x] Memory ring uses `kern.memorystatus_level`
-- [ ] Verify the 70/90 thresholds under real memory pressure on-device
-- [ ] Pill percentages ("12%" / "98%") are ~9pt and hard to read; consider a bit more size
+- [ ] Verify the 70/90 thresholds under real memory pressure on-device -- spot-checked 2026-09-28 at idle load
+      (`memory_pressure`'s "System-wide memory free percentage" read 46%, `sysctl kern.memorystatus_level` read 44%,
+      the app's own formula gives ~54-56% used, all consistent and well under the 70% "busy" threshold); actually
+      pushing past 70%/90% needs a real high-memory-pressure moment on her machine, not something to simulate here
+- [x] Pill percentages ("12%" / "98%") are ~9pt and hard to read -- a wider fixed frame (20 -> 26) was tried to stop
+      `minimumScaleFactor` kicking in, but read as oversized/inconsistent next to every other pill (on-device,
+      2026-09-28). Reverted to match `BatteryActivityContent`'s own `frame(maxWidth: 18)` exactly, scale-down
+      included -- that's the established convention this app's pills use, not a bug to fix.
 
 ### ✅ Phase 14 — Camera mirror mode
 *Ships: a camera-preview mirror widget.* Shipped (PR #23, 146 tests pass); verified on-device 2026-09-24: permission
