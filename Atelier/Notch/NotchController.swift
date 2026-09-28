@@ -213,7 +213,8 @@ final class NotchController {
                     shelfStore: shelfStore,
                     systemMonitor: systemMonitorSource,
                     calendar: calendarSource,
-                    weather: weatherSource
+                    weather: weatherSource,
+                    volumeSource: volumeSource
                 )
             )
             return
@@ -336,7 +337,8 @@ final class NotchController {
                 shelfStore: shelfStore,
                 systemMonitor: systemMonitorSource,
                 calendar: calendarSource,
-                    weather: weatherSource
+                    weather: weatherSource,
+                    volumeSource: volumeSource
             )
         )
         panel.setFrame(maxRect, display: true)

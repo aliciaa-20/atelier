@@ -81,6 +81,15 @@ final class VolumeSource: LiveActivitySource {
         return true
     }
 
+    /// Reads the live percent/mute state without publishing a HUD -- for a
+    /// caller (the expanded player's inline volume section) that needs the
+    /// starting position of its own slider, not a transient peek.
+    func currentState() -> (percent: Int, isMuted: Bool) {
+        guard let deviceID = Self.defaultOutputDevice() else { return (0, false) }
+        let percent = Self.volume(for: deviceID).map { Int(($0 * 100).rounded()) } ?? 0
+        return (percent, Self.isMuted(for: deviceID) ?? false)
+    }
+
     /// Sets volume to an absolute level, for the peek's drag-to-scrub bar
     /// -- unlike `step(by:)`'s relative nudge, matching the key press it
     /// mirrors. Called live on every drag update; `publish()`'s own decay
@@ -96,6 +105,26 @@ final class VolumeSource: LiveActivitySource {
             _ = Self.setMuted(false, for: deviceID)
         }
         publish(percent: clamped, isMuted: Self.isMuted(for: deviceID) ?? false)
+    }
+
+    /// Same CoreAudio write as `scrub(toPercent:)`/`toggleMute()`, but
+    /// never `publish()`es -- for a caller (the expanded player's own
+    /// inline volume section) that already shows its own live level, where
+    /// also popping the transient system-HUD peek on top would show the
+    /// same number twice.
+    func applyDirectly(percent: Int) {
+        guard let deviceID = Self.defaultOutputDevice() else { return }
+        let clamped = min(max(percent, 0), 100)
+        guard Self.setVolume(Float32(clamped) / 100, for: deviceID) else { return }
+        if clamped > 0 {
+            _ = Self.setMuted(false, for: deviceID)
+        }
+    }
+
+    /// Silent counterpart to `toggleMute()` -- see `applyDirectly(percent:)`.
+    func setMutedDirectly(_ muted: Bool) {
+        guard let deviceID = Self.defaultOutputDevice() else { return }
+        _ = Self.setMuted(muted, for: deviceID)
     }
 
     private func publish(percent: Int, isMuted: Bool) {
