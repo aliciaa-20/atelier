@@ -18,6 +18,20 @@ struct NotchRootView: View {
     /// Tracked so a hold-open that ends (mirror stopped) knows whether to
     /// retract now or wait for the pointer to actually leave.
     @State private var pointerInside = false
+    /// The real screen-space mouse location the last time `.onHover`
+    /// reported `hovering == true`. Glass mode was flickering open/closed
+    /// while hovering -- `os_log` instrumentation (see ADR 0023's "Update"
+    /// section) proved this wasn't `.glassEffect()` swallowing hover (it
+    /// never appears in the real AppKit view hierarchy at all) but a
+    /// genuine race: `.contentShape(Rectangle())`'s hit region tracks
+    /// `frameSize`, which is mid-spring during the open/close animation, so
+    /// its edge can sweep across a cursor that never actually moved. Six
+    /// captured pairs showed `.onHover(false)` immediately followed by
+    /// `.onHover(true)` at the *identical* mouse coordinate, 2-7ms apart --
+    /// proof the cursor was stationary and only the animating hit-test
+    /// boundary moved under it. `.onHover` below ignores an exit that
+    /// isn't a real cursor move.
+    @State private var lastHoverEnterLocation: NSPoint?
     /// True while any `NSMenu` (e.g. the teleprompter's speed menu) is being
     /// tracked: the pointer is over the popup, outside the panel, but the
     /// notch must not retract underneath it.
@@ -489,6 +503,17 @@ struct NotchRootView: View {
                          NSWorkspace.shared.accessibilityDisplayShouldReduceMotion ? nil : artworkNamespace)
             .contentShape(Rectangle())
             .onHover { hovering in
+                let mouseLocation = NSEvent.mouseLocation
+                if hovering {
+                    lastHoverEnterLocation = mouseLocation
+                } else if let enteredAt = lastHoverEnterLocation,
+                          abs(enteredAt.x - mouseLocation.x) < 1, abs(enteredAt.y - mouseLocation.y) < 1 {
+                    // Spurious: see `lastHoverEnterLocation`'s note -- the
+                    // cursor hasn't actually moved since the last real
+                    // hover-in, so this exit is the animating hit-test
+                    // region sweeping past it, not a real hover-out.
+                    return
+                }
                 pointerInside = hovering
                 if AtelierSettings.teleprompterPauseOnHover {
                     teleprompter.setPointerInside(hovering)

@@ -963,16 +963,47 @@ specifically when nothing is playing (closes to `.collapsed` rather than
 on-device video of that specific path to diagnose properly — flagged
 inline in `NotchRootView.swift` rather than guessed at further.
 
+**Hover-oscillation flicker: fixed 2026-09-28.** `os_log` instrumentation
+(mouse location + a full AppKit view-hierarchy/tracking-area dump at each
+`.onHover` fire) confirmed `.glassEffect()` never appears as a real
+subview in the panel's hierarchy at all, ruling out the "glass material
+swallows hover" theory this bug was tracked under. The real cause:
+`.contentShape(Rectangle())`'s hit region tracks `frameSize`, which is
+mid-spring during the open/close animation -- captured pairs showed
+`.onHover(false)` immediately followed by `.onHover(true)` at the
+*identical* mouse coordinate, 2-7ms apart, proving the cursor was
+stationary and the animating hit-test boundary swept past it. Fixed by
+ignoring a hover-exit unless the cursor has actually moved since the last
+hover-in (`NotchRootView.swift`'s `lastHoverEnterLocation`). Confirmed
+on-device: zero duplicate-coordinate flip pairs in a post-fix capture that
+previously produced six.
+
 **Known issue, unresolved (reported 2026-09-28):** in glass mode, taps
 sometimes don't register — tab switches and the play/pause button reported
 as intermittently unresponsive. Not yet reproduced with a video or
-instrumented. Likely the same family of bug as the hover-oscillation
-flicker documented in ADR 0023 (`.glassEffect()` inserting a real
-AppKit-backed material view that can intercept event delivery -- Invariant
-4's exact concern, "transparent SwiftUI views still swallow clicks," except
-here for real taps instead of hover), but that's a hypothesis, not
-confirmed -- could equally be a separate bug. Investigate together with the
-flicker, not in isolation, next time this area is picked up.
+instrumented. The flicker's real cause (above) turned out unrelated to
+`.glassEffect()` swallowing events, so that theory no longer applies here
+either -- this needs its own video/repro before diagnosing, not an
+assumption borrowed from the flicker fix.
+
+**Glass-mode entrance motion: investigated 2026-09-28, not fixed, parked.**
+Content (artwork/title/transport) visibly trickled in element-by-element
+while the panel grew, glass mode only. Root cause: the grow spring
+genuinely shifts position (~35px leftward, center-anchored growth) as well
+as size, confirmed via a growth-timing probe -- and under glass this
+motion visibly takes ~500ms to settle (not the animation's nominal 350ms
+response), vs. imperceptibly fast against flat black. Two fix attempts
+(a flat delay, then a `withAnimation` completion callback) both hid
+content until the grow was "done," but each new attempt just relocated
+the same visible artifact to a different moment (a slow open, then a
+last-second pop/slide) rather than removing it, since the underlying
+per-frame render cost was never addressed. Reverted both; glass content
+stays visible throughout the grow now, same as black mode -- choppier
+under glass, but at least one continuous motion instead of a new seam.
+A real fix likely means either reducing `.glassEffect()`'s per-frame
+compositing cost (limited control -- it's a system material) or
+redesigning the grow to not shift position at all (fixed left edge
+instead of center anchor) -- a real design change, not a quick patch.
 
 **Rework parked (2026-09-24):** it reads as transparency, not glass. Research
 and options in [docs/research/liquid-glass-apple-guidance.md](research/liquid-glass-apple-guidance.md).
