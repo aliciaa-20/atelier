@@ -963,6 +963,17 @@ specifically when nothing is playing (closes to `.collapsed` rather than
 on-device video of that specific path to diagnose properly — flagged
 inline in `NotchRootView.swift` rather than guessed at further.
 
+**Known issue, unresolved (reported 2026-09-28):** in glass mode, taps
+sometimes don't register — tab switches and the play/pause button reported
+as intermittently unresponsive. Not yet reproduced with a video or
+instrumented. Likely the same family of bug as the hover-oscillation
+flicker documented in ADR 0023 (`.glassEffect()` inserting a real
+AppKit-backed material view that can intercept event delivery -- Invariant
+4's exact concern, "transparent SwiftUI views still swallow clicks," except
+here for real taps instead of hover), but that's a hypothesis, not
+confirmed -- could equally be a separate bug. Investigate together with the
+flicker, not in isolation, next time this area is picked up.
+
 **Rework parked (2026-09-24):** it reads as transparency, not glass. Research
 and options in [docs/research/liquid-glass-apple-guidance.md](research/liquid-glass-apple-guidance.md).
 
