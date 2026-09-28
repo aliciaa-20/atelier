@@ -104,6 +104,7 @@ Additional sources found directly (not via Atoll's acknowledgments):
 | [jpomykala/NotchPrompter](https://github.com/jpomykala/NotchPrompter) | Ghost Mode mechanism (`NSWindow.sharingType = .none`), open-source, pulled directly |
 | [Avocado](https://avocadonotch.com) | Voice-synced scrolling shape (real speech recognition), Focus Guide idea for Phase 17 |
 | [Aboudjem/Sleepless](https://github.com/Aboudjem/Sleepless) | "Keep awake with lid closed" backlog item — `pmset disablesleep` mechanism, open-source MIT |
+| [IuCC123/BendMac](https://github.com/IuCC123/BendMac) | Physical bend/morph visual effect tied to lid-close motion, open-source MIT — possible reference for the parked Phase 18 glass entrance-motion trickle (smoother grow/resize motion, not a fixed-delay or completion-callback patch) |
 
 This list also lives in the root `CLAUDE.md` — update both if you add a repo.
 
