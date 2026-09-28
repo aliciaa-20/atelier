@@ -206,10 +206,10 @@ While armed but not yet visibly folding, a throttled (250ms,
 full FluidFold-style frozen-snapshot fold): the live stream still drives
 the actual bend animation once visible, so desktop content stays live
 mid-fold exactly as before -- only the long idle-armed window loses its
-standing stream. 313/313 tests pass. Needs on-device verification: no
-flicker at the visible-threshold crossing (the snapshot-to-live-frame
-handoff), and no rapid stream restart if the lid lingers right at that
-threshold.
+standing stream. 313/313 tests pass. See
+[ADR 0026](decisions/0026-bend-effect-lazy-snapshot-capture.md) for the
+full design/trade-off writeup. **Confirmed on-device (2026-09-29):** no
+flicker at the visible-threshold crossing during a real lid close.
 
 ### 🔜 Phase 5 — Pill + auto-peek
 *Ships: slim pill while music plays; auto-peek on track change, then retract.*
