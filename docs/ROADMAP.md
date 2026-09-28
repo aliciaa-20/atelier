@@ -1145,6 +1145,14 @@ Items not part of the Phase 6–16 feature survey (see
   (including browsers), as an optional source. Weigh against the third-party
   helper that can break on any macOS release. See
   [ADR 0001](decisions/0001-mediaremote-unavailable.md).
+- **CI is broken** — has been red since PR #46 (2026-09-28), which bumped
+  the deployment target to macOS 27.0. The GitHub Actions runner is still
+  on macOS 26.6.2, so `xcodebuild test` fails with "My Mac's macOS 26.6.2
+  doesn't match AtelierTests's macOS 27.0 deployment target" — not a real
+  code problem, every merge since (including PR #51) has just been
+  building/testing locally instead and ignoring the red X. Fix: pin the
+  workflow to a runner/Xcode image that actually has macOS 27, or bump
+  `macos-latest` once GitHub adds it.
 - **Multi-monitor polish** — notchless / external display handling.
 - ~~**iOS-like visual polish for the Home/Shelf tab bar, idle Home, and the
   now-playing player**~~ **Shipped and merged** (PR #10, `main` commit
