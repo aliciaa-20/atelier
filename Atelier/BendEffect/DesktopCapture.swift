@@ -51,6 +51,30 @@ final class DesktopCapture: NSObject, SCStreamOutput, SCStreamDelegate {
     }
     init(frames: FrameStore) { self.frames = frames }
 
+    /// One-shot capture for the idle-armed window (lid past the clear angle
+    /// but not yet visibly folding): no `SCStream` to throttle or tear down,
+    /// so it costs nothing between calls. Adapted from altic-dev/FluidFold's
+    /// `ScreenCapturer.snapshotPixelBuffer()` (MIT) -- ROADMAP backlog,
+    /// "Bend Effect: snapshot capture instead of a continuous SCStream".
+    @MainActor func snapshot(displayID: CGDirectDisplayID) async throws {
+        let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: false)
+        guard let display = content.displays.first(where: { $0.displayID == displayID }) else {
+            throw CaptureError.builtInDisplayUnavailable
+        }
+        let ownApp = content.applications.filter { $0.processID == ProcessInfo.processInfo.processIdentifier }
+        guard !ownApp.isEmpty else { throw CaptureError.applicationUnavailable }
+        let filter = SCContentFilter(display: display, excludingApplications: ownApp, exceptingWindows: [])
+        let config = SCStreamConfiguration()
+        let mode = CGDisplayCopyDisplayMode(displayID)
+        config.width = mode?.pixelWidth ?? CGDisplayPixelsWide(displayID)
+        config.height = mode?.pixelHeight ?? CGDisplayPixelsHigh(displayID)
+        config.pixelFormat = kCVPixelFormatType_32BGRA
+        config.showsCursor = false
+        let sampleBuffer = try await SCScreenshotManager.captureSampleBuffer(contentFilter: filter, configuration: config)
+        guard let pixelBuffer = sampleBuffer.imageBuffer else { return }
+        frames.put(pixelBuffer)
+    }
+
     @MainActor func start(displayID: CGDirectDisplayID) async throws {
         generation += 1
         let request = generation
@@ -80,7 +104,11 @@ final class DesktopCapture: NSObject, SCStreamOutput, SCStreamDelegate {
         self.stream = stream
         self.config = config
         desiredBending = false
-        acceptOutput(from: stream)
+        // Unlike `stop()`, don't clear `frames` here: `start()` is only ever
+        // called once a fold is already visible, seeded by a prior
+        // `snapshot()`, and wiping that frame would blank the overlay for
+        // the stream's async startup latency.
+        acceptOutput(from: stream, clearFrames: false)
         do {
             try await stream.startCapture()
             guard request == generation else {
@@ -91,7 +119,7 @@ final class DesktopCapture: NSObject, SCStreamOutput, SCStreamDelegate {
             if self.stream === stream {
                 self.stream = nil
                 self.config = nil
-                acceptOutput(from: nil)
+                acceptOutput(from: nil, clearFrames: false)
             }
             throw error
         }
@@ -120,14 +148,14 @@ final class DesktopCapture: NSObject, SCStreamOutput, SCStreamDelegate {
         let old = stream
         stream = nil
         config = nil
-        acceptOutput(from: nil)
+        acceptOutput(from: nil, clearFrames: true)
         try? await old?.stopCapture()
     }
-    private nonisolated func acceptOutput(from stream: SCStream?) {
+    private nonisolated func acceptOutput(from stream: SCStream?, clearFrames: Bool) {
         countLock.lock()
         defer { countLock.unlock() }
         outputStream = stream
-        frames.clear()
+        if clearFrames { frames.clear() }
     }
     nonisolated func stream(_ stream: SCStream, didStopWithError error: Error) {
         // `SCStream` isn't `Sendable`. `nonisolated(unsafe)` on this local

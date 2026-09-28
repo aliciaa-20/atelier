@@ -51,6 +51,14 @@ final class BendEffectController: ObservableObject {
     private var lastTime = CACurrentMediaTime()
     private var playStart = 0.0
     private var wasFolded = false
+    /// Whether the live `SCStream` is currently open. False for most of an
+    /// armed session -- capture starts lazily, only once `tick()` sees the
+    /// fold actually cross the visible threshold; before that, periodic
+    /// one-shot snapshots refresh the frame instead. See ROADMAP "Bend
+    /// Effect: snapshot capture instead of a continuous SCStream".
+    private var streaming = false
+    private var captureDisplayID: CGDirectDisplayID?
+    private var lastSnapshotTime: Double?
 
     private nonisolated(unsafe) var observers: [(NotificationCenter, NSObjectProtocol)] = []
     /// Reference count of live viewers of `sensorAngle` (the Settings
@@ -290,11 +298,19 @@ final class BendEffectController: ObservableObject {
             overlay = window
             // Register the hidden overlay before querying shareable content, including at login.
             captureAttempted = true
-            try await capture.start(displayID: displayID)
+            // Seed a frame with a one-shot snapshot rather than opening a live
+            // stream: `progress` always starts at 0 and eases toward `target`
+            // (BendMath.smooth), so the fold is rarely visible yet here.
+            // `tick()` opens the real SCStream only once it actually crosses
+            // the visible threshold.
+            captureDisplayID = displayID
+            try await capture.snapshot(displayID: displayID)
+            lastSnapshotTime = CACurrentMediaTime()
             guard generation == request, !Task.isCancelled else { return .needsAttention }
             enabled = true
             starting = false
             progress = 0
+            streaming = false
             startTicking()
             status =
                 followLid
@@ -320,6 +336,32 @@ final class BendEffectController: ObservableObject {
     private func interrupt(message: String) {
         guard wantsEnabled else { return }
         disable(message: message, preserveIntent: true)
+    }
+    /// Opens the live `SCStream` once `tick()` sees the fold cross the
+    /// visible threshold. Mirrors `connect()`'s own error handling since
+    /// this runs later, off the `connect()` call stack.
+    private func beginStreaming(displayID: CGDirectDisplayID, generation request: Int) async {
+        do {
+            try await capture.start(displayID: displayID)
+            guard generation == request, !Task.isCancelled else {
+                await capture.stop()
+                return
+            }
+            await capture.setBending(true)
+        } catch is CancellationError {
+            // Superseded by a newer generation (a reconnect or stopEffect); nothing to clean up.
+        } catch {
+            guard generation == request else { return }
+            streaming = false
+            if Self.requiresUserAction(error) {
+                disable(
+                    message:
+                        "Allow the bend effect in System Settings → Privacy & Security → Screen & System Audio Recording, then try again."
+                )
+            } else {
+                interrupt(message: "Capture interrupted: \(error.localizedDescription)")
+            }
+        }
     }
     private func scheduleReconnect(immediate: Bool = false) {
         guard reconnectTask == nil, wantsEnabled, !enabled || (overlay == nil && targetProgress > 0),
@@ -369,6 +411,7 @@ final class BendEffectController: ObservableObject {
         generation += 1
         enabled = keepReady
         progress = 0
+        streaming = false
         wasFolded = false
         sensor.setMode(keepReady && AtelierSettings.bendEffectFollowLid ? .watching : .idle)
         clearOverlay()
@@ -436,17 +479,27 @@ final class BendEffectController: ObservableObject {
         let visible = progress > 0.0005 && hasFrame
         if visible && overlay?.isVisible == false {
             overlay?.show()
-            Task { await capture.setBending(true) }
             RegisterEventHotKey(
                 UInt32(kVK_Escape), 0, EventHotKeyID(signature: BendEffectController.hotKeySignature, id: 1),
                 GetApplicationEventTarget(), 0, &hotKey)
         } else if !visible && overlay?.isVisible == true {
             overlay?.hide()
-            Task { await capture.setBending(false) }
             if let hotKey {
                 UnregisterEventHotKey(hotKey)
                 self.hotKey = nil
             }
+        }
+        if visible && !streaming, let displayID = captureDisplayID {
+            streaming = true
+            Task { await beginStreaming(displayID: displayID, generation: generation) }
+        } else if !visible && streaming {
+            streaming = false
+            Task { await capture.stop() }
+        } else if !streaming, target > 0, let displayID = captureDisplayID,
+            BendMath.shouldRefreshSnapshot(now: now, lastSnapshotTime: lastSnapshotTime, interval: 0.25)
+        {
+            lastSnapshotTime = now
+            Task { try? await capture.snapshot(displayID: displayID) }
         }
         if !previewPlaying && progress == target { stopTicking() }
         if progress > 0.15 { wasFolded = true }
