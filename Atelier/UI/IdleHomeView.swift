@@ -61,7 +61,7 @@ struct IdleHomeView: View {
                     }
                 }
                 .font(.caption2)
-                .foregroundStyle(.white.opacity(0.6))
+                .dimmedText(0.6)
             }
             .foregroundStyle(.white)
             .frame(maxWidth: .infinity, alignment: .center)
