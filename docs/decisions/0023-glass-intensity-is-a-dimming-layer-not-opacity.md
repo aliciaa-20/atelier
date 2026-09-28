@@ -52,3 +52,10 @@ less glass.
   `AtelierSettings.glassEffectEnabled` + `\.accessibilityReduceTransparency`
   directly at each call site -- see `DimmedText.swift`).
 - The hover-oscillation flicker remains open, tracked for a future pass.
+- Apple's own macOS 27 Figma UI kit (`.claude/skills/macos27-design-tokens/tokens.md`)
+  exposes a first-class `Context` mode variable -- **Content Area** vs
+  **Over-glass** -- that components use to switch contrast/treatment
+  depending on whether they sit over a Liquid Glass surface or a flat one.
+  That's the same distinction this ADR hand-built as "glassIntensity as a
+  dimming layer": confirmation this approach mirrors Apple's own pattern
+  rather than being a workaround invented from first principles.

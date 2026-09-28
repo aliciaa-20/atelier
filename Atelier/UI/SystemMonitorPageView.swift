@@ -197,7 +197,7 @@ private struct StatusCard: View {
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
-        .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: NotchLayout.cardCornerRadius, style: .continuous))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(metric.name): \(percent == nil ? "Checking" : severity.word)")
         .accessibilityValue(percent == nil ? "Getting a first reading" : severity.message(for: metric))
