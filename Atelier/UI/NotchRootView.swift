@@ -181,40 +181,76 @@ struct NotchRootView: View {
         }
     }
 
+    /// Pulled out of `body` so `.equatable()` can skip re-invoking it on
+    /// every unrelated re-render (`WaveformView`'s `audioTap.levels`
+    /// publishes many times a second while music plays, and `body`
+    /// re-evaluates on every one of those).
+    ///
+    /// No `.opacity()` on the material itself, unlike the first version --
+    /// fading the whole glass layer, corners included, is exactly why it
+    /// read as faint/ghosted at the top corners and "just transparency"
+    /// rather than glass (see [ADR 0023](../../docs/decisions/0023-glass-intensity-is-a-dimming-layer-not-opacity.md)
+    /// and the 2026-09-24 UI review). `AtelierSettings.glassIntensity` now
+    /// drives a dark dimming overlay instead -- Apple's own documented
+    /// technique for keeping a bright background legible behind glass --
+    /// so the material always renders at full strength; the slider only
+    /// tunes how much of a bright wallpaper shows through. The trailing
+    /// `stroke` is a thin light rim, brighter at the top as if lit from
+    /// above and fading to nothing at the bottom, restoring the crisp
+    /// top-corner definition the flat panel has for free from its opaque
+    /// fill.
+    ///
+    /// `.transition(.identity)`, not `.opacity` -- confirmed on-device via
+    /// frame-by-frame video: an `.opacity` crossfade means the glass's own
+    /// defining shape is resizing (expanded's large corner radii -> pill's
+    /// small ones) at the same instant it's fading, and the live system
+    /// material doesn't render cleanly while its own bounds are actively
+    /// morphing mid-fade -- it showed as a solid, wrongly-sized rectangle
+    /// bleeding through. Snapping instead of fading avoids ever rendering
+    /// the glass mid-resize.
+    private struct GlassPanelBackground: View, Equatable {
+        let topCornerRadius: CGFloat
+        let bottomCornerRadius: CGFloat
+        let intensity: Double
+
+        var body: some View {
+            let shape = NotchShape(topCornerRadius: topCornerRadius, bottomCornerRadius: bottomCornerRadius)
+            let rimGradient = LinearGradient(
+                colors: [Color.white.opacity(0.5), Color.white.opacity(0.05)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            return shape
+                .fill(.clear)
+                .glassEffect(.regular, in: shape)
+                .overlay(shape.fill(Color.black.opacity(intensity * 0.35)))
+                .overlay(shape.stroke(rimGradient, lineWidth: 1))
+                // Invariant 4: purely decorative background, never a click
+                // target. Does not address the separate, still-open
+                // hover-oscillation issue tracked in ADR 0023's "Update"
+                // section (confirmed present independent of this change --
+                // it also reproduces against a plain, undimmed
+                // `.glassEffect()`) -- kept anyway as the invariant-correct
+                // treatment for a purely decorative layer.
+                .allowsHitTesting(false)
+        }
+    }
+
+    private var glassPanelBackground: some View {
+        GlassPanelBackground(
+            topCornerRadius: cornerRadii.top,
+            bottomCornerRadius: cornerRadii.bottom,
+            intensity: AtelierSettings.glassIntensity
+        )
+        .equatable()
+        .transition(.identity)
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             ZStack {
                 if usesGlassBackground {
-                    // Regular variant, plain -- no tint. The `liquid-glass`
-                    // skill's own design rules are explicit: "tint only
-                    // primary actions... when every element is tinted,
-                    // nothing stands out." An untinted background lets the
-                    // actual glass material read as clear/lensed.
-                    //
-                    // `.transition(.identity)`, not `.opacity` -- confirmed
-                    // on-device via frame-by-frame video: an `.opacity`
-                    // crossfade means the glass's own defining shape is
-                    // resizing (expanded's large corner radii -> pill's
-                    // small ones) at the same instant it's fading, and the
-                    // live system material doesn't render cleanly while its
-                    // own bounds are actively morphing mid-fade -- it showed
-                    // as a solid, wrongly-sized rectangle bleeding through.
-                    // Snapping instead of fading avoids ever rendering the
-                    // glass mid-resize.
-                    // `AtelierSettings.glassIntensity` (Settings slider) as
-                    // a plain, continuous `.opacity()` -- not a tint, not a
-                    // crossfade. It's a steady render-time property that
-                    // updates every frame the slider moves, never tied to a
-                    // state transition, so it can't hit the material-mid-
-                    // resize or content-escaping-clip bugs a crossfade did.
-                    NotchShape(topCornerRadius: cornerRadii.top, bottomCornerRadius: cornerRadii.bottom)
-                        .fill(.clear)
-                        .glassEffect(
-                            .regular,
-                            in: NotchShape(topCornerRadius: cornerRadii.top, bottomCornerRadius: cornerRadii.bottom)
-                        )
-                        .opacity(AtelierSettings.glassIntensity)
-                        .transition(.identity)
+                    glassPanelBackground
                 } else {
                     NotchShape(topCornerRadius: cornerRadii.top, bottomCornerRadius: cornerRadii.bottom)
                         .fill(Color.black)
