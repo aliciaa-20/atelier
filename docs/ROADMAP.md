@@ -960,12 +960,32 @@ Manually exercised on-device throughout development (build + 129-test
 unit suite pass); the known issue above is the one thing not yet
 confirmed fixed.
 
-**Parked from the 2026-09-24 UI review (screenshots):**
-- [ ] Secondary text (white @ 0.55-0.65: dates, artist, time labels) loses
-      contrast on bright wallpapers in glass mode -- raise opacity or add a soft
-      shadow when glass is on
-- [ ] Top corners of the glass panel look faint/ghosted vs. the black panel's
-      crisp inverse curves (the notch-blend illusion weakens)
+**Parked from the 2026-09-24 UI review (screenshots), both fixed 2026-09-28:**
+- [x] Secondary text (white @ 0.55-0.65: dates, artist, time labels) lost
+      contrast on bright wallpapers in glass mode. Fixed: `DimmedText.swift`
+      now lifts the opacity floor and adds a soft dark shadow when glass is
+      active (`AtelierSettings.glassEffectEnabled && !reduceTransparency`),
+      same treatment Increase Contrast already got. Applies to
+      `ExpandedPlayerView`/`PeekPlayerView`'s artist text and
+      `IdleHomeView`'s date/weather line.
+- [x] Top corners of the glass panel looked faint/ghosted vs. the black
+      panel's crisp inverse curves. Root cause: `AtelierSettings.glassIntensity`
+      was applied as `.opacity()` on the *whole* glass layer, corners
+      included -- fading a translucent material's edges reads as more
+      transparency, not less glass. Fixed (partial port from
+      `feat/liquid-glass-body-dimming-fix`, corner-fix piece only -- see
+      [ADR 0023](decisions/0023-glass-intensity-is-a-dimming-layer-not-opacity.md)):
+      the glass material now always renders at full strength; the intensity
+      slider drives a dark dimming overlay instead (Apple's documented
+      technique), plus a light top-to-bottom rim restoring the crisp corner
+      definition. Deliberately left out of this port: that branch's pill
+      entrance animation (its `glassBackgroundActive` gate can never be
+      true during `.pill`, so it can't actually fire as written) and its
+      `glassBackgroundActive` environment key (this fix reads
+      `AtelierSettings.glassEffectEnabled` + `reduceTransparency` directly
+      at each call site instead). The branch's own separate, unresolved
+      hover-oscillation flicker bug is confirmed to reproduce independent
+      of this change and remains open.
 
 ---
 
