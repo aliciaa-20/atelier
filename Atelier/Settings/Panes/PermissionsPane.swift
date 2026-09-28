@@ -37,6 +37,7 @@ private struct PermissionSnapshot {
     let camera: PermissionState
     let microphone: PermissionState
     let speech: PermissionState
+    let screenRecording: PermissionState
     let location: PermissionState
     let spotify: PermissionState
 
@@ -71,6 +72,7 @@ private struct PermissionSnapshot {
                 default: .denied
                 }
             }(),
+            screenRecording: ScreenRecordingPermission.isGranted ? .granted : .denied,
             location: {
                 switch LocationPermission.status {
                 case .authorizedAlways: .granted
@@ -122,6 +124,12 @@ struct PermissionsPane: View {
                     detail: "Volume and brightness keys",
                     state: snapshot.accessibility,
                     openSettings: AccessibilityPermission.openSystemSettings
+                )
+                PermissionRow(
+                    title: "Screen Recording",
+                    detail: "Renders the desktop bend effect",
+                    state: snapshot.screenRecording,
+                    openSettings: ScreenRecordingPermission.openSystemSettings
                 )
                 PermissionRow(
                     title: "Calendar",
