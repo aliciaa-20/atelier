@@ -10,7 +10,7 @@ Phase 16 (stable signing still open; the menu-bar icon is a placeholder until th
 their entries below for what's still open (Phase 18 has one known
 unresolved visual bug on close). Phases 9 and 10 detail below is kept as
 historical context from when they were in progress.
-A post-v1 feature request landed out of band from the phase survey — a
+A feature request landed out of band from the phase survey — a
 Home/Shelf tab switcher for the expanded notch, plus real idle-Home content
 (date/time + battery %, in its own smaller footprint than the player) —
 shipped and manually verified on-device (see
@@ -94,7 +94,7 @@ stash on `main` anymore.
 - ✅ done — shipped and committed
 - 🔜 next — the current target
 - ⬜ planned — not started
-- 💤 backlog — after v1
+- 💤 backlog — not scheduled
 
 ---
 
@@ -911,18 +911,7 @@ confirmed fixed.
 
 ---
 
-## v1 done means
-
-- Hover → full player; music playing → pill; track change → peek then retract.
-- Spotify data correct: artwork, title/artist, scrubber, working transport.
-- Neither Spotify nor any media app is launched by us unprompted.
-- Denied Automation permission shows a clear state, never a silent blank.
-- Green unit suite (geometry, state, parsing) in CI; manual integration checks
-  pass on the target MacBook.
-
----
-
-## 💤 Backlog — after v1
+## 💤 Backlog
 
 Items not part of the Phase 6–16 feature survey (see
 [FEATURES.md](FEATURES.md)):
