@@ -32,6 +32,25 @@ struct NotchRootView: View {
     /// boundary moved under it. `.onHover` below ignores an exit that
     /// isn't a real cursor move.
     @State private var lastHoverEnterLocation: NSPoint?
+    /// True for the duration of any state/page-changing animation --
+    /// open, close, or a tab switch -- all of which change `frameSize`,
+    /// the value `.contentShape(Rectangle())` derives its hit-test region
+    /// from. The region tracks the *current*, mid-spring frame, not the
+    /// settled target, so real input arriving before the spring finishes
+    /// can land against stale geometry -- confirmed for two different
+    /// triggers now: the hover-flicker fix above (`lastHoverEnterLocation`,
+    /// PR #44, open/close) and the camera tap-to-mirror bug (ROADMAP Phase
+    /// 18, root-caused 2026-09-28: a tap right after opening or switching
+    /// tabs failed, worked once the spring visibly settled first). Rather
+    /// than patch each new symptom (hover, tap, and — per the same report —
+    /// a hover-exit specifically during a tab switch) separately, every
+    /// `withAnimation` that changes `viewModel.state`/`.currentPage` now
+    /// goes through `animateStateChange(_:_:)` below, which raises this
+    /// flag for the animation's real duration (`completionCriteria:
+    /// .logicallyComplete`, not a guessed delay) and is checked both by
+    /// `onHover` (ignore a spurious exit) and by the page-content gate
+    /// (ignore taps) further down.
+    @State private var contentGeometryUnstable = false
     /// True while any `NSMenu` (e.g. the teleprompter's speed menu) is being
     /// tracked: the pointer is over the popup, outside the panel, but the
     /// notch must not retract underneath it.
@@ -278,7 +297,7 @@ struct NotchRootView: View {
                         // switcher with one destination.
                         if NotchTabBar.activePages.count > 1 {
                             NotchTabBar(currentPage: viewModel.currentPage) { page in
-                                withAnimation(NotchAnimations.page) {
+                                animateStateChange(NotchAnimations.page) {
                                     viewModel.selectPage(page)
                                 }
                             }
@@ -323,7 +342,7 @@ struct NotchRootView: View {
                                         // means you're done, so close the notch now
                                         // instead of waiting for the pointer to leave.
                                         guard AtelierSettings.cameraHoldOpen else { return }
-                                        withAnimation(NotchAnimations.close) {
+                                        animateStateChange(NotchAnimations.close) {
                                             viewModel.handle(.hoverEnded(isPlaying: liveActivity.hasContent))
                                         }
                                     }
@@ -358,6 +377,15 @@ struct NotchRootView: View {
                             .id(viewModel.currentPage)
                             .transition(pageTransition)
                         }
+                        // See `contentGeometryUnstable`'s doc comment: a tap
+                        // landing while this page's own frame is still
+                        // mid-spring (just opened, or just switched to) can
+                        // hit stale geometry and silently miss. Scoped to
+                        // page content only, not the tab bar above it, so a
+                        // second tab tap during the settle window still
+                        // works -- only in-page controls (e.g. Camera's
+                        // "Tap to mirror") need the wait.
+                        .allowsHitTesting(!contentGeometryUnstable)
                     }
                     // Root cause of the idle clock bleeding past the
                     // bottom rounded corner: this VStack (tab bar +
@@ -506,6 +534,13 @@ struct NotchRootView: View {
                 let mouseLocation = NSEvent.mouseLocation
                 if hovering {
                     lastHoverEnterLocation = mouseLocation
+                } else if contentGeometryUnstable {
+                    // Spurious: see `contentGeometryUnstable`'s note -- a
+                    // state/page-changing animation (e.g. a tab switch) is
+                    // still mid-flight, so this exit is the animating
+                    // hit-test region moving under a cursor that may not
+                    // have actually left.
+                    return
                 } else if let enteredAt = lastHoverEnterLocation,
                           abs(enteredAt.x - mouseLocation.x) < 1, abs(enteredAt.y - mouseLocation.y) < 1 {
                     // Spurious: see `lastHoverEnterLocation`'s note -- the
@@ -541,7 +576,7 @@ struct NotchRootView: View {
                 guard viewModel.state == .expanded || (liveActivity.topContent?.isExpandable ?? true) else { return }
 
                 if hovering {
-                    withAnimation(NotchAnimations.open) {
+                    animateStateChange(NotchAnimations.open) {
                         viewModel.handle(.hoverStarted)
                     }
                 } else {
@@ -567,7 +602,7 @@ struct NotchRootView: View {
                     // shut at the same speed it opened, which read as
                     // abrupt since there's no destination content to draw
                     // the eye the way the expanding player does on open.
-                    withAnimation(NotchAnimations.close) {
+                    animateStateChange(NotchAnimations.close) {
                         viewModel.handle(.hoverEnded(isPlaying: liveActivity.hasContent))
                     }
                 }
@@ -588,7 +623,7 @@ struct NotchRootView: View {
             // outside: do the retract the suppressed hover-out skipped.
             .onChange(of: camera.isLive) { _, live in
                 guard !live, !pointerInside, viewModel.state == .expanded else { return }
-                withAnimation(NotchAnimations.close) {
+                animateStateChange(NotchAnimations.close) {
                     viewModel.handle(.hoverEnded(isPlaying: liveActivity.hasContent))
                 }
             }
@@ -614,7 +649,7 @@ struct NotchRootView: View {
                         currentPage: viewModel.currentPage,
                         state: viewModel.state
                     ) { return }
-                    withAnimation(NotchAnimations.close) {
+                    animateStateChange(NotchAnimations.close) {
                         viewModel.handle(.hoverEnded(isPlaying: liveActivity.hasContent))
                     }
                 }
@@ -626,7 +661,7 @@ struct NotchRootView: View {
                 // hotkey) keeps the notch up so the presenter keeps their place.
                 guard !wants, !pointerInside, viewModel.state == .expanded, viewModel.currentPage == .teleprompter,
                       teleprompter.hasFinished() else { return }
-                withAnimation(NotchAnimations.close) {
+                animateStateChange(NotchAnimations.close) {
                     viewModel.handle(.hoverEnded(isPlaying: liveActivity.hasContent))
                 }
             }
@@ -662,12 +697,12 @@ struct NotchRootView: View {
                         canScrub: onCalendarPage && AtelierSettings.calendarScrollSwipeEnabled
                     ),
                     onOpen: {
-                        withAnimation(NotchAnimations.open) {
+                        animateStateChange(NotchAnimations.open) {
                             viewModel.handle(.hoverStarted)
                         }
                     },
                     onClose: {
-                        withAnimation(NotchAnimations.close) {
+                        animateStateChange(NotchAnimations.close) {
                             viewModel.handle(.hoverEnded(isPlaying: liveActivity.hasContent))
                         }
                     },
@@ -693,12 +728,12 @@ struct NotchRootView: View {
                 NotchDragModifier(
                     onDragEntered: {
                         guard AtelierSettings.shelfEnabled else { return }
-                        withAnimation(NotchAnimations.open) {
+                        animateStateChange(NotchAnimations.open) {
                             viewModel.handle(.dragEntered)
                         }
                     },
                     onDragExited: {
-                        withAnimation(NotchAnimations.close) {
+                        animateStateChange(NotchAnimations.close) {
                             viewModel.handle(.dragExited(isPlaying: liveActivity.hasContent))
                         }
                     },
@@ -731,7 +766,7 @@ struct NotchRootView: View {
                                 try? FileManager.default.removeItem(at: stagingDir)
                             }
                         }
-                        withAnimation(NotchAnimations.open) {
+                        animateStateChange(NotchAnimations.open) {
                             viewModel.handle(.dropCompleted)
                         }
                     }
@@ -776,7 +811,7 @@ struct NotchRootView: View {
         }
         .onChange(of: transientHUD == nil) { _, hudGone in
             guard hudGone, viewModel.state == .expanded, !pointerOverExpandedPanel() else { return }
-            withAnimation(NotchAnimations.close) {
+            animateStateChange(NotchAnimations.close) {
                 viewModel.handle(.hoverEnded(isPlaying: liveActivity.hasContent))
             }
         }
@@ -784,6 +819,24 @@ struct NotchRootView: View {
             if let topContent = liveActivity.topContent {
                 lastPeekContent = topContent
             }
+        }
+    }
+
+    /// Every `withAnimation` that changes `viewModel.state`/`.currentPage`
+    /// goes through here instead of calling `withAnimation` directly --
+    /// see `contentGeometryUnstable`'s own doc comment for why. Uses
+    /// `completionCriteria: .logicallyComplete` (SwiftUI's own answer to
+    /// "has this animation actually finished"), not a fixed delay guessed
+    /// at the spring's nominal duration -- the entrance-motion investigation
+    /// (ROADMAP Phase 18) already found glass mode's real settle time runs
+    /// past its nominal response under heavier compositing, which a fixed
+    /// delay would silently under- or over-shoot.
+    private func animateStateChange(_ animation: Animation, _ changes: @escaping () -> Void) {
+        contentGeometryUnstable = true
+        withAnimation(animation, completionCriteria: .logicallyComplete) {
+            changes()
+        } completion: {
+            contentGeometryUnstable = false
         }
     }
 
