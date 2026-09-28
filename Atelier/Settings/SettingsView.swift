@@ -6,6 +6,7 @@ enum SettingsPane: String, CaseIterable, Identifiable {
     case tabs = "Tabs"
     case widgets = "Widgets"
     case teleprompter = "Teleprompter"
+    case bendEffect = "Bend Effect"
     case permissions = "Permissions"
 
     var id: String { rawValue }
@@ -17,6 +18,7 @@ enum SettingsPane: String, CaseIterable, Identifiable {
         case .tabs: "rectangle.3.group"
         case .widgets: "square.grid.2x2"
         case .teleprompter: "text.alignleft"
+        case .bendEffect: "macbook"
         case .permissions: "hand.raised"
         }
     }
@@ -65,6 +67,7 @@ struct SettingsView: View {
                 case .tabs: TabsPane()
                 case .widgets: WidgetsPane()
                 case .teleprompter: TeleprompterPane()
+                case .bendEffect: BendEffectPane()
                 case .permissions: PermissionsPane()
                 }
             }

@@ -95,6 +95,7 @@ say no.
 | Microphone + Speech Recognition | Teleprompter voice sync — on-device word tracking, only while actively listening |
 | Accessibility | Lets Atelier intercept volume/brightness/mute keys for its own HUD |
 | System Audio Recording Only | Powers the live waveform via a system-wide audio tap |
+| Screen & System Audio Recording | Renders the desktop bend effect as the lid closes. Only runs while actively bending; nothing is recorded or saved |
 
 **Network:** the only outbound calls are Spotify/Apple Music artwork,
 a weather lookup against `api.open-meteo.com` (rounded coordinates

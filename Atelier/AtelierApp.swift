@@ -17,12 +17,18 @@ struct AtelierApp: App {
     /// Held for the app's lifetime; `NotchController` owns the panel itself.
     private let notchController: NotchController?
 
+    /// Held for the app's lifetime so the lid sensor starts polling at
+    /// launch, the same eager-creation reasoning as `notchController`.
+    private let bendEffectController: BendEffectController?
+
     @AppStorage(AtelierSettings.colorPickerEnabledKey) private var colorPickerEnabled = true
     @AppStorage(AtelierSettings.ghostModeKey) private var ghostMode = false
+    @AppStorage(AtelierSettings.bendEffectEnabledKey) private var bendEffectEnabled = false
 
     init() {
         AtelierSettings.registerDefaults()
         notchController = Self.isRunningTests ? nil : NotchController()
+        bendEffectController = Self.isRunningTests ? nil : .shared
     }
 
     var body: some Scene {
@@ -47,6 +53,13 @@ struct AtelierApp: App {
             }
 
             Toggle("Ghost Mode", isOn: $ghostMode)
+
+            Toggle("Bend Effect", isOn: Binding(
+                get: { bendEffectEnabled },
+                set: { newValue in
+                    newValue ? bendEffectController?.enable() : bendEffectController?.disable()
+                }
+            ))
 
             Divider()
 

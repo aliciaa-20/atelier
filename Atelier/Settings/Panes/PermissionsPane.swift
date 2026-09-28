@@ -37,6 +37,7 @@ private struct PermissionSnapshot {
     let camera: PermissionState
     let microphone: PermissionState
     let speech: PermissionState
+    let screenRecording: PermissionState
     let location: PermissionState
     let spotify: PermissionState
 
@@ -71,6 +72,7 @@ private struct PermissionSnapshot {
                 default: .denied
                 }
             }(),
+            screenRecording: ScreenRecordingPermission.isGranted ? .granted : .denied,
             location: {
                 switch LocationPermission.status {
                 case .authorizedAlways: .granted
@@ -122,6 +124,12 @@ struct PermissionsPane: View {
                     detail: "Volume and brightness keys",
                     state: snapshot.accessibility,
                     openSettings: AccessibilityPermission.openSystemSettings
+                )
+                PermissionRow(
+                    title: "Screen Recording",
+                    detail: "Renders the desktop bend effect",
+                    state: snapshot.screenRecording,
+                    openSettings: ScreenRecordingPermission.openSystemSettings
                 )
                 PermissionRow(
                     title: "Calendar",
@@ -197,8 +205,8 @@ struct PermissionsPane: View {
 
 extension PermissionsPane {
     /// One prompt after another, skipping anything already answered.
-    /// Accessibility goes last: its prompt points the user at System
-    /// Settings, so nothing useful can follow it.
+    /// Accessibility and Screen Recording go last: their prompts point the
+    /// user at System Settings, so nothing useful can follow either.
     @MainActor
     fileprivate func grantAll() async {
         isGrantingAll = true
@@ -213,6 +221,7 @@ extension PermissionsPane {
         snapshot = .current()
 
         if snapshot.accessibility != .granted { AccessibilityPermission.requestPrompt() }
+        if snapshot.screenRecording != .granted { ScreenRecordingPermission.requestPrompt() }
     }
 }
 

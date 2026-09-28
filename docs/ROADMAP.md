@@ -177,6 +177,24 @@ only exists because that app is already running and playing.
 
 ## Upcoming
 
+### 🟨 Phase 19 — Desktop bend effect (connects live; visible fold not yet confirmed)
+
+Full port of [IuCC123/BendMac](https://github.com/IuCC123/BendMac) (MIT):
+the desktop visibly bends and blurs as the lid closes. Whole-built-in-
+display overlay, structurally separate from the notch -- see
+`docs/superpowers/specs/2026-09-28-bend-effect-design.md` and
+`docs/superpowers/plans/2026-09-28-bend-effect-implementation.md`.
+Needs Screen & System Audio Recording permission (ScreenCaptureKit).
+All files ported/wired on `main`, builds clean, full test suite green
+(309/309, `BendMath` unit-tested). Fixed a launch-time concurrency crash
+in `LidSensor`/`FrameStore`/`DesktopCapture` (commit `6e4ecbe`) and a
+Carbon hotkey collision with Teleprompter's `GlobalHotkeys` found in code
+review (commit `9c6a58f`). Confirmed on-device: Settings pane renders,
+Screen Recording permission grant flow works, sensor gives a live angle
+reading, and enabling the effect reaches "Live desktop connected" status.
+Still needs: watching the desktop actually fold during a real lid close,
+permission-revoked-mid-session behavior, and a Reduce Motion check.
+
 ### 🔜 Phase 5 — Pill + auto-peek
 *Ships: slim pill while music plays; auto-peek on track change, then retract.*
 
@@ -1145,6 +1163,17 @@ Items not part of the Phase 6–16 feature survey (see
   (including browsers), as an optional source. Weigh against the third-party
   helper that can break on any macOS release. See
   [ADR 0001](decisions/0001-mediaremote-unavailable.md).
+- **Bend Effect: snapshot capture instead of a continuous `SCStream`** — the
+  current port (Phase 19) keeps a live `ScreenCaptureKit` stream open the
+  whole time the effect is armed (throttled 5fps idle / 60fps bending, per
+  upstream BendMac). A sibling open-source project,
+  [altic-dev/FluidFold](https://github.com/altic-dev/FluidFold), instead
+  takes one-shot screenshots while the lid moves through its pre-warm zone
+  and holds no stream open at all by default — a real, isolated CPU/battery
+  win (its `DesktopCapture` equivalent could be swapped without touching
+  the renderer, math, or UI). Not pulled in during the initial port
+  (2026-09-28) to keep that branch scoped to the approved spec; noted here
+  instead of doing it inline as a scope-creep risk on an already-large PR.
 - ~~**CI is broken**~~ Was red since PR #46 (2026-09-28), which bumped the
   deployment target to macOS 27.0 — the GitHub Actions runner is still on
   macOS 26.6.2 (confirmed 2026-09-29: no `macos-27` image exists yet,

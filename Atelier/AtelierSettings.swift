@@ -29,6 +29,15 @@ enum AtelierSettings {
     static let glassIntensityKey = "glassIntensity"
     static let tabOrderKey = "tabOrder"
     static let nowPlayingSwipeSkipKey = "nowPlayingSwipeSkip"
+    static let bendEffectEnabledKey = "bendEffectEnabled"
+    static let bendEffectStyleKey = "bendEffectStyle"
+    static let bendEffectPerspectiveKey = "bendEffectPerspective"
+    static let bendEffectBlurKey = "bendEffectBlur"
+    static let bendEffectShadowKey = "bendEffectShadow"
+    static let bendEffectClearAngleKey = "bendEffectClearAngle"
+    static let bendEffectFollowLidKey = "bendEffectFollowLid"
+    static let bendEffectManualAngleKey = "bendEffectManualAngle"
+    static let bendEffectSoundKey = "bendEffectSound"
 
     static func registerDefaults() {
         UserDefaults.standard.register(defaults: [
@@ -54,7 +63,19 @@ enum AtelierSettings {
             // already shipped tied only to the master `gesturesEnabled`
             // toggle); this setting exists to let someone turn it off
             // independently, not to opt newcomers in.
-            nowPlayingSwipeSkipKey: true
+            nowPlayingSwipeSkipKey: true,
+            // Off by default -- Screen Recording is a materially broader
+            // grant than anything else Atelier asks for, same reasoning as
+            // glassEffectEnabledKey shipping conservatively.
+            bendEffectEnabledKey: false,
+            bendEffectStyleKey: 0,
+            bendEffectPerspectiveKey: 1.0,
+            bendEffectBlurKey: 0.9,
+            bendEffectShadowKey: 0.35,
+            bendEffectClearAngleKey: 105.0,
+            bendEffectFollowLidKey: true,
+            bendEffectManualAngleKey: 115.0,
+            bendEffectSoundKey: false
         ])
     }
 
@@ -222,6 +243,57 @@ enum AtelierSettings {
     /// The tab the notch opens on: first in the user's order (Home by default).
     static var firstPage: NotchPage {
         TabOrder.resolve(stored: tabOrder, enabled: enabledPages).first ?? .home
+    }
+
+    /// Whether the desktop-bend overlay should run. Off by default --
+    /// Screen Recording is a materially broader grant than anything else
+    /// Atelier asks for, so this ships opt-in.
+    static var bendEffectEnabled: Bool {
+        get { UserDefaults.standard.bool(forKey: bendEffectEnabledKey) }
+        set { UserDefaults.standard.set(newValue, forKey: bendEffectEnabledKey) }
+    }
+
+    /// 0 = Silk, 1 = Shade, 2 = Frost -- matches `Bend.metal`'s `p.style` bands.
+    static var bendEffectStyle: Int {
+        get { UserDefaults.standard.integer(forKey: bendEffectStyleKey) }
+        set { UserDefaults.standard.set(newValue, forKey: bendEffectStyleKey) }
+    }
+
+    static var bendEffectPerspective: Double {
+        get { UserDefaults.standard.double(forKey: bendEffectPerspectiveKey) }
+        set { UserDefaults.standard.set(newValue, forKey: bendEffectPerspectiveKey) }
+    }
+
+    static var bendEffectBlur: Double {
+        get { UserDefaults.standard.double(forKey: bendEffectBlurKey) }
+        set { UserDefaults.standard.set(newValue, forKey: bendEffectBlurKey) }
+    }
+
+    static var bendEffectShadow: Double {
+        get { UserDefaults.standard.double(forKey: bendEffectShadowKey) }
+        set { UserDefaults.standard.set(newValue, forKey: bendEffectShadowKey) }
+    }
+
+    /// The lid angle (degrees) above which the desktop is undistorted.
+    static var bendEffectClearAngle: Double {
+        get { UserDefaults.standard.double(forKey: bendEffectClearAngleKey) }
+        set { UserDefaults.standard.set(newValue, forKey: bendEffectClearAngleKey) }
+    }
+
+    static var bendEffectFollowLid: Bool {
+        get { UserDefaults.standard.bool(forKey: bendEffectFollowLidKey) }
+        set { UserDefaults.standard.set(newValue, forKey: bendEffectFollowLidKey) }
+    }
+
+    static var bendEffectManualAngle: Double {
+        get { UserDefaults.standard.double(forKey: bendEffectManualAngleKey) }
+        set { UserDefaults.standard.set(newValue, forKey: bendEffectManualAngleKey) }
+    }
+
+    /// Plays a soft sound once the desktop finishes unfolding back flat.
+    static var bendEffectSound: Bool {
+        get { UserDefaults.standard.bool(forKey: bendEffectSoundKey) }
+        set { UserDefaults.standard.set(newValue, forKey: bendEffectSoundKey) }
     }
 
     /// Home is always enabled; the rest follow their own settings.
