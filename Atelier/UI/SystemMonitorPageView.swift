@@ -78,6 +78,14 @@ struct SystemMonitorPageView: View {
         .help(showingDetail ? "Show gauges" : "Show a plain-language status")
         .padding(.horizontal, NotchLayout.pageHorizontalInset)
         .padding(.top, 6)
+        // Matches `ShelfView`'s own bottom inset -- this view never applied
+        // one, so centering had more room to push into below the content
+        // than above it (no matching pull from the top edge), reading as
+        // the two cards sitting low with a big gap overhead. Symmetric
+        // insets now pull the centered content up without hard-anchoring
+        // it to the top, which overcorrected into a big gap underneath
+        // instead.
+        .padding(.bottom, NotchLayout.pageBottomInset)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
     }
 }
