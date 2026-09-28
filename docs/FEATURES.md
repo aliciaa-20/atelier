@@ -262,6 +262,30 @@ grant.
 
 ---
 
+## 12. Desktop bend effect
+
+| Feature | Source(s) |
+|---|---|
+| The desktop visibly bends and blurs as the lid closes, mirroring the physical fold | [IuCC123/BendMac](https://github.com/IuCC123/BendMac) (MIT, pulled directly) |
+
+**User-requested, approved to build (full port) — spec written, not yet
+implemented.** See
+[the design spec](superpowers/specs/2026-09-28-bend-effect-design.md) for
+the full architecture, confirmed hardware support, and the new permission
+this needs.
+
+Not a notch feature — a separate, whole-built-in-display overlay
+(`ScreenCaptureKit` capture + a Metal fold/blur shader, driven by an
+undocumented lid-angle HID sensor). Structurally closer to `LockScreen/`
+(an entirely separate window/lifecycle) than to anything under `Notch/`
+or `Widgets/`. Needs Screen & System Audio Recording — a materially
+broader permission grant than anything else Atelier asks for today.
+Confirmed working on this machine (MacBook Pro M3) by probing the same
+`IOHIDManager` match criteria BendMac's own `LidSensor.swift` uses, even
+though their README only lists an M5 MacBook Air as tested hardware.
+
+---
+
 ## Not pulled from the survey
 
 - **Clipboard history** — excluded, user already uses Maccy.
