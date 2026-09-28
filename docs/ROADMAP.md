@@ -491,30 +491,74 @@ both depend on the shelf existing first) — see
       until drag-enter/exit, drop, remove, drag-out, and relaunch
       persistence are actually exercised on real hardware.
 
-  **Two on-device bugs found during manual verification, one open:**
-  - Drag-out preview: the custom icon+filename drag ghost wasn't showing
-    (fell back to a generic preview). Root-caused to two stacked issues —
-    `ShelfDragSourceView` (a raw `NSView`, outside SwiftUI's own gesture
-    machinery) needed the same `acceptsFirstMouse` override ADR 0003
-    already applied to the root hosting view (confirmed via `os.Logger`
-    instrumentation + `log stream`: without it, `mouseDown` never reached
-    the view on a not-yet-key panel). That fix confirmed the drag pipeline
-    now runs end to end, but the custom image *still* doesn't render —
-    current hypothesis is that `lockFocus`/`unlockFocus`-drawn `NSImage`s
-    don't reliably serialize as a drag ghost across the Drag Manager's
-    out-of-process compositor; swapped to an explicit
-    `NSBitmapImageRep`-backed image as the next attempt, **not yet
-    verified on-device**.
-  - Dropping onto the shelf triggers macOS's own Mission Control
-    (confirmed: happens whenever a drag hovers near the menu bar, not
-    specific to Atelier) — likely inherent OS behavior tied to the cursor
-    reaching the literal top screen edge during any drag, since the
-    shelf's whole interaction model requires hovering there. Not
-    root-caused yet; no reference app (boring.notch's own `DragDetector`
-    uses the identical global-`NSEvent`-monitor approach) shows a known
-    fix. Next step if picked back up: try registering the panel as a real
-    `NSDraggingDestination` (`registerForDraggedTypes`) instead of pure
-    event polling — untested, may or may not suppress it.
+  **Reworked 2026-09-28** per `check-reference-apps-first`: pulled real
+  source from both `Lakr233/NotchDrop` and `TheBoredTeam/boring.notch`
+  (`gh api`, not memory) before touching code again. The two references
+  actually disagree on drag-out technique — NotchDrop uses SwiftUI's
+  `.draggable`/`Transferable` (auto preview from the view), boring.notch's
+  *current* `ShelfItemView` hand-rolls `NSDraggingSource` with an explicit
+  `ImageRenderer`-rendered preview set on the `NSDraggingItem`. Went with
+  the boring.notch pattern since it's proven and closest to what was
+  already attempted here. Fixed in `UI/ShelfView.swift`:
+  `ShelfItemCell`'s `.onDrag { NSItemProvider(contentsOf:) }` (SwiftUI's
+  `.onDrag` can't take a custom image at all) replaced with
+  `ShelfDragSourceView`, a raw `NSView: NSDraggingSource` with the same
+  `acceptsFirstMouse` override as ADR 0003, a 3pt mouse-move threshold
+  before starting a real drag session, and a `SwiftUI ImageRenderer`
+  snapshot (icon + filename) set explicitly as the `NSDraggingItem`'s
+  contents — sidesteps the earlier `lockFocus`/`unlockFocus` serialization
+  failure by not using that API at all. 298/298 tests pass (unaffected —
+  this is AppKit plumbing, manual-verification only like the rest of the
+  shelf). **Not yet verified on-device.**
+
+  Scoped down deliberately: kept Atelier's existing copy-into-app-support
+  storage model rather than boring.notch's newer security-scoped-bookmark
+  (no-copy) architecture, and kept single-file/no-multi-select — those are
+  real, bigger reworks (boring.notch also supports dropped text/link items,
+  not just files) that can be picked up separately if wanted.
+
+  **On-device verification found a second, more fundamental bug** (systematic
+  debugging via a screen recording + `AVAssetImageGenerator` contact sheet,
+  since a still description wasn't enough to localize it): dropped files were
+  being persisted under a **corrupted filename** — `manifest.json` showed
+  `"originalFilename":"PDF document.pdf"` for a file actually named
+  `Unit4_Prims_Kruskals.pdf`. Root cause: `NotchRootView`'s drop handler
+  called `provider.loadFileRepresentation(forTypeIdentifier: "public.item")`
+  on an `NSItemProvider` built from the pasteboard's real file `URL`s in
+  `NotchDragDetector` — `"public.item"` doesn't exactly match how the file's
+  UTI was registered, so the system synthesized a fresh temp copy instead of
+  handing back the original, using the UTI's generic type description as the
+  filename. Since drag-out re-exports the *already-corrupted* stored file,
+  this one bug explained both the "wrong preview" and "wrong filename"
+  symptoms on **both** directions (drop-in and drag-out) — not two separate
+  bugs. Fixed by cutting the `NSItemProvider` round-trip entirely:
+  `NotchDragDetector.draggedFileURLs()` now hands `[URL]` straight to
+  `NotchRootView`'s `onDrop` (the real pasteboard `NSURL`s were sitting right
+  there the whole time), which still stages a private copy before calling
+  `ShelfStore.addFile` but never re-synthesizes a name. **Verified on-device
+  2026-09-28: filename retained correctly, drag-out works.**
+
+  Two more findings from that same verification pass, not yet fixed:
+  - The shelf shows the file's **type icon**, not a real content thumbnail
+    (e.g. a PDF's actual first page). boring.notch has a `ThumbnailService`
+    (QuickLook-based) for this — a real feature addition, not a bug fix;
+    worth its own pass if wanted.
+  - With many items, horizontal scrolling doesn't engage — `ShelfView`'s
+    `ScrollView(.horizontal)` + `LazyHGrid(rows:)` looks structurally right
+    at a glance; not yet root-caused (candidate: interaction with
+    `NotchGestureModifier`'s scroll-wheel monitors, unconfirmed).
+
+  - Mission Control still triggers when a drag hovers near the menu bar.
+    Investigated further this pass: boring.notch's `DragDetector` is
+    structurally identical to Atelier's `NotchDragDetector` (same
+    global-`NSEvent`-monitor approach) and doesn't work around it either.
+    This is very likely a WindowServer-level gesture keyed to raw
+    screen-edge proximity during *any* drag, independent of which
+    app/window owns the drop target — registering the panel as a real
+    `NSDraggingDestination` wouldn't change where the cursor physically
+    is, so that untested idea was dropped rather than built on spec.
+    Treating this as a real OS limitation, not an Atelier bug, unless a
+    future reference app turns up an actual workaround.
 
 - [ ] AirDrop integration — sub-project 2, not started.
 - [ ] File format converter — sub-project 3, not started.
