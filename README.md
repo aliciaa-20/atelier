@@ -59,7 +59,7 @@ playing, behind a seam designed so any other player is a drop-in away.
 
 ## Requirements
 
-- macOS 26.0+
+- macOS 27.0+
 - Xcode 26+
 
 ## Build & Test
