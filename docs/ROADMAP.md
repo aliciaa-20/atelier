@@ -808,7 +808,11 @@ Claude Code mechanic: custom slash commands; `/code-review`.
 - [x] VoiceOver-adjustable scrubbers (playback position, Volume, Brightness)
 - [x] Trackpad haptics (`NotchHaptics`: tab switch, mirror toggle, scrub release)
 - [x] Symbol/number morphs (`numericText` on Volume/Brightness/monitor %, `.symbolEffect` on transport)
-- [ ] 9-10pt text bump (done: Calendar, Weather, Volume/Brightness/ColorPicker pills, which all scale down if tight; the 8pt teleprompter ring label is left); edge gaps: cards share `pageHorizontalInset` (26) / `pageBottomInset` (12, = the visible side gap once NotchShape's 14pt edge inset is counted) / `cardCornerRadius` (20 - 12 = 8, concentric); peek + HUD panels use one `peekEdgeGap` (9) to every edge with the artwork radius concentric (14 - 9); other artwork corners ~22%
+- [x] 9-10pt text bump (Calendar, Weather, Volume/Brightness/ColorPicker pills, and now the teleprompter ring label
+      8pt -> 10pt, 2026-09-28 — all scale down via `minimumScaleFactor` if tight); edge gaps: cards share
+      `pageHorizontalInset` (26) / `pageBottomInset` (12, = the visible side gap once NotchShape's 14pt edge inset is
+      counted) / `cardCornerRadius` (20 - 12 = 8, concentric); peek + HUD panels use one `peekEdgeGap` (9) to every
+      edge with the artwork radius concentric (14 - 9); other artwork corners ~22%
 - [x] ui-review-tahoe sweep (2026-09-25), batch 1: Shelf remove as a VoiceOver action, labels/decorative hiding on
       peek/pill/HUD/battery/recording/colour-picker views, HUD announcements for VoiceOver (`HUDAnnouncer`), faint text
       raised to AA contrast (`dimmedText`, honours Increase Contrast), tab dots grouped as "Notch tabs", press feedback on
