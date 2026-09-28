@@ -7,7 +7,11 @@ now-playing player; a slim pill hugs the notch while music plays; a track change
 makes it peek briefly then retract.
 
 Named after the MacBook it runs on. Personal project, private repo, single target
-machine: MacBook Pro M3 (Mac15,3), macOS 26.6.
+machine: MacBook Pro M3 (Mac15,3), macOS 27.0 (Golden Gate) as of 2026-09-28 --
+the machine updated from macOS 26 (Tahoe) mid-project; Xcode's installed SDK was
+already MacOSX27.0.sdk before this line was corrected. Deployment target is still
+`macos26.0` in the Xcode project (see Conventions below) -- that's deliberate,
+not stale, unless a future session is told to bump it.
 
 > **Unrelated context warning:** a `CLAUDE.md` for a different project (DevFlow)
 > lives at `~/Downloads/CLAUDE.md` and is inherited by directory traversal. It has
