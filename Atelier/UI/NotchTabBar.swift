@@ -25,6 +25,11 @@ struct NotchTabBar: View {
     let currentPage: NotchPage
     let onSelect: (NotchPage) -> Void
 
+    /// Tracks keyboard focus for `selectAdjacent` only -- no visible ring
+    /// (tried, rejected by direct feedback: it read as visual clutter on
+    /// the tab bar's tight geometry).
+    @FocusState private var isKeyboardFocused: Bool
+
     private static let dotSize: CGFloat = 6
     private static let selectedDotWidth: CGFloat = 16
     /// The visual dot stays small, but the tappable area around it is
@@ -73,6 +78,15 @@ struct NotchTabBar: View {
         // One labelled group: Mac VoiceOver navigates container-first.
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Notch tabs")
+        // Left/right cycles tabs once focus reaches the bar (Tab key, or a
+        // click that doesn't consume the event) -- there was previously no
+        // keyboard path to switch tabs at all, only tap/VoiceOver. No
+        // visible ring on focus -- tried, rejected by direct feedback.
+        .focusable()
+        .focused($isKeyboardFocused)
+        .focusEffectDisabled()
+        .onKeyPress(.leftArrow) { selectAdjacent(before: true); return .handled }
+        .onKeyPress(.rightArrow) { selectAdjacent(before: false); return .handled }
         .padding(.horizontal, 4)
         // Split from a symmetric `.padding(.vertical, 2)` -- the top side
         // still needs its 2pt (stacks with `NotchRootView`'s own
@@ -81,6 +95,15 @@ struct NotchTabBar: View {
         // (idle clock, player, tab content) -- direct feedback that it
         // still read as too loose after the last round of tightening.
         .padding(.top, 2)
+    }
+
+    private func selectAdjacent(before: Bool) {
+        let pages = Self.activePages
+        guard let index = pages.firstIndex(of: currentPage), pages.count > 1 else { return }
+        let delta = before ? -1 : 1
+        let next = pages[(index + delta + pages.count) % pages.count]
+        NotchHaptics.alignment()
+        onSelect(next)
     }
 }
 

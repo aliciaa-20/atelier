@@ -20,12 +20,20 @@ struct ExpandedPlayerView: View {
     @ObservedObject var audioTap: AudioTap
     let outputDevices: [AudioOutputDevice]
     let currentOutputDeviceID: AudioDeviceID?
+    let volumeSource: VolumeSource
     let onPlayPause: () -> Void
     let onNext: () -> Void
     let onPrevious: () -> Void
     let onSeek: (TimeInterval) -> Void
     let onToggleShuffle: () -> Void
     let onSelectOutputDevice: (AudioDeviceID) -> Void
+
+    /// Swaps just the transport row for an inline volume slider + output
+    /// picker -- like macOS's own Control Center Sound module, but drawn
+    /// in place rather than as a separate popover, per direct request.
+    @State private var showingVolumeControl = false
+    @State private var volumePercent = 0
+    @State private var isMuted = false
 
     var body: some View {
         Group {
@@ -58,6 +66,9 @@ struct ExpandedPlayerView: View {
         // enough, the next lever is `IdleHomeView`'s own `VStack(spacing:
         // 3)` or the tab bar's `+5.5` clearance in `NotchRootView.swift`.
         .padding(.top, 0)
+        // Land back on the transport row next time the notch opens -- the
+        // panel collapsing mid-adjustment shouldn't leave this stuck open.
+        .onDisappear { showingVolumeControl = false }
     }
 
     private func player(for info: NowPlayingInfo) -> some View {
@@ -66,7 +77,11 @@ struct ExpandedPlayerView: View {
             Spacer(minLength: 4)
             ScrubberView(duration: info.duration, elapsed: info.elapsed, onSeek: onSeek)
             Spacer(minLength: 4)
-            controlsSection(for: info)
+            if showingVolumeControl {
+                volumeControlSection
+            } else {
+                controlsSection(for: info)
+            }
         }
     }
 
@@ -140,11 +155,20 @@ struct ExpandedPlayerView: View {
             // too close) for a real but modest gap from prev/next.
             HStack {
                 Button(action: onToggleShuffle) {
-                    Image(systemName: "shuffle")
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(info.isShuffling ? waveformColor : Color.white.opacity(0.65))
-                        .animation(.easeOut(duration: 0.15), value: info.isShuffling)
-                        .frame(width: 24, height: 24)
+                    // Color alone (Differentiate Without Color) previously
+                    // carried the on/off state -- the dot below is the same
+                    // "active" cue the tab bar and calendar event markers
+                    // already use, so it reads without relying on hue.
+                    VStack(spacing: 2) {
+                        Image(systemName: "shuffle")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundStyle(info.isShuffling ? waveformColor : Color.white.opacity(0.65))
+                        Circle()
+                            .fill(info.isShuffling ? waveformColor : Color.clear)
+                            .frame(width: 3, height: 3)
+                    }
+                    .animation(.easeOut(duration: 0.15), value: info.isShuffling)
+                    .frame(width: 24, height: 24)
                 }
                 .accessibilityLabel("Shuffle")
                 .help(info.isShuffling ? "Shuffle: on" : "Shuffle: off")
@@ -152,17 +176,87 @@ struct ExpandedPlayerView: View {
 
                 Spacer(minLength: 0)
 
-                OutputDeviceMenu(
-                    devices: outputDevices,
-                    currentDeviceID: currentOutputDeviceID,
-                    onSelect: onSelectOutputDevice
-                )
-                .font(.system(size: 13, weight: .medium))
-                .frame(width: 24, height: 24)
-                .accessibilityLabel("Output device")
-                .help("Output device")
+                // Tapping this used to pop the device-picker Menu directly;
+                // it now opens the inline volume section instead (which
+                // still carries its own output-device picker), matching
+                // macOS's own Sound module rather than a bare device list.
+                Button {
+                    let state = volumeSource.currentState()
+                    volumePercent = state.percent
+                    isMuted = state.isMuted
+                    withAnimation(NotchAnimations.standard) { showingVolumeControl = true }
+                } label: {
+                    Image(systemName: currentOutputDeviceIsAirPods ? "headphones" : "speaker.wave.2.fill")
+                        .font(.system(size: 13, weight: .medium))
+                        .frame(width: 24, height: 24)
+                }
+                .accessibilityLabel("Volume and output")
+                .help("Volume and output")
             }
             .padding(.horizontal, 30)
+        }
+        .buttonStyle(PressScaleButtonStyle())
+        .focusEffectDisabled()
+        .foregroundStyle(.white)
+    }
+
+    private var currentOutputDeviceIsAirPods: Bool {
+        outputDevices.first(where: { $0.id == currentOutputDeviceID })?.isAirPods ?? false
+    }
+
+    /// Mirrors macOS's own Control Center Sound module: a mute glyph, a
+    /// draggable level bar (`ScrubBarView`, shared with the volume HUD
+    /// peek), and the same output-device picker the transport row's icon
+    /// used to open directly. Local `volumePercent`/`isMuted` update
+    /// optimistically on every drag -- `VolumeSource.applyDirectly`/
+    /// `setMutedDirectly` (not `scrub`/`toggleMute`) apply the CoreAudio
+    /// change without also popping the transient system-HUD peek, which
+    /// would otherwise show the same level a second time on top of this
+    /// already-visible one (confirmed on-device, direct feedback).
+    private var volumeControlSection: some View {
+        HStack(spacing: 10) {
+            Button {
+                withAnimation(NotchAnimations.standard) { showingVolumeControl = false }
+            } label: {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 13, weight: .medium))
+                    .frame(width: 24, height: 24)
+            }
+            .accessibilityLabel("Back to transport controls")
+            .help("Back")
+
+            Button {
+                isMuted.toggle()
+                volumeSource.setMutedDirectly(isMuted)
+            } label: {
+                Image(systemName: isMuted || volumePercent == 0 ? "speaker.slash.fill" : "speaker.wave.2.fill")
+                    .font(.system(size: 13, weight: .medium))
+                    .frame(width: 24, height: 24)
+            }
+            .accessibilityLabel(isMuted ? "Unmute" : "Mute")
+            .help(isMuted ? "Unmute" : "Mute")
+
+            ScrubBarView(
+                fillFraction: isMuted ? 0 : CGFloat(volumePercent) / 100,
+                tint: .white,
+                label: "Volume",
+                onScrub: { percent in
+                    volumePercent = percent
+                    isMuted = false
+                    volumeSource.applyDirectly(percent: percent)
+                }
+            )
+            .frame(height: 16)
+
+            OutputDeviceMenu(
+                devices: outputDevices,
+                currentDeviceID: currentOutputDeviceID,
+                onSelect: onSelectOutputDevice
+            )
+            .font(.system(size: 13, weight: .medium))
+            .frame(width: 24, height: 24)
+            .accessibilityLabel("Output device")
+            .help("Output device")
         }
         .buttonStyle(PressScaleButtonStyle())
         .focusEffectDisabled()
