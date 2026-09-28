@@ -19,6 +19,21 @@ struct PillPlayerView: View {
     /// feedback that this is a glass-only flourish, not a change to the
     /// plain black pill's existing (unrelated) appearance.
     @Environment(\.glassBackgroundActive) private var glassBackgroundActive
+    /// Found in a ui-review-tahoe pass: the scale-based entrance below had
+    /// no Reduce Motion check, unlike every other animation in this
+    /// codebase. A plain opacity fade still marks the appearance without
+    /// the elastic/lensing motion Reduce Motion asks to avoid.
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private var artworkEntrance: AnyTransition {
+        guard glassBackgroundActive else { return .identity }
+        return reduceMotion ? .opacity : .scale(scale: 0.01, anchor: .trailing).combined(with: .opacity)
+    }
+
+    private var waveformEntrance: AnyTransition {
+        guard glassBackgroundActive else { return .identity }
+        return reduceMotion ? .opacity : .scale(scale: 0.01, anchor: .leading).combined(with: .opacity)
+    }
 
     /// Sized with real margin on every side (both vertical, via the
     /// HStack's default center alignment against the pill's fixed
@@ -46,7 +61,7 @@ struct PillPlayerView: View {
                         // Island's own symmetric two-sided expand. Glass
                         // mode only -- the plain black pill keeps its
                         // existing look untouched.
-                        .transition(glassBackgroundActive ? .scale(scale: 0.01, anchor: .trailing).combined(with: .opacity) : .identity)
+                        .transition(artworkEntrance)
 
                     Spacer(minLength: 0)
 
@@ -74,7 +89,7 @@ struct PillPlayerView: View {
                     // leading (nearest the cutout) so it grows rightward,
                     // the other half of the symmetric two-sided expand.
                     // Same glass-only gating as the artwork above.
-                    .transition(glassBackgroundActive ? .scale(scale: 0.01, anchor: .leading).combined(with: .opacity) : .identity)
+                    .transition(waveformEntrance)
                 }
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel("Now \(info.isPlaying ? "playing" : "paused"): \(info.title) by \(info.artist)")
