@@ -11,6 +11,7 @@ struct NotchRootView: View {
     @ObservedObject var systemMonitor: SystemMonitorSource
     @ObservedObject var calendar: CalendarSource
     @ObservedObject var weather: WeatherSource
+    let volumeSource: VolumeSource
     @StateObject private var artworkColor = ArtworkColorLoader()
     @StateObject private var camera = CameraMirrorSource()
     @ObservedObject private var teleprompter = TeleprompterModel.shared
@@ -287,6 +288,7 @@ struct NotchRootView: View {
                                         audioTap: audioTap,
                                         outputDevices: outputDevices,
                                         currentOutputDeviceID: currentOutputDeviceID,
+                                        volumeSource: volumeSource,
                                         onPlayPause: { Task { await nowPlaying.playPause() } },
                                         onNext: { Task { await nowPlaying.next() } },
                                         onPrevious: { Task { await nowPlaying.previous() } },
