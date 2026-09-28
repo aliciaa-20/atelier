@@ -15,6 +15,10 @@ struct PillPlayerView: View {
     let notchHeight: CGFloat
     @ObservedObject var audioTap: AudioTap
     @StateObject private var artworkColor = ArtworkColorLoader()
+    /// Gates the two-sided grow-from-center entrance below -- direct
+    /// feedback that this is a glass-only flourish, not a change to the
+    /// plain black pill's existing (unrelated) appearance.
+    @Environment(\.glassBackgroundActive) private var glassBackgroundActive
 
     /// Sized with real margin on every side (both vertical, via the
     /// HStack's default center alignment against the pill's fixed
@@ -34,6 +38,15 @@ struct PillPlayerView: View {
                     // flare into the menu bar and unrelated to this corner.)
                     ArtworkView(url: info.artworkURL, cornerRadius: artworkSide * 0.23)
                         .frame(width: artworkSide, height: artworkSide)
+                        // Grows outward from the cutout instead of the whole
+                        // pill sliding in from the left -- anchored to its
+                        // own trailing edge (nearest the physical notch), so
+                        // scaling up reads as the artwork growing leftward
+                        // out of the middle, matching a real Dynamic
+                        // Island's own symmetric two-sided expand. Glass
+                        // mode only -- the plain black pill keeps its
+                        // existing look untouched.
+                        .transition(glassBackgroundActive ? .scale(scale: 0.01, anchor: .trailing).combined(with: .opacity) : .identity)
 
                     Spacer(minLength: 0)
 
@@ -57,6 +70,11 @@ struct PillPlayerView: View {
                         levels: audioTap.isRunning ? audioTap.levels : nil
                     )
                     .frame(width: artworkSide)
+                    // Mirrors the artwork's own transition -- anchored
+                    // leading (nearest the cutout) so it grows rightward,
+                    // the other half of the symmetric two-sided expand.
+                    // Same glass-only gating as the artwork above.
+                    .transition(glassBackgroundActive ? .scale(scale: 0.01, anchor: .leading).combined(with: .opacity) : .identity)
                 }
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel("Now \(info.isPlaying ? "playing" : "paused"): \(info.title) by \(info.artist)")

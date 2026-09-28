@@ -899,6 +899,17 @@ inline in `NotchRootView.swift` rather than guessed at further.
 **Rework parked (2026-09-24):** it reads as transparency, not glass. Research
 and options in [docs/research/liquid-glass-apple-guidance.md](research/liquid-glass-apple-guidance.md).
 
+**Reworked 2026-09-28** (see [ADR 0023](decisions/0023-glass-intensity-is-a-dimming-layer-not-opacity.md)):
+root cause was `glassIntensity` fading the whole glass layer via `.opacity()`
+— including its corners, which is why the corners read as faint/ghosted and
+the material as plain transparency rather than glass. The material now
+always renders at full strength; the slider drives a dark dimming overlay on
+top instead (Apple's own documented technique), default lowered 0.7 → 0.25.
+A controls-only alternative (glass on the tab bar's selected-page indicator
+instead of the body) was also built and shown, per Apple's actual "glass
+belongs on navigation, not content" guidance, but Alicia's direct call was to
+keep it on the notch body regardless — ADR 0023 has the full reasoning.
+
 **Menu-bar settings UI is a known placeholder**, not a finished design —
 a redesign of the whole menu-bar settings surface (this toggle/slider
 included) is planned as separate follow-up work, not blocking this from
@@ -908,12 +919,33 @@ Manually exercised on-device throughout development (build + 129-test
 unit suite pass); the known issue above is the one thing not yet
 confirmed fixed.
 
+**Known issue, unresolved (2026-09-28): glass-mode open/close flicker.**
+While music plays with glass on, the panel repeatedly opens and closes in a
+fast loop (confirmed on-device, not a screen-recording artifact -- seen with
+the naked eye too). Root-caused as far as `os_log` instrumentation could take
+it: `.onHover` itself fires `true`/`false` in a genuine, tight loop (not
+`NotchGestureModifier`, not the track-change peek -- ruled out directly from
+Console output, not guessed). Four attempts, none fixed it:
+`Equatable`-wrapping the glass background view, removing `.interactive()`,
+`.allowsHitTesting(false)` on the glass layer, and a 120ms debounce on
+hover-exit (`NotchRootView.hoverExitTask` -- kept in the code as a harmless
+defensive improvement, but it did not fix this). The debounce not working
+means the leading theory (a hit-test-vs-animating-`frameSize` race) is
+probably wrong or incomplete. Stopped here per direct instruction rather than
+keep guessing -- pick this back up with a fresh angle (possibly: does it
+reproduce with `.interactive()` and the debounce both removed and glass
+`.clear` instead of `.regular`? does it reproduce on the tab-bar-only glass
+control tried earlier in this same session, ruling the notch body in/out?).
+
 **Parked from the 2026-09-24 UI review (screenshots):**
-- [ ] Secondary text (white @ 0.55-0.65: dates, artist, time labels) loses
-      contrast on bright wallpapers in glass mode -- raise opacity or add a soft
-      shadow when glass is on
-- [ ] Top corners of the glass panel look faint/ghosted vs. the black panel's
-      crisp inverse curves (the notch-blend illusion weakens)
+- [x] Secondary text (white @ 0.55-0.65: dates, artist, time labels) loses
+      contrast on bright wallpapers in glass mode -- added a soft dark shadow
+      via a new `glassBackgroundActive` environment value (`DimmedText.swift`),
+      2026-09-28; not yet confirmed on-device against a real bright wallpaper
+- [x] Top corners of the glass panel look faint/ghosted vs. the black panel's
+      crisp inverse curves -- root cause was the `.opacity()` fade above;
+      should be resolved now that the material never fades, but not yet
+      re-confirmed on-device
 
 ---
 

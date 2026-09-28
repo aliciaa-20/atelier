@@ -49,7 +49,11 @@ enum AtelierSettings {
             // look) until a user opts in, rather than changing the
             // default notch appearance out from under an existing install.
             glassEffectEnabledKey: false,
-            glassIntensityKey: 0.7,
+            // Low by default -- see ADR 0023. This drives a dark dimming
+            // layer now, not the material's own opacity, so a low default
+            // lets the glass read at close to full clarity out of the box;
+            // raise it only if a bright wallpaper washes out legibility.
+            glassIntensityKey: 0.25,
             // On by default -- this is existing behavior (swipe-to-skip
             // already shipped tied only to the master `gesturesEnabled`
             // toggle); this setting exists to let someone turn it off
@@ -191,12 +195,12 @@ enum AtelierSettings {
         UserDefaults.standard.bool(forKey: glassEffectEnabledKey)
     }
 
-    /// Applied as a plain `.opacity()` on the glass layer itself (not a
-    /// tint, not a crossfade with anything) -- a continuous render-time
-    /// property, not a transition, so it can't hit the material-mid-resize
-    /// or content-escaping-clip bugs a crossfade did (see `NotchRootView`'s
-    /// own notes on `usesGlassBackground`). 0 reads as fully see-through/
-    /// faint, 1 as the full-strength material.
+    /// Drives a dark dimming overlay on top of the glass material (Apple's
+    /// own documented technique for legibility over bright content), not
+    /// the material's own opacity -- see ADR 0023. Fading the material
+    /// itself (the original approach) read as faint/ghosted at the corners
+    /// and as plain transparency rather than glass. 0 is the clearest
+    /// glass, 1 the most dimmed/opaque-looking.
     static var glassIntensity: Double {
         UserDefaults.standard.double(forKey: glassIntensityKey)
     }

@@ -18,6 +18,19 @@ struct NotchRootView: View {
     /// Tracked so a hold-open that ends (mirror stopped) knows whether to
     /// retract now or wait for the pointer to actually leave.
     @State private var pointerInside = false
+    /// Debounces a hover-exit before actually closing -- see the note where
+    /// it's scheduled below. Added while chasing the glass-mode open/close
+    /// flicker (see `docs/decisions/0023-...md`'s update): temporary
+    /// `os_log` instrumentation confirmed via Console that `.onHover` itself
+    /// was firing true/false in a tight, genuine loop (not the gesture
+    /// modifier, not the track-change peek). The working theory was a race
+    /// between `.onHover`'s hit-test region and `frameSize`'s actively-
+    /// animating value during the open/close spring -- this debounce did
+    /// NOT fix the flicker on-device, so that theory is unconfirmed/likely
+    /// incomplete. Left in place as a harmless defensive improvement (a
+    /// genuine hover-out still closes, just ~120ms later), not as a fix.
+    /// **The flicker itself is unresolved** -- see ROADMAP's Phase 18 entry.
+    @State private var hoverExitTask: Task<Void, Never>?
     /// True while any `NSMenu` (e.g. the teleprompter's speed menu) is being
     /// tracked: the pointer is over the popup, outside the panel, but the
     /// notch must not retract underneath it.
@@ -181,40 +194,130 @@ struct NotchRootView: View {
         }
     }
 
+    /// The deeper glass shadow reads fine on the player/calendar/shelf-sized
+    /// pages, but on the Teleprompter tab (its own taller, wider panel) it
+    /// visibly bled way outside the card -- direct feedback, confirmed on a
+    /// screenshot. Teleprompter falls back to the plain shadow regardless
+    /// of glass, rather than tuning one shared radius/opacity to split the
+    /// difference between two very differently-sized panels.
+    private var usesBoostedGlassShadow: Bool {
+        usesGlassBackground && viewModel.currentPage != .teleprompter
+    }
+
+    private var panelShadowColor: Color {
+        guard viewModel.state != .collapsed else { return .clear }
+        return .black.opacity(usesBoostedGlassShadow ? 0.4 : 0.25)
+    }
+
+    private var panelShadowRadius: CGFloat { usesBoostedGlassShadow ? 14 : 8 }
+    private var panelShadowYOffset: CGFloat { usesBoostedGlassShadow ? 5 : 2 }
+
+    /// Pulled out of `body` -- the combined `.glassEffect`/two `.overlay`s/
+    /// gradient chain made the type-checker time out inline. `.regular`,
+    /// untinted-adjacent (see the tint note below) rather than `.clear`:
+    /// the `liquid-glass` skill's own design rules are explicit ("tint only
+    /// primary actions... when every element is tinted, nothing stands
+    /// out"), and `.regular` is the variant meant for content-heavy
+    /// surfaces like this one.
+    ///
+    /// `.transition(.identity)`, not `.opacity` -- confirmed on-device via
+    /// frame-by-frame video: an `.opacity` crossfade means the glass's own
+    /// defining shape is resizing (expanded's large corner radii -> pill's
+    /// small ones) at the same instant it's fading, and the live system
+    /// material doesn't render cleanly while its own bounds are actively
+    /// morphing mid-fade -- it showed as a solid, wrongly-sized rectangle
+    /// bleeding through. Snapping instead of fading avoids ever rendering
+    /// the glass mid-resize.
+    ///
+    /// No `.opacity()` on the material itself -- see ADR 0023. Fading the
+    /// whole glass layer, corners included, is exactly why it read as
+    /// faint/ghosted at the top corners and "just transparency" rather than
+    /// glass (the research doc's own diagnosis: "it fades the glass, it
+    /// doesn't change the material"). `AtelierSettings.glassIntensity`
+    /// drives a dark dimming overlay instead -- Apple's own documented
+    /// technique ("add a ~35% dark dimming layer if what's behind it is
+    /// bright") -- so the material itself always renders at full strength;
+    /// the slider only tunes how much shows through a bright wallpaper.
+    ///
+    /// `.interactive()` was tried (a subtle bounce/shimmer response on
+    /// hover) and reverted -- see the note on `style` below.
+    /// `.tint(.blue.opacity(0.08))` -- a deliberately faint cool tint,
+    /// direct feedback that fully neutral read as "grey smoked plastic"
+    /// rather than glass; kept far below the skill's "tint only primary
+    /// actions" territory, closer to a color temperature than a tint
+    /// anyone would consciously name. The trailing `strokeBorder` overlay
+    /// is a thin light rim along the outline, brighter at the top (as if
+    /// lit from above) fading to nothing at the bottom -- fakes the
+    /// light-bending edge real glass has, direct feedback that the
+    /// material alone read as too flat with no edge definition.
+    ///
+    /// A real `View` conformance, not a computed property inline in `body`
+    /// -- found via frame-by-frame video (see ADR 0023): while music plays,
+    /// `WaveformView`'s `audioTap.levels` publishes dozens of times a
+    /// second, and `NotchRootView.body` re-evaluates on every one of them.
+    /// A computed property gets reconstructed as part of that same `body`
+    /// call regardless; the real system Liquid Glass material apparently
+    /// can't rebuild that often without visibly flickering on and off
+    /// (flat black rebuilding that often costs nothing, which is why this
+    /// was invisible before glass existed here). `Equatable` + `.equatable()`
+    /// lets SwiftUI skip re-invoking this view's own `body` entirely unless
+    /// `topCornerRadius`/`bottomCornerRadius`/`intensity` actually changed
+    /// -- which happens only on real state transitions, not every audio tick.
+    private struct GlassPanelBackground: View, Equatable {
+        let topCornerRadius: CGFloat
+        let bottomCornerRadius: CGFloat
+        let intensity: Double
+
+        var body: some View {
+            let shape = NotchShape(topCornerRadius: topCornerRadius, bottomCornerRadius: bottomCornerRadius)
+            let rimGradient = LinearGradient(
+                colors: [Color.white.opacity(0.5), Color.white.opacity(0.05)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            let tint: Color = .blue.opacity(0.08)
+            // `.interactive()` was tried and removed first -- turned out not
+            // to be the cause (still flickered without it). Frame-by-frame
+            // video at finer granularity showed this isn't a material
+            // rendering glitch at all: the panel is genuinely opening and
+            // closing in a fast loop, each with its own real open/close
+            // transition. That is Invariant 4's exact failure mode --
+            // "transparent SwiftUI views still swallow clicks" -- except
+            // here it swallows *hover* tracking: `.glassEffect()` inserts a
+            // real AppKit-backed material view where a plain `Shape.fill()`
+            // used to be, and that view was intercepting hover events the
+            // `.onHover` elsewhere in this tree needs, producing a feedback
+            // loop (hover in -> expand -> glass swallows the hover ->
+            // SwiftUI thinks the mouse left -> collapse -> mouse is still
+            // there -> hover in again...). `.allowsHitTesting(false)` below
+            // is the fix -- this layer is purely decorative background.
+            let style: Glass = .regular.tint(tint)
+            let dimming = shape.fill(Color.black.opacity(intensity * 0.35))
+            let rim = shape.stroke(rimGradient, lineWidth: 1)
+            return shape
+                .fill(.clear)
+                .glassEffect(style, in: shape)
+                .overlay(dimming)
+                .overlay(rim)
+                .allowsHitTesting(false)
+        }
+    }
+
+    private var glassPanelBackground: some View {
+        GlassPanelBackground(
+            topCornerRadius: cornerRadii.top,
+            bottomCornerRadius: cornerRadii.bottom,
+            intensity: AtelierSettings.glassIntensity
+        )
+        .equatable()
+        .transition(.identity)
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             ZStack {
                 if usesGlassBackground {
-                    // Regular variant, plain -- no tint. The `liquid-glass`
-                    // skill's own design rules are explicit: "tint only
-                    // primary actions... when every element is tinted,
-                    // nothing stands out." An untinted background lets the
-                    // actual glass material read as clear/lensed.
-                    //
-                    // `.transition(.identity)`, not `.opacity` -- confirmed
-                    // on-device via frame-by-frame video: an `.opacity`
-                    // crossfade means the glass's own defining shape is
-                    // resizing (expanded's large corner radii -> pill's
-                    // small ones) at the same instant it's fading, and the
-                    // live system material doesn't render cleanly while its
-                    // own bounds are actively morphing mid-fade -- it showed
-                    // as a solid, wrongly-sized rectangle bleeding through.
-                    // Snapping instead of fading avoids ever rendering the
-                    // glass mid-resize.
-                    // `AtelierSettings.glassIntensity` (Settings slider) as
-                    // a plain, continuous `.opacity()` -- not a tint, not a
-                    // crossfade. It's a steady render-time property that
-                    // updates every frame the slider moves, never tied to a
-                    // state transition, so it can't hit the material-mid-
-                    // resize or content-escaping-clip bugs a crossfade did.
-                    NotchShape(topCornerRadius: cornerRadii.top, bottomCornerRadius: cornerRadii.bottom)
-                        .fill(.clear)
-                        .glassEffect(
-                            .regular,
-                            in: NotchShape(topCornerRadius: cornerRadii.top, bottomCornerRadius: cornerRadii.bottom)
-                        )
-                        .opacity(AtelierSettings.glassIntensity)
-                        .transition(.identity)
+                    glassPanelBackground
                 } else {
                     NotchShape(topCornerRadius: cornerRadii.top, bottomCornerRadius: cornerRadii.bottom)
                         .fill(Color.black)
@@ -405,6 +508,11 @@ struct NotchRootView: View {
                 }
             }
             .frame(width: frameSize.width, height: frameSize.height)
+            // On the ZStack, not the glass layer itself -- this needs to
+            // reach `dimmedText()` calls in sibling page content (Calendar,
+            // Weather, etc.), and environment values only flow to
+            // descendants, not across ZStack siblings.
+            .environment(\.glassBackgroundActive, usesGlassBackground)
             // The volume/brightness HUD is an overlay on the panel-sized view (before
             // the clip), so it is centred on the animating frame by construction. As a
             // ZStack sibling it was laid out against the player's larger width and sat
@@ -446,7 +554,12 @@ struct NotchRootView: View {
             // from the stock notch's look, and real Dynamic Island shows a
             // subtle shadow once expanded/peeking to read as "lifted" off
             // the wallpaper -- found missing in a ui-review-tahoe pass.
-            .shadow(color: .black.opacity(viewModel.state == .collapsed ? 0 : 0.25), radius: 8, y: 2)
+            // Deeper still when glass is on -- direct feedback that the
+            // glass panel read as "too flat," and a floating glass slab
+            // wants more visible lift than a flat black card does. Broken
+            // into a helper (not inline ternaries) -- the type-checker
+            // timed out combining this with the rest of the chain otherwise.
+            .shadow(color: panelShadowColor, radius: panelShadowRadius, y: panelShadowYOffset)
             .scaleEffect(settleScale, anchor: .top)
             .scaleEffect(closeScale, anchor: .top)
             .environment(\.artworkNamespace,
@@ -480,6 +593,7 @@ struct NotchRootView: View {
                 guard viewModel.state == .expanded || (liveActivity.topContent?.isExpandable ?? true) else { return }
 
                 if hovering {
+                    hoverExitTask?.cancel()
                     withAnimation(NotchAnimations.open) {
                         viewModel.handle(.hoverStarted)
                     }
@@ -502,12 +616,23 @@ struct NotchRootView: View {
                         currentPage: viewModel.currentPage,
                         state: viewModel.state
                     ) { return }
-                    // Slower and more damped than the open — closing snapped
-                    // shut at the same speed it opened, which read as
-                    // abrupt since there's no destination content to draw
-                    // the eye the way the expanding player does on open.
-                    withAnimation(NotchAnimations.close) {
-                        viewModel.handle(.hoverEnded(isPlaying: liveActivity.hasContent))
+                    // Debounced, not immediate -- see `hoverExitTask`'s own
+                    // doc comment. A short grace period lets a spurious
+                    // false-then-true (the animating-hit-test race) resolve
+                    // itself without ever actually closing; a genuine
+                    // hover-out still closes, just ~120ms later than before,
+                    // not perceptible as a delay.
+                    hoverExitTask?.cancel()
+                    hoverExitTask = Task { @MainActor in
+                        try? await Task.sleep(for: .milliseconds(120))
+                        guard !Task.isCancelled, !pointerInside else { return }
+                        // Slower and more damped than the open — closing snapped
+                        // shut at the same speed it opened, which read as
+                        // abrupt since there's no destination content to draw
+                        // the eye the way the expanding player does on open.
+                        withAnimation(NotchAnimations.close) {
+                            viewModel.handle(.hoverEnded(isPlaying: liveActivity.hasContent))
+                        }
                     }
                 }
             }
