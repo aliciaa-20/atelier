@@ -79,10 +79,13 @@ lock/unlock transitions, a real waveform sharing the notch panel's single
 card can use its own quicker threshold without affecting the notch panel's
 tuned feel — see [ADR 0013](decisions/0013-lock-screen-card-gesture-and-glass.md)),
 and a stronger glass treatment adapted from cshariq/Sapphire's public-API
-gradient technique (same ADR). Confirmed on-device this session; the full
-manual checklist and the merge are still open.
-Phase 9's shelf drag-out preview fix and Phase 10's Wi-Fi/VPN source are
-both mid-flight as uncommitted stashes on `main`, not yet resolved.
+gradient technique (same ADR). Confirmed on-device and merged to `main`.
+Phase 9's shelf drag-out preview fix still needs a full reimplementation
+(a hand-rolled `NSDraggingSource` attempt was tried and dropped — reuse
+NotchDrop's `Transferable`/`FileRepresentation` pattern instead). Phase
+10's Wi-Fi/VPN source sits unmerged in the `worktree-live-activity-architecture`
+worktree, reported broken and never debugged — neither is an uncommitted
+stash on `main` anymore.
 
 ---
 
@@ -355,6 +358,21 @@ XPC-helper subsystem and is deferred to a later phase.
       non-goals: needs a privileged XPC helper tool (à la
       TheBoredTeam/boring.notch's `BoringNotchXPCHelperProtocol`), a much
       bigger commitment than this phase's event-tap mechanism.
+- [x] Inline volume/output adjuster in the expanded player (2026-09-28,
+      out-of-band feature request): tapping the transport row's output icon
+      swaps the row for a mute toggle, a `ScrubBarView` volume slider, and
+      the output-device picker, in place — mirroring macOS's own Control
+      Center Sound module rather than opening a separate popover. Applies
+      through two new silent `VolumeSource` methods (`applyDirectly`/
+      `setMutedDirectly`) that write CoreAudio directly without
+      `publish()`ing — the existing `scrub(toPercent:)`/`toggleMute()` also
+      pop the transient system-HUD peek, which double-showed the same level
+      on top of this already-visible one (on-device, direct feedback). The
+      output-device picker itself is a real `NSMenu` (SwiftUI `Menu` on
+      macOS) switching via the same public CoreAudio default-device call
+      the system uses — macOS has no public API for embedding the actual
+      Control Center routing surface in a third-party window, so this is
+      as native as it gets short of that.
 - [x] Power state / time remaining — see the Battery bullet above.
 - [x] Suppress stock macOS HUDs while ours is shown — falls out of the
       `CGEventTap` callback returning `nil` for a successfully-applied
@@ -795,8 +813,12 @@ Claude Code mechanic: custom slash commands; `/code-review`.
       peek/pill/HUD/battery/recording/colour-picker views, HUD announcements for VoiceOver (`HUDAnnouncer`), faint text
       raised to AA contrast (`dimmedText`, honours Increase Contrast), tab dots grouped as "Notch tabs", press feedback on
       tab dots/calendar cells/Shelf remove, missing tooltips
-- [ ] ui-review-tahoe leftovers: state shown by colour alone (shuffle on/off, calendar today) for Differentiate Without
-      Color; custom focus ring where `.focusEffectDisabled()` removed it; keyboard shortcut for switching tabs
+- [x] ui-review-tahoe leftovers (2026-09-28): shuffle on/off now also carries a small dot (not colour alone); calendar
+      today uses bold weight instead of a colour+ring combo (a ring was tried, rejected on-device for sitting off-centre
+      on two-digit dates); tab dots gained Left/Right-arrow keyboard cycling (no visible focus ring -- tried, rejected
+      by direct feedback). Also fixed on the same pass: the calendar's white selection indicator was drifting off the
+      day-number glyph (a hand-tuned vertical offset guessed from the weekday label's line height) -- now reads the
+      real day-number frame via a `PreferenceKey` instead of a constant.
 - [x] Done in the `fix/native-polish-pass` branch: real-minute clock, locale-aware
       formats, macOS VoiceOver wording, Reduce Motion, tooltips, Shelf empty state
 - [x] 2026-09-27 follow-up: independent "Swipe to skip track" setting, Reduce Motion

@@ -1,6 +1,16 @@
 import AppKit
 import SwiftUI
 
+/// Reports a day cell's real day-number frame center (in the week strip's
+/// own coordinate space) so the selection indicator can align to it exactly
+/// -- see `CalendarPageView.dayNumberCenterY`.
+private struct DayNumberCenterKey: PreferenceKey {
+    static var defaultValue: CGFloat?
+    static func reduce(value: inout CGFloat?, nextValue: () -> CGFloat?) {
+        value = nextValue() ?? value
+    }
+}
+
 /// Calendar tab: a header (month + week chevrons), a 7-day strip with
 /// event dots, and the selected day's agenda underneath. Sized by
 /// `NotchController.calendarContentHeight` -- if you add rows here, check
@@ -122,9 +132,15 @@ struct CalendarPageView: View {
     /// How much wider than a circle the indicator gets at the midpoint
     /// between two days. Visual tuning constant.
     private static let indicatorStretch: CGFloat = 14
-    /// Vertical offset of the date row inside a day cell (below the weekday
-    /// letter). Visual tuning constant.
-    private static let indicatorTopInset: CGFloat = 13
+
+    /// The indicator's vertical center used to be a hand-tuned constant
+    /// guessed from the weekday label's approximate line height -- it drifted
+    /// out of alignment with the actual day-number glyph whenever that
+    /// guess didn't match the real rendered layout (confirmed on-device,
+    /// direct feedback twice). Read from the real day-number frame instead
+    /// via `DayNumberCenterKey`, so it tracks any future spacing/font change
+    /// automatically rather than needing to be re-guessed.
+    @State private var dayNumberCenterY: CGFloat?
 
     /// Indicator offset toward the neighbouring day; 0 with Reduce Motion so
     /// it steps instead of gliding and stretching.
@@ -142,7 +158,11 @@ struct CalendarPageView: View {
                     dayCell(day, underIndicator: isUnderIndicator(index, selectedIndex: selectedIndex))
                 }
             }
+            .coordinateSpace(name: "weekStrip")
             .background(alignment: .topLeading) { indicator(selectedIndex: selectedIndex) }
+            .onPreferenceChange(DayNumberCenterKey.self) { y in
+                if let y { dayNumberCenterY = y }
+            }
             .id(source.weekStart)
             // The incoming week slides in from the side of travel; the
             // outgoing one just fades (an outgoing view keeps the transition
@@ -177,6 +197,10 @@ struct CalendarPageView: View {
 
     /// One white capsule behind the strip instead of a circle per cell, so
     /// it can slide and stretch between days like the tab bar's dot.
+    /// Vertical center comes from `dayNumberCenterY` (the real day-number
+    /// frame, reported via `DayNumberCenterKey`) rather than a guessed
+    /// constant -- falls back to the old hand-tuned value for the one
+    /// frame before that preference has reported in.
     private func indicator(selectedIndex: Int?) -> some View {
         GeometryReader { geo in
             if let selectedIndex {
@@ -187,7 +211,7 @@ struct CalendarPageView: View {
                     .frame(width: Self.indicatorSize + Self.indicatorStretch * abs(f) * 2, height: Self.indicatorSize)
                     .position(
                         x: (CGFloat(selectedIndex) + 0.5 + f) * columnWidth,
-                        y: Self.indicatorTopInset + Self.indicatorSize / 2
+                        y: dayNumberCenterY ?? 26
                     )
                     .animation(indicatorAnimation, value: f)
                     .animation(indicatorAnimation, value: selectedIndex)
@@ -210,9 +234,20 @@ struct CalendarPageView: View {
                     .font(.system(size: 10, weight: .medium))
                     .dimmedText()
                 Text(day, format: .dateTime.day())
-                    .font(.system(size: 13, weight: isSelected ? .bold : .medium))
+                    // Today previously read as color alone (red text) --
+                    // bold weight is the non-hue cue now (a ring was tried
+                    // and rejected: it didn't sit centered on the digits).
+                    .font(.system(size: 13, weight: isSelected || isToday ? .bold : .medium))
                     .foregroundStyle(underIndicator ? Color.black : (isToday ? Color.red : Color.white))
                     .frame(width: Self.indicatorSize, height: Self.indicatorSize)
+                    .background(
+                        GeometryReader { geo in
+                            Color.clear.preference(
+                                key: DayNumberCenterKey.self,
+                                value: geo.frame(in: .named("weekStrip")).midY
+                            )
+                        }
+                    )
                 Circle()
                     .fill(Color.white.opacity(hasEvents ? 0.7 : 0))
                     .frame(width: 4, height: 4)
