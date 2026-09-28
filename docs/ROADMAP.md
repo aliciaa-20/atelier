@@ -22,11 +22,13 @@ and [the plan](superpowers/plans/2026-09-19-tabbed-navigation-idle-home.md)).
 Further "make it feel more iOS-like" visual polish is deliberately deferred —
 see the Backlog.
 Phase 9's file shelf sub-project is code-complete (all 6 implementation
-tasks reviewed, two real bugs found and fixed) but not yet manually
-verified on-device — on-device testing is now underway and has surfaced
-two more real bugs, one fixed (drag-out `acceptsFirstMouse`) and two still
-open (drag-out preview image, Mission Control triggering on drop) — see
-Phase 9's entry below. Phase 6 (Live Activity / widget
+tasks reviewed, two real bugs found and fixed) and has since been verified
+on-device: the drag-out preview/filename corruption bug was root-caused
+and fixed (a bad `NSItemProvider` UTI round-trip), thumbnails and
+horizontal scrolling were fixed too, and Mission Control triggering near
+the menu bar during a drag was investigated and found to be a WindowServer-
+level behavior independent of Atelier, not a bug to fix — see Phase 9's
+entry below for the full writeup. Phase 6 (Live Activity / widget
 architecture) is implemented and confirmed on real hardware: pill/peek/hover/
 decay behavior and the Battery widget were tuned live into their final shape
 — Battery is deliberately pill-only (`peeksOnChange == false` — no auto-peek,
@@ -83,12 +85,11 @@ card can use its own quicker threshold without affecting the notch panel's
 tuned feel — see [ADR 0013](decisions/0013-lock-screen-card-gesture-and-glass.md)),
 and a stronger glass treatment adapted from cshariq/Sapphire's public-API
 gradient technique (same ADR). Confirmed on-device and merged to `main`.
-Phase 9's shelf drag-out preview fix still needs a full reimplementation
-(a hand-rolled `NSDraggingSource` attempt was tried and dropped — reuse
-NotchDrop's `Transferable`/`FileRepresentation` pattern instead). Phase
+Phase 9's shelf drag-out preview fix has since shipped (boring.notch's
+hand-rolled `NSDraggingSource` pattern, not NotchDrop's `Transferable`
+approach — see Phase 9's entry above). Phase
 10's Wi-Fi/VPN source sits unmerged in the `worktree-live-activity-architecture`
-worktree, reported broken and never debugged — neither is an uncommitted
-stash on `main` anymore.
+worktree, reported broken and never debugged — that one's still an open item.
 
 ---
 
@@ -1157,9 +1158,9 @@ Items not part of the Phase 6–16 feature survey (see
   found; **worth re-verifying if it resurfaces.** See
   [[visual_identity_tabbar_rebuild]] memory for the full diagnosis if it
   does.
-- **Volume/brightness scrub bar (`ScrubBarView.swift`) reportedly not
-  visually updating** when adjusting volume/brightness — reported once
-  during the tab-bar rebuild session, never actually investigated.
+- ~~**Volume/brightness scrub bar (`ScrubBarView.swift`) reportedly not
+  visually updating**~~ Reported once during the tab-bar rebuild session,
+  never actually investigated — confirmed working fine on-device 2026-09-28.
 - **`worktree-live-activity-architecture`** — an older worktree with 4
   unpushed commits (a Phase 10 slice: Wi-Fi/Bluetooth connect toasts,
   retiring the crashy `AirPodsSource`; plus ADRs 0010/0011 and a now-
