@@ -7,8 +7,11 @@ this file tracks progress against it.
 
 **Where we are:** Phases 0–12 and 14 (camera mirror) shipped, Phase 17 stages 1–3 (teleprompter tab + Ghost Mode + hotkeys) shipped, stage 4 voice sync shipped on its branch (unit-tested, core flow verified on-device; edge-case checks still optional), Phase 16 (Settings window) mostly shipped (Phase 12 so far: color picker + Calendar tab + weather; quick notes/timers not started). Phase 13 (system resource monitor),
 Phase 16 (stable signing still open; the menu-bar icon is a placeholder until the app icon exists), and Phase 18 (Liquid Glass notch background) are all 🟨 partial — see
-their entries below for what's still open (Phase 18 has one known
-unresolved visual bug on close). Phases 9 and 10 detail below is kept as
+their entries below for what's still open (Phase 18 has a known
+unresolved visual bug on close, a tab-switch retract flicker, and a
+confirmed glass-only click-through-to-the-app-behind bug — see
+[ADR 0024](decisions/0024-glass-mode-click-through-public-glasseffect-limitation.md)).
+Phases 9 and 10 detail below is kept as
 historical context from when they were in progress.
 A feature request landed out of band from the phase survey — a
 Home/Shelf tab switcher for the expanded notch, plus real idle-Home content
@@ -1026,23 +1029,64 @@ compositing cost (limited control -- it's a system material) or
 redesigning the grow to not shift position at all (fixed left edge
 instead of center anchor) -- a real design change, not a quick patch.
 
-**Untried lever, parked 2026-09-28: bump the deployment target to macOS 27.**
-The target machine updated to macOS 27 (Golden Gate) mid-project (see
-`CLAUDE.md`), but Atelier's Xcode deployment target is still pinned to
-`macos26.0` -- Xcode's installed SDK is already `MacOSX27.0.sdk`, so this
-is a target-version bump, not a toolchain change. Apple's own macOS 27
-release notes describe changed Liquid Glass opacity handling ("diffuses
-complex content more effectively," darkened edge + brighter specular
-highlights -- notably close to what ADR 0023 hand-built as a workaround)
-plus general performance/animation-smoothness improvements. Everything
-debugged tonight (the flicker fix, the parked entrance-trickle
-investigation) already ran against macOS 27's *current* `.glassEffect()`
-behavior at the OS level -- bumping the deployment target doesn't change
-what's running, but may unlock a newer, possibly cheaper glass
-implementation gated behind the target version, and could make the
-hand-built dimming/rim overlay partially redundant. Untested, not a
-guaranteed fix -- worth a fresh session's first on-device check before
-touching the entrance-trickle or click-unresponsiveness bugs again.
+**Deployment target bumped to macOS 27, tested 2026-09-28 (uncommitted --
+see the session's branch-split note below).** `MACOSX_DEPLOYMENT_TARGET`
+moved from `26.0` to `27.0` (Xcode's SDK was already `MacOSX27.0.sdk`, so
+purely a target-version bump). Build and 298-test suite pass. On-device
+check: the bump alone did **not** fix either bug it was tried against
+(camera tap-to-mirror, entrance-motion trickle) -- both needed to be
+root-caused and fixed/investigated separately, below.
+
+**Camera tap-to-mirror bug: root-caused and fixed 2026-09-28.** `os_log`
+instrumentation on `ClickThroughHostingView.mouseDown` confirmed AppKit
+*does* reliably deliver the click to Atelier's own window (ruling out a
+leak to the OS) -- the real cause was the same mechanism as the glass
+hover-flicker fix (PR #44): `.contentShape(Rectangle())`'s hit region
+tracks `frameSize`, which is mid-spring right after opening or switching
+tabs, so a tap landing before the spring settles can miss. Confirmed by a
+behavioral test (tap works reliably once you wait for the panel to visibly
+settle first, fails immediately after). Fixed in `NotchRootView.swift`: a
+new `contentGeometryUnstable` flag is raised for the real duration of any
+state/page-changing animation (`animateStateChange(_:_:)`, using
+`withAnimation`'s `completionCriteria: .logicallyComplete`, not a guessed
+delay) and gates the page content's `allowsHitTesting` -- scoped to page
+content only, not the tab bar, so a second tab tap during the settle
+window still works. **Confirmed fixed on-device.**
+
+**Tab-switch retract-and-snap-back flicker: root-caused, fix attempted,
+NOT fixed.** `os_log` evidence caught the real trigger: a tab-dot *click*
+(not passive hovering) fires a genuine `onHover` exit ~24ms after its
+matching enter, only ~5pt away -- close enough to be the same click's
+natural cursor jitter, not a real hover-out, but outside PR #44's original
+1pt/no-time-bound tolerance (which was only ever validated against a
+*stationary* hover, never a click's inherent jitter). Widened to 8pt and
+added an 80ms time bound. **Confirmed on-device the flicker still
+happens** -- the captured pattern wasn't the only (or the right) trigger.
+Needs fresh `os_log` evidence for whatever's actually still causing it,
+not another guess on top of this one.
+
+**New, more serious bug found while investigating the flicker: glass mode
+lets clicks through to the app behind the notch panel.** Confirmed via a
+full-resolution screen recording (an I-beam cursor resolving from a
+windowed Safari's tab bar sitting behind the notch, not from Atelier's own
+panel) and confirmed by the user that a real click there does land on
+Safari. Ruled out: fullscreen-menu-bar interaction (Safari was windowed),
+and a missing `isFloatingPanel`/`hidesOnDeactivate` on `NotchPanel` (real
+gap vs. ADR 0003's documented decision, restored, but not the cause here).
+**Decisive test: does not happen with glass mode off** -- black mode
+"works perfectly fine" per direct confirmation. Reference-app comparison
+(Atoll's `LiquidGlassBackground.swift`) found the likely mechanism: Atoll
+doesn't use SwiftUI's public `.glassEffect()` at all -- it drops to
+AppKit's private `NSGlassEffectView` and forcibly keeps its `CABackdropLayer`
+`windowServerAware` via continuous KVO reapplication, implying Apple's own
+backdrop layer doesn't reliably stay window-server-aware inside a custom
+floating panel, which the public SwiftUI API gives no way to patch. Full
+writeup, ruled-out theories, and the real options (adopt the private-API
+approach / restructure glass to Apple's own navigation-layer-only usage
+pattern / leave off by default and document the limitation) are in
+[ADR 0024](decisions/0024-glass-mode-click-through-public-glasseffect-limitation.md).
+**No fix implemented** -- this needs a deliberate choice among those
+options, not a quick patch.
 
 **Rework parked (2026-09-24):** it reads as transparency, not glass. Research
 and options in [docs/research/liquid-glass-apple-guidance.md](research/liquid-glass-apple-guidance.md).
