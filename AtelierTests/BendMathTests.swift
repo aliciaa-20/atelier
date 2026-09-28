@@ -74,4 +74,23 @@ struct BendMathTests {
         let result = BendMath.smooth(current: 0.9997, target: 1.0, dt: 0.1)
         #expect(result == 1.0)
     }
+
+    // MARK: - shouldRefreshSnapshot
+
+    @Test func shouldRefreshSnapshotOnFirstCall() {
+        // No prior snapshot (nil) always refreshes immediately.
+        #expect(BendMath.shouldRefreshSnapshot(now: 10, lastSnapshotTime: nil, interval: 0.25))
+    }
+
+    @Test func shouldRefreshSnapshotBeforeIntervalElapsedIsFalse() {
+        #expect(!BendMath.shouldRefreshSnapshot(now: 10.1, lastSnapshotTime: 10, interval: 0.25))
+    }
+
+    @Test func shouldRefreshSnapshotAtExactIntervalIsTrue() {
+        #expect(BendMath.shouldRefreshSnapshot(now: 10.25, lastSnapshotTime: 10, interval: 0.25))
+    }
+
+    @Test func shouldRefreshSnapshotAfterIntervalElapsedIsTrue() {
+        #expect(BendMath.shouldRefreshSnapshot(now: 11, lastSnapshotTime: 10, interval: 0.25))
+    }
 }
