@@ -11,6 +11,9 @@ struct PeekPlayerView: View {
     let notchHeight: CGFloat
     @ObservedObject var audioTap: AudioTap
     @StateObject private var artworkColor = ArtworkColorLoader()
+    @Environment(\.colorSchemeContrast) private var contrast
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+    private var isGlassActive: Bool { DimmedText.glassActive(reduceTransparency: reduceTransparency) }
 
     var body: some View {
         Group {
@@ -46,7 +49,14 @@ struct PeekPlayerView: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 MarqueeText(text: info.title, font: .headline, color: .white, width: 92, height: 16)
-                MarqueeText(text: info.artist, font: .subheadline, color: .white.opacity(0.65), width: 92, height: 16)
+                MarqueeText(
+                    text: info.artist,
+                    font: .subheadline,
+                    color: .white.opacity(DimmedText.opacity(0.65, contrast: contrast, glassActive: isGlassActive)),
+                    width: 92,
+                    height: 16
+                )
+                .dimmedTextShadow(glassActive: isGlassActive)
             }
 
             Spacer(minLength: 0)
