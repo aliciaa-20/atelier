@@ -88,6 +88,14 @@ anything animated, polled, or otherwise continuously running:
   `AudioTap`, any future `LiveActivitySource`) to idle/off when their
   output isn't currently visible or needed — matching the existing pattern
   where `AudioTap`'s lifetime is already tied to `isPlaying`.
+- **Idle-CPU lessons (2026-09-29 profile, 2.7% -> ~0.4%):** never check "is app X
+  running" with `runningApplications.contains { $0.bundleIdentifier == ... }` (a
+  LaunchServices lookup per running app, several times per poll) -- use
+  `NSRunningApplication.runningApplications(withBundleIdentifier:)`. And an
+  `@Published` assignment fires `objectWillChange` even for an identical value, so
+  a poll that re-assigns `nil`/an unchanged number re-renders `NotchRootView`
+  every tick: assign only when the value actually changed. Profile with
+  `/usr/bin/sample <pid> 6` (a Python `sample` may shadow it on PATH).
 - Surface a real memory/CPU/battery tradeoff explicitly when one exists,
   rather than silently picking the expensive option.
 
