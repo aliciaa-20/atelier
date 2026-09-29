@@ -22,6 +22,11 @@ enum NotchLiveActivityPriority {
     /// than wait its turn behind it, but it's not privacy-relevant like
     /// `screenRecording`, so it doesn't outrank that.
     static let colorPicker = 11
+    /// Above `colorPicker` and `nowPlaying` so the countdown pill isn't hidden
+    /// by music for the ~7 minute window, below the volume/brightness HUDs so
+    /// a key press still interrupts. Tradeoff: a picked-colour peek is
+    /// suppressed while a meeting pill is up.
+    static let meeting = 12
     static let nowPlaying = 10
     static let airpods = 6
     static let battery = 5

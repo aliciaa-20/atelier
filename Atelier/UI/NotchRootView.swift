@@ -151,7 +151,10 @@ struct NotchRootView: View {
         switch viewModel.state {
         case .peeking:
             let content = liveActivity.topContent ?? lastPeekContent
-            return content?.isExpandable == false ? viewModel.compactPeekSize : viewModel.peekSize
+            // Hover-peek content (Meeting Join: two text lines + a button) needs
+            // the regular peek footprint, not the HUD-sized compact one.
+            let usesCompact = content?.isExpandable == false && content?.hoversToPeek != true
+            return usesCompact ? viewModel.compactPeekSize : viewModel.peekSize
         case .expanded:
             // A volume/brightness HUD while hover-open: the compact peek size
             // instead of the full player footprint, then back.
@@ -573,11 +576,19 @@ struct NotchRootView: View {
                 // hover-to-open behavior for the plain notch/pill.
                 // Already hover-open (e.g. a volume HUD took over): exits must
                 // still get through, or the notch never retracts.
-                guard viewModel.state == .expanded || (liveActivity.topContent?.isExpandable ?? true) else { return }
+                viewModel.pointerInside = hovering
+                let hoverPeeks = liveActivity.topContent?.hoversToPeek == true
+                guard NotchHoverPolicy.handlesHover(
+                    hovering: hovering,
+                    state: viewModel.state,
+                    topContentIsExpandable: liveActivity.topContent?.isExpandable,
+                    topContentHoversToPeek: hoverPeeks,
+                    hudActive: hudActive
+                ) else { return }
 
                 if hovering {
                     animateStateChange(NotchAnimations.open) {
-                        viewModel.handle(.hoverStarted)
+                        viewModel.handle(hoverPeeks && viewModel.state != .expanded ? .hoverPeekStarted : .hoverStarted)
                     }
                 } else {
                     if menuTracking { return }
@@ -861,7 +872,7 @@ struct NotchRootView: View {
     private var hudActive: Bool { transientHUD != nil }
 
     private var transientHUD: LiveActivityContent? {
-        guard let content = liveActivity.topContent, !content.isExpandable, content.peeksOnChange else { return nil }
+        guard let content = liveActivity.topContent, !content.isExpandable, content.peeksOnChange, !content.hoversToPeek else { return nil }
         return content
     }
 

@@ -5,7 +5,7 @@ something runnable, a green test suite, and a commit. Source of truth for the
 overall plan is [the design spec](superpowers/specs/2026-08-31-atelier-notch-design.md);
 this file tracks progress against it.
 
-**Where we are:** Phases 0–12 and 14 (camera mirror) shipped, Phase 17 stages 1–3 (teleprompter tab + Ghost Mode + hotkeys) shipped, stage 4 voice sync shipped on its branch (unit-tested, core flow verified on-device; edge-case checks still optional), Phase 16 (Settings window) mostly shipped (Phase 12 so far: color picker + Calendar tab + weather; quick notes/timers not started). Phase 13 (system resource monitor),
+**Where we are:** Meeting Join shipped 2026-09-29 (first item of the Backlog's Next-features queue; next up: battery drain list, share card, Claude usage meter). Phases 0–12 and 14 (camera mirror) shipped, Phase 17 stages 1–3 (teleprompter tab + Ghost Mode + hotkeys) shipped, stage 4 voice sync shipped on its branch (unit-tested, core flow verified on-device; edge-case checks still optional), Phase 16 (Settings window) mostly shipped (Phase 12 so far: color picker + Calendar tab + weather; quick notes/timers not started). Phase 13 (system resource monitor),
 Phase 16 (stable signing still open; the menu-bar icon is a placeholder until the app icon exists), and Phase 18 (Liquid Glass notch background) are all 🟨 partial — see
 their entries below for what's still open (Phase 18 has a known
 unresolved visual bug on close, a tab-switch retract flicker, and a
@@ -1170,6 +1170,46 @@ confirmed fixed.
 Items not part of the Phase 6–16 feature survey (see
 [FEATURES.md](FEATURES.md)):
 
+- **Next-features queue (agreed 2026-09-29, in build order).** Each is its own
+  brainstorm → spec → plan → build cycle; ideas drawn from MeetingBar,
+  FineTune, Background Music, Oversight, Show HN survey.
+  1. ✅ **Meeting Join** *(shipped 2026-09-29; parser/schedule/state machine/
+     hover policy unit-tested, source + pill/peek layout verified on-device;
+     ADR 0028; opt-in ⌃⌥J added after UI review)* — peek with a Join button for the next call (Zoom/Meet/
+     Teams link parsed from the event); button only, no auto-open. Reuses
+     `CalendarSource`; link parsing + peek timing are pure/testable. Ref:
+     leits/MeetingBar (Apache-2.0).
+  2. **Battery drain list** — top energy-using apps, sampled only while the
+     notch is hover-open.
+  3. **Now-playing share card** — render the current track as a draggable image.
+  4. **Claude usage meter** — starts as a *spike*: do local `~/.claude` logs
+     hold enough to compute usage vs limits? No API key/network.
+  5. **Notch pet** — capped low frame rate; reacts to music, meetings, battery.
+  6. **Per-app audio control + privacy indicator** — per-app volume/output
+     routing (Core Audio process taps; also covers the output-device switcher
+     and mic mute), plus mic/camera-in-use indicator. Large; opt-in per app
+     for battery. Read FineTune (GPL-3.0) / Background Music (GPL-2.0) for
+     technique only; don't copy code.
+  7. **Screenshot peek** — after the shelf is fixed.
+  8. **Stacked live activities** — follow-up to Meeting Join (#1): today only
+     the top-priority source shows, so a meeting pill hides the music pill for
+     ~7 min. Let several activities share the collapsed pill. Changes
+     `LiveActivityCoordinator`/`NotchRootView`, so it needs its own design pass.
+  9. **Quick wins** (small, order flexible; ideas from notchy.dev — closed
+     source, product ideas only):
+     - **Drive Eject island** — USB/volume mount → one-tap Eject, then "Safe to
+       disconnect". Public mount notifications, no permission.
+     - **Caps Lock HUD** — brief island on each toggle (modifier flags only).
+     - **Keyboard cleaning lock** — lock every key with a countdown island;
+       `⌘⎋` unlocks. Event tap; Accessibility already granted for
+       `MediaKeyInterceptor`.
+     - **Full-charge island** — pill at a chosen charge level (80–100%) as the
+       cue to unplug. Extends `BatterySource`.
+     - **Finder Cut (⌘X / ⌘V)** — not a notch feature (like the QuickLook
+       folder-preview idea). Reference: YONN2222/cmdX (MIT, Swift): listens only
+       while Finder is frontmost; ⌘X copies and arms a flag, ⌘V then sends
+       Finder's own ⌘⌥V "Move Item Here". Reuses the Accessibility grant and
+       event-tap code from `MediaKeyInterceptor`.
 - ~~**Apple Music source** — a second `NowPlayingSource` conformer.~~ Shipped
   2026-09-27: `AppleMusicSource` + `MultiNowPlayingSource` (auto-detects
   whichever app is actually playing, `NowPlayingArbiter` is the pure/tested

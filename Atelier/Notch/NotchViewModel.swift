@@ -9,6 +9,10 @@ import Foundation
 final class NotchViewModel: ObservableObject {
     @Published private(set) var state: NotchState = .collapsed
     @Published private(set) var currentPage: NotchPage = AtelierSettings.firstPage
+    /// Set by `NotchRootView`'s hover handler; read by `NotchController`'s
+    /// peek decay so a hover-peek isn't retracted under the cursor. Plain
+    /// (not `@Published`) -- nothing re-renders on it.
+    var pointerInside = false
 
     let collapsedSize: CGSize
     let expandedSize: CGSize
