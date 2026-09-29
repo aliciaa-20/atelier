@@ -31,10 +31,48 @@ import SwiftUI
 /// dashboard.
 struct SystemMonitorPageView: View {
     @ObservedObject var source: SystemMonitorSource
+    let energy: EnergySource
     @State private var showingDetail = false
+    @State private var segment: Segment = .gauges
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
+    private enum Segment: String, CaseIterable {
+        case gauges = "Gauges"
+        case energy = "Energy"
+    }
+
     var body: some View {
+        VStack(spacing: 8) {
+            Picker("View", selection: $segment) {
+                ForEach(Segment.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .controlSize(.small)
+            .frame(width: 150)
+            .help("Switch between gauges and top energy users")
+
+            // Swapping the view (not hiding it) is what fires
+            // `EnergyListView`'s onDisappear, which stops sampling.
+            switch segment {
+            case .gauges: gauges
+            case .energy: EnergyListView(source: energy)
+            }
+        }
+        .padding(.horizontal, NotchLayout.pageHorizontalInset)
+        .padding(.top, 6)
+        // Matches `ShelfView`'s own bottom inset -- this view never applied
+        // one, so centering had more room to push into below the content
+        // than above it (no matching pull from the top edge), reading as
+        // the two cards sitting low with a big gap overhead. Symmetric
+        // insets now pull the centered content up without hard-anchoring
+        // it to the top, which overcorrected into a big gap underneath
+        // instead.
+        .padding(.bottom, NotchLayout.pageBottomInset)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+    }
+
+    private var gauges: some View {
         Button {
             withAnimation(reduceMotion ? .easeInOut(duration: 0.15) : .spring(response: 0.35, dampingFraction: 0.85)) {
                 showingDetail.toggle()
@@ -76,17 +114,6 @@ struct SystemMonitorPageView: View {
         .accessibilityLabel(showingDetail ? "System status detail" : "System status rings")
         .accessibilityHint(showingDetail ? "Press to show gauges" : "Press for a plain-language status")
         .help(showingDetail ? "Show gauges" : "Show a plain-language status")
-        .padding(.horizontal, NotchLayout.pageHorizontalInset)
-        .padding(.top, 6)
-        // Matches `ShelfView`'s own bottom inset -- this view never applied
-        // one, so centering had more room to push into below the content
-        // than above it (no matching pull from the top edge), reading as
-        // the two cards sitting low with a big gap overhead. Symmetric
-        // insets now pull the centered content up without hard-anchoring
-        // it to the top, which overcorrected into a big gap underneath
-        // instead.
-        .padding(.bottom, NotchLayout.pageBottomInset)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
     }
 }
 

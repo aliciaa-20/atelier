@@ -14,6 +14,7 @@ struct NotchRootView: View {
     let volumeSource: VolumeSource
     @StateObject private var artworkColor = ArtworkColorLoader()
     @StateObject private var camera = CameraMirrorSource()
+    @StateObject private var energy = EnergySource()
     @ObservedObject private var teleprompter = TeleprompterModel.shared
     /// Tracked so a hold-open that ends (mirror stopped) knows whether to
     /// retract now or wait for the pointer to actually leave.
@@ -336,7 +337,7 @@ struct NotchRootView: View {
                                     ShelfView(store: shelfStore, rootDirectory: shelfStore.rootDirectory, notchHeight: 0)
                                         .onAppear { shelfStore.sweepExpired() }
                                 } else if AtelierSettings.systemMonitorEnabled, viewModel.currentPage == .systemMonitor {
-                                    SystemMonitorPageView(source: systemMonitor)
+                                    SystemMonitorPageView(source: systemMonitor, energy: energy)
                                 } else if AtelierSettings.calendarEnabled, viewModel.currentPage == .calendar {
                                     CalendarPageView(source: calendar)
                                 } else if AtelierSettings.cameraEnabled, viewModel.currentPage == .camera {
