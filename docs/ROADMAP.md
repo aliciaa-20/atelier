@@ -1205,6 +1205,11 @@ Items not part of the Phase 6–16 feature survey (see
        `MediaKeyInterceptor`.
      - **Full-charge island** — pill at a chosen charge level (80–100%) as the
        cue to unplug. Extends `BatterySource`.
+     - **Finder Cut (⌘X / ⌘V)** — not a notch feature (like the QuickLook
+       folder-preview idea). Reference: YONN2222/cmdX (MIT, Swift): listens only
+       while Finder is frontmost; ⌘X copies and arms a flag, ⌘V then sends
+       Finder's own ⌘⌥V "Move Item Here". Reuses the Accessibility grant and
+       event-tap code from `MediaKeyInterceptor`.
 - ~~**Apple Music source** — a second `NowPlayingSource` conformer.~~ Shipped
   2026-09-27: `AppleMusicSource` + `MultiNowPlayingSource` (auto-detects
   whichever app is actually playing, `NowPlayingArbiter` is the pure/tested

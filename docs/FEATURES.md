@@ -298,6 +298,7 @@ only; nothing to pull). Queued in ROADMAP's Next-features queue.
 | Caps Lock HUD | Brief island per toggle; reads modifier flags only. |
 | Keyboard cleaning lock | Locks all keys with a countdown island, `⌘⎋` unlocks; event tap (Accessibility already granted). |
 | Full-charge island | Pill at a user-chosen level (80–100%) as the cue to unplug; extends `BatterySource`. |
+| Finder Cut (⌘X / ⌘V) | Not a notch feature. Ref: [YONN2222/cmdX](https://github.com/YONN2222/cmdX) (MIT): Finder-frontmost only, ⌘X = copy + arm, ⌘V = Finder's ⌘⌥V move. Reuses the Accessibility/event-tap path. |
 | Stacked live activities | Several activities share the collapsed pill instead of one winning the slot. Follow-up to Meeting Join. |
 
 ---
