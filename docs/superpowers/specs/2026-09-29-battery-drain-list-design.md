@@ -84,3 +84,20 @@ of both segments.
 
 ROADMAP (tick queue #2), README feature list, CLAUDE.md Widgets row, ADR if
 `ri_energy_nj` needs caveats.
+
+## Revisions after on-device review (2026-09-29)
+
+The first build read as cluttered and clipped the gauges, so the shipped
+design differs from the sections above:
+
+- **Switch:** a small corner icon (bolt / speedometer) instead of a segmented
+  `Gauges | Energy` control, which cost vertical space and clipped "Memory".
+- **Rows:** top **3**, `.regular` (Dock) apps only; no "System" row, no
+  background agents, no "that's me, hi" caption.
+- **Bars:** scaled against `max(top, 3 W)` (`EnergyMath.barFraction`) so an
+  idle Mac shows short bars that agree with "napping".
+- **Loading card:** "Finding the battery hogs…", no icon.
+- **Copy/contrast:** secondary text uses `dimmedText()`; the switch has hover
+  feedback. Sampling also stops explicitly when the notch collapses.
+- **Known limit:** only ~65% of pids are readable without root, so
+  WindowServer never appears (ADR 0029).
