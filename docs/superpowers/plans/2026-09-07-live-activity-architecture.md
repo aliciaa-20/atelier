@@ -190,7 +190,6 @@ Foundation-only priority list deciding which live activity source is
 wiring yet; this is the data structure Phase 6's widgets will share.
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_0124yKTWHuLdrDfjcebwgfwU
 EOF
 )"
 ```
@@ -284,7 +283,6 @@ jackson-storm/dynamicnotch's NotchContentProtocol, read via gh api
 first per check-reference-apps-first.
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_0124yKTWHuLdrDfjcebwgfwU
 EOF
 )"
 ```
@@ -413,7 +411,6 @@ cutout left untouched in between) matches Clayton630/QuartzNotch's
 resting-pill reference image.
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_0124yKTWHuLdrDfjcebwgfwU
 EOF
 )"
 ```
@@ -647,7 +644,6 @@ PillPlayerView/PeekPlayerView load their own artwork color now that
 nothing external threads it through the no-argument protocol methods.
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_0124yKTWHuLdrDfjcebwgfwU
 EOF
 )"
 ```
@@ -853,7 +849,6 @@ title|artist dedup key) generically across any number of sources.
 NotchController wiring lands in the next task.
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_0124yKTWHuLdrDfjcebwgfwU
 EOF
 )"
 ```
@@ -1081,7 +1076,6 @@ Behavior verified identical on-device: pill/peek/decay/hover timing
 unaffected.
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_0124yKTWHuLdrDfjcebwgfwU
 EOF
 )"
 ```
@@ -1192,7 +1186,6 @@ IOKit polling that will drive it (next task) -- same split
 SpotifyOutputParser uses for its parsing logic.
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_0124yKTWHuLdrDfjcebwgfwU
 EOF
 )"
 ```
@@ -1408,7 +1401,6 @@ uses. Lower priority than now-playing so it never displaces the
 current track.
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_0124yKTWHuLdrDfjcebwgfwU
 EOF
 )"
 ```
@@ -1527,7 +1519,6 @@ BluetoothActivityManager (read via gh api first). Unit-tested against
 fixture IDs -- no IOBluetooth import, no real device needed to test.
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_0124yKTWHuLdrDfjcebwgfwU
 EOF
 )"
 ```
@@ -1750,7 +1741,6 @@ returns nil. On-device verification deferred: no AirPods on hand this
 session.
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_0124yKTWHuLdrDfjcebwgfwU
 EOF
 )"
 ```
@@ -1782,7 +1772,6 @@ git commit -m "$(cat <<'EOF'
 docs: sync ROADMAP.md with Phase 6's Live Activity architecture
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_0124yKTWHuLdrDfjcebwgfwU
 EOF
 )"
 ```

@@ -24,7 +24,7 @@
 - Commands: build `xcodebuild -scheme Atelier -configuration Debug build`; tests `xcodebuild test -scheme Atelier -destination 'platform=macOS'`.
 - Work on branch `feat/battery-drain-list`. Never commit to `main`. Don't push without asking.
 - Commit trailer on every commit:
-  `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>` and `Claude-Session: https://claude.ai/code/session_014VB2s2s2qWMvH86EeTqZdA`
+  `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>`
 
 ## Review Focus
 
@@ -190,8 +190,7 @@ Expected: `** TEST SUCCEEDED **`, 8 tests in `EnergyMathTests` passing.
 git add Atelier/Widgets/SystemMonitor/EnergyMath.swift AtelierTests/EnergyMathTests.swift
 git commit -m "Energy list: EnergyMath watts, bar fraction, tier, verdict copy
 
-Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_014VB2s2s2qWMvH86EeTqZdA"
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>"
 ```
 
 ---
@@ -428,8 +427,7 @@ Expected: `** TEST SUCCEEDED **`, both structs pass.
 git add Atelier/Widgets/SystemMonitor/EnergyMath.swift AtelierTests/EnergyMathTests.swift
 git commit -m "Energy list: per-process readings, owner resolution, top-app grouping
 
-Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_014VB2s2s2qWMvH86EeTqZdA"
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>"
 ```
 
 ---
@@ -590,8 +588,7 @@ Run the app with `start()` **not** called: Activity Monitor → Atelier CPU shou
 git add Atelier/Widgets/SystemMonitor/EnergySource.swift
 git commit -m "Energy list: EnergySource libproc sampling loop (start/stop gated)
 
-Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_014VB2s2s2qWMvH86EeTqZdA"
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>"
 ```
 
 ---
@@ -806,8 +803,7 @@ Manual checks, one at a time:
 git add Atelier/UI/EnergyListView.swift Atelier/UI/NotchLayout.swift Atelier/UI/SystemMonitorPageView.swift Atelier/UI/NotchRootView.swift Atelier/Notch/NotchController.swift
 git commit -m "Energy list: Gauges | Energy toggle and EnergyListView
 
-Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_014VB2s2s2qWMvH86EeTqZdA"
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>"
 ```
 
 ---
@@ -835,8 +831,7 @@ Claude-Session: https://claude.ai/code/session_014VB2s2s2qWMvH86EeTqZdA"
 git add -A docs README.md CLAUDE.md Atelier AtelierTests
 git commit -m "Energy list: UI review fixes, tier tuning, docs
 
-Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_014VB2s2s2qWMvH86EeTqZdA"
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>"
 ```
 
 - [ ] **Step 7: Stop and ask before pushing.** Run `pre-push-docs-sync`, post its summary, then ask whether to push and open a PR (she merges PRs herself; never push without asking).
