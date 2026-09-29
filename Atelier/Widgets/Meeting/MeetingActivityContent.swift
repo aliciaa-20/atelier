@@ -36,11 +36,16 @@ struct MeetingActivityContent: LiveActivityContent {
 
     /// Short enough for a flank: the pill's middle is the physical notch, so
     /// content goes in the two ears (like `BatteryActivityContent`), never
-    /// centred. "Now" instead of "Started" -- the ears are ~32pt wide.
+    /// centred, and the text is the compact `MeetingCountdown` form. The 1 Hz
+    /// tick exists only while the pill is showing the last two minutes.
     @ViewBuilder private var pillCountdown: some View {
         switch phase {
-        case .imminent: Text(timerInterval: countdownRange, countsDown: true, showsHours: false)
-        case .started: Text("Now")
+        case .imminent:
+            TimelineView(.periodic(from: .now, by: 1)) { context in
+                Text(MeetingCountdown.pillText(remaining: meeting.start.timeIntervalSince(context.date)))
+            }
+        case .started:
+            Text("Now")
         }
     }
 
@@ -48,18 +53,17 @@ struct MeetingActivityContent: LiveActivityContent {
         AnyView(
             HStack(spacing: 0) {
                 Image(systemName: "video.fill")
-                    .font(.system(size: 9, weight: .semibold))
+                    .font(.system(size: 10, weight: .semibold))
                 Spacer(minLength: 0)
                 pillCountdown
-                    .font(.system(size: 9, weight: .medium).monospacedDigit())
+                    .font(.system(size: 10, weight: .medium).monospacedDigit())
                     .lineLimit(1)
                     .fixedSize()
             }
             .foregroundStyle(.white)
-            // Each flank is ~32pt (pillExtraWidth / 2); "0:44" at 9pt is ~22pt,
-            // so 8pt of edge padding keeps the digits clear of the notch
-            // (10pt text + 12pt padding overlapped it on-device).
-            .padding(.horizontal, 8)
+            // Same 12pt edge inset as `BatteryActivityContent`'s pill; each
+            // flank is ~32pt (pillExtraWidth / 2), and "44s" at 10pt is ~17pt.
+            .padding(.horizontal, 12)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(spokenLabel)
             // The pill has no visible button (Join lives in the hover peek),

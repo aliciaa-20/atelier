@@ -91,4 +91,23 @@ struct MeetingScheduleTests {
     @Test func nextChangeIgnoresIneligibleMeetings() {
         #expect(MeetingSchedule.nextChange(candidates: [meeting(declined: true)], now: t0, excluding: []) == nil)
     }
+
+    // The pill's flank fits ~20pt of digits, so it shows "2m" / "44s", not "1:53".
+    @Test func pillTextShowsCeilingMinutesAboveAMinute() {
+        #expect(MeetingCountdown.pillText(remaining: 120) == "2m")
+        #expect(MeetingCountdown.pillText(remaining: 113) == "2m")
+        #expect(MeetingCountdown.pillText(remaining: 61) == "2m")
+        #expect(MeetingCountdown.pillText(remaining: 60) == "1m")
+    }
+
+    @Test func pillTextShowsSecondsInTheLastMinute() {
+        #expect(MeetingCountdown.pillText(remaining: 59) == "59s")
+        #expect(MeetingCountdown.pillText(remaining: 44.4) == "45s")
+        #expect(MeetingCountdown.pillText(remaining: 1) == "1s")
+    }
+
+    @Test func pillTextClampsAtZero() {
+        #expect(MeetingCountdown.pillText(remaining: 0) == "0s")
+        #expect(MeetingCountdown.pillText(remaining: -5) == "0s")
+    }
 }

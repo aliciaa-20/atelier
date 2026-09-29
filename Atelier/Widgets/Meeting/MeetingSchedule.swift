@@ -67,3 +67,14 @@ enum MeetingSchedule {
         }
     }
 }
+
+/// Countdown text for the pill, whose flanks (~32pt each beside the notch) fit
+/// only ~20pt of digits -- so "2m" / "44s" rather than "1:53". The peek has
+/// room and shows the exact `m:ss` via `Text(timerInterval:)`.
+enum MeetingCountdown {
+    static func pillText(remaining: TimeInterval) -> String {
+        let seconds = max(0, remaining)
+        if seconds >= 60 { return "\(Int((seconds / 60).rounded(.up)))m" }
+        return "\(Int(seconds.rounded(.up)))s"
+    }
+}
