@@ -849,6 +849,40 @@ struct NotchRootView: View {
             changes()
         } completion: {
             contentGeometryUnstable = false
+            replaySwallowedHoverExit()
+        }
+    }
+
+    /// `onHover` drops a hover-out that arrives while a spring is running (see
+    /// `contentGeometryUnstable`). If the cursor really left in that window no
+    /// second exit comes, so once the spring settles, compare the real mouse
+    /// position with the stale `pointerInside` and do the retract that was
+    /// skipped. Same holds as the hover-out branch above.
+    private func replaySwallowedHoverExit() {
+        guard NotchHoverPolicy.shouldRetractAfterSettle(
+            state: viewModel.state,
+            pointerOverPanel: pointerOverExpandedPanel(),
+            pointerInsideFlag: pointerInside
+        ) else { return }
+        pointerInside = false
+        viewModel.pointerInside = false
+        if AtelierSettings.teleprompterPauseOnHover {
+            teleprompter.setPointerInside(false)
+        }
+        if menuTracking || transientHUD != nil { return }
+        if CameraHoldOpen.shouldSuppressRetract(
+            holdOpenEnabled: AtelierSettings.cameraHoldOpen,
+            mirrorLive: camera.isLive,
+            currentPage: viewModel.currentPage,
+            state: viewModel.state
+        ) { return }
+        if TeleprompterHoldOpen.shouldSuppressRetract(
+            isPlaying: teleprompter.wantsNotchOpen,
+            currentPage: viewModel.currentPage,
+            state: viewModel.state
+        ) { return }
+        animateStateChange(NotchAnimations.close) {
+            viewModel.handle(.hoverEnded(isPlaying: liveActivity.hasContent))
         }
     }
 
