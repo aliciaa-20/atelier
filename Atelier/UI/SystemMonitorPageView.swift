@@ -67,6 +67,11 @@ struct SystemMonitorPageView: View {
         .overlay(alignment: .topTrailing) { switchButton }
     }
 
+    /// Empty space between the 11pt glyph and the edge of its 24pt tap
+    /// target, so the *glyph* (not the frame) sits `pageHorizontalInset`
+    /// from the panel edge like every other page's content.
+    private static let switchGlyphSlack: CGFloat = 6
+
     private var switchButton: some View {
         Button {
             withAnimation(reduceMotion ? .easeInOut(duration: 0.15) : NotchAnimations.standard) {
@@ -81,7 +86,7 @@ struct SystemMonitorPageView: View {
         }
         .buttonStyle(.plain)
         .focusEffectDisabled()
-        .padding(.trailing, NotchLayout.pageHorizontalInset - 12)
+        .padding(.trailing, NotchLayout.pageHorizontalInset - Self.switchGlyphSlack)
         .padding(.top, 2)
         .help(segment == .gauges ? "Show top energy users" : "Show gauges")
         .accessibilityLabel(segment == .gauges ? "Show top energy users" : "Show gauges")

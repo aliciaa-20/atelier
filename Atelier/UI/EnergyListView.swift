@@ -12,7 +12,7 @@ struct EnergyListView: View {
     var body: some View {
         VStack(spacing: NotchLayout.energyRowSpacing) {
             if !source.hasSample {
-                message("Watching who's thirsty…", symbol: "eyes")
+                message("Finding the battery hogs…", symbol: nil)
             } else if source.rows.isEmpty {
                 message(EnergyMath.verdict(.napping, appName: ""), symbol: "moon.zzz")
             } else {
@@ -32,12 +32,14 @@ struct EnergyListView: View {
         .onDisappear { source.stop() }
     }
 
-    /// Shared empty-state style: soft card, one SF Symbol, one short line.
-    private func message(_ text: String, symbol: String) -> some View {
+    /// Shared empty-state style: soft card, one short line, optional SF Symbol.
+    private func message(_ text: String, symbol: String?) -> some View {
         HStack(spacing: 8) {
-            Image(systemName: symbol)
-                .foregroundStyle(.secondary)
-                .accessibilityHidden(true)
+            if let symbol {
+                Image(systemName: symbol)
+                    .foregroundStyle(.secondary)
+                    .accessibilityHidden(true)
+            }
             Text(text)
                 .font(.system(size: 12, weight: .medium))
                 .foregroundStyle(.secondary)
