@@ -99,7 +99,7 @@ Four layers with deliberate seams. The two pure ones carry the test suite.
 |---|---|---|
 | App shell | `AtelierApp.swift` | `LSUIElement`, no Dock icon, `NSStatusItem` menu |
 | Window | `Notch/NotchPanel.swift`, `Notch/NotchController.swift` | borderless `NSPanel` over the notch |
-| Pure logic | `Notch/NotchGeometry.swift`, `Notch/NotchState.swift`, `Notch/NotchPage.swift`, `Notch/CameraHoldOpen.swift`, `Notch/TabOrder.swift` | **unit tested**, no AppKit imports |
+| Pure logic | `Notch/NotchGeometry.swift`, `Notch/NotchState.swift`, `Notch/NotchPage.swift`, `Notch/CameraHoldOpen.swift`, `Notch/TabOrder.swift`, `Notch/NotchHoverPolicy.swift` | **unit tested**, no AppKit imports |
 | UI | `UI/*.swift` | SwiftUI, driven by `NotchState` |
 | Shared UI tokens | `UI/NotchLayout.swift`, `UI/NotchAnimations.swift`, `UI/NotchHaptics.swift`, `UI/DimmedText.swift` | Page/card/peek insets and corner radii (one `peekEdgeGap`, card radius = panel corner - gap), named springs (`open`/`close`/`page`/`standard`/`press`/`grab`/`hud`), trackpad haptics, AA-contrast secondary text (honours Increase Contrast). Add values here, not inline |
 | Data | `NowPlaying/*.swift` | `NowPlayingSource` protocol + per-app implementations (`SpotifySource`, `AppleMusicSource`) arbitrated by `MultiNowPlayingSource`/`NowPlayingArbiter` (pure, unit-tested — sticky pick of whichever app is actually playing). `AppleMusicSource` falls back to the iTunes Search API for streaming-track artwork, since Music.app's AppleScript only exposes artwork for downloaded tracks (ADR 0022) |
