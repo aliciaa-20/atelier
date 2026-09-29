@@ -51,25 +51,32 @@ struct MeetingActivityContent: LiveActivityContent {
         }
     }
 
+    /// The pill's two flanks flank the physical notch: each is
+    /// `pillExtraWidth / 2` = 32pt wide, but `NotchShape` insets the visible
+    /// edge by ~6pt, so the visible flank is ~26pt (measured from an on-device
+    /// screenshot: 12pt padding put the dot ~9pt from the visible edge).
+    /// Each item sits centred in its own 26pt cell.
+    private static let flankInset: CGFloat = 6
+    private static let flankWidth: CGFloat = 26
+
     func pillView() -> AnyView {
         AnyView(
             HStack(spacing: 0) {
                 Image(systemName: "video.fill")
                     .font(.system(size: 10, weight: .semibold))
+                    .frame(width: Self.flankWidth)
                 Spacer(minLength: 0)
-                // Same budget as `BatteryActivityContent`: the flank's usable
-                // width is ~18pt after the shape's edge inset and the 12pt
-                // padding, so text is capped there and scales down rather
-                // than overlapping the notch (confirmed on-device).
+                // Text is additionally capped at 18pt (Battery's budget) and
+                // scales down rather than touching the notch.
                 pillCountdown
                     .font(.system(size: 10, weight: .medium).monospacedDigit())
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
-                    .frame(maxWidth: 18, alignment: .trailing)
+                    .frame(maxWidth: 18)
+                    .frame(width: Self.flankWidth)
             }
             .foregroundStyle(.white)
-            // Same 12pt edge inset as `BatteryActivityContent`'s pill.
-            .padding(.horizontal, 12)
+            .padding(.horizontal, Self.flankInset)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(spokenLabel)
             // The pill has no visible button (Join lives in the hover peek),
