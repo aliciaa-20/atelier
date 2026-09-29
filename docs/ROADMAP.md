@@ -1170,6 +1170,25 @@ confirmed fixed.
 Items not part of the Phase 6–16 feature survey (see
 [FEATURES.md](FEATURES.md)):
 
+- **Next-features queue (agreed 2026-09-29, in build order).** Each is its own
+  brainstorm → spec → plan → build cycle; ideas drawn from MeetingBar,
+  FineTune, Background Music, Oversight, Show HN survey.
+  1. **Meeting Join** — peek with a Join button for the next call (Zoom/Meet/
+     Teams link parsed from the event); button only, no auto-open. Reuses
+     `CalendarSource`; link parsing + peek timing are pure/testable. Ref:
+     leits/MeetingBar (Apache-2.0).
+  2. **Battery drain list** — top energy-using apps, sampled only while the
+     notch is hover-open.
+  3. **Now-playing share card** — render the current track as a draggable image.
+  4. **Claude usage meter** — starts as a *spike*: do local `~/.claude` logs
+     hold enough to compute usage vs limits? No API key/network.
+  5. **Notch pet** — capped low frame rate; reacts to music, meetings, battery.
+  6. **Per-app audio control + privacy indicator** — per-app volume/output
+     routing (Core Audio process taps; also covers the output-device switcher
+     and mic mute), plus mic/camera-in-use indicator. Large; opt-in per app
+     for battery. Read FineTune (GPL-3.0) / Background Music (GPL-2.0) for
+     technique only; don't copy code.
+  7. **Screenshot peek** — after the shelf is fixed.
 - ~~**Apple Music source** — a second `NowPlayingSource` conformer.~~ Shipped
   2026-09-27: `AppleMusicSource` + `MultiNowPlayingSource` (auto-detects
   whichever app is actually playing, `NowPlayingArbiter` is the pure/tested
