@@ -452,12 +452,19 @@ final class BendEffectController: ObservableObject {
         lastTime = now
         if previewPlaying {
             let clearAngle = AtelierSettings.bendEffectClearAngle
-            let t = (now - playStart) / 4.2
-            if t >= 1 {
+            if NSWorkspace.shared.accessibilityDisplayShouldReduceMotion {
+                // Same reasoning as the live fold below: skip the sine-eased
+                // sweep entirely rather than just playing it at the same speed.
                 previewPlaying = false
                 previewAngle = clearAngle
             } else {
-                previewAngle = clearAngle - (clearAngle - 18) * pow(sin(t * .pi), 2)
+                let t = (now - playStart) / 4.2
+                if t >= 1 {
+                    previewPlaying = false
+                    previewAngle = clearAngle
+                } else {
+                    previewAngle = clearAngle - (clearAngle - 18) * pow(sin(t * .pi), 2)
+                }
             }
         }
         guard enabled, overlay != nil else {
