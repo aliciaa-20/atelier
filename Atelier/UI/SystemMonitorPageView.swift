@@ -34,6 +34,7 @@ struct SystemMonitorPageView: View {
     let energy: EnergySource
     @State private var showingDetail = false
     @State private var segment: Segment = .gauges
+    @State private var isSwitchHovering = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private enum Segment: String, CaseIterable {
@@ -80,12 +81,15 @@ struct SystemMonitorPageView: View {
         } label: {
             Image(systemName: segment == .gauges ? "bolt.fill" : "speedometer")
                 .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(.secondary)
+                .dimmedText()
+                .opacity(isSwitchHovering ? 0.7 : 1)
+                .animation(reduceMotion ? nil : NotchAnimations.press, value: isSwitchHovering)
                 .frame(width: 24, height: 24)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .focusEffectDisabled()
+        .onHover { isSwitchHovering = $0 }
         .padding(.trailing, NotchLayout.pageHorizontalInset - Self.switchGlyphSlack)
         .padding(.top, 2)
         .help(segment == .gauges ? "Show top energy users" : "Show gauges")

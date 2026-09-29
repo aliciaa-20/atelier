@@ -620,7 +620,7 @@ struct NotchRootView: View {
                 }
             }
             .onChange(of: viewModel.state) { _, newState in
-                if newState != .expanded { camera.stop(); teleprompter.pause() }
+                if newState != .expanded { camera.stop(); energy.stop(); teleprompter.pause() }
             }
             .onChange(of: viewModel.currentPage) { _, page in
                 if page != .camera { camera.stop() }

@@ -19,7 +19,7 @@ struct EnergyListView: View {
                 let top = source.rows[0]
                 Text(EnergyMath.verdict(EnergyMath.Tier(topWatts: top.watts), appName: top.name))
                     .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(.secondary)
+                    .dimmedText()
                     .lineLimit(1)
                     .accessibilityAddTraits(.isHeader)
                 ForEach(source.rows) { row in
@@ -37,12 +37,12 @@ struct EnergyListView: View {
         HStack(spacing: 8) {
             if let symbol {
                 Image(systemName: symbol)
-                    .foregroundStyle(.secondary)
+                    .dimmedText()
                     .accessibilityHidden(true)
             }
             Text(text)
                 .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(.secondary)
+                .dimmedText()
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 14)
