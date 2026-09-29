@@ -48,16 +48,18 @@ struct MeetingActivityContent: LiveActivityContent {
         AnyView(
             HStack(spacing: 0) {
                 Image(systemName: "video.fill")
-                    .font(.system(size: 10, weight: .semibold))
+                    .font(.system(size: 9, weight: .semibold))
                 Spacer(minLength: 0)
                 pillCountdown
-                    .font(.system(size: 10, weight: .medium).monospacedDigit())
+                    .font(.system(size: 9, weight: .medium).monospacedDigit())
                     .lineLimit(1)
-                    .minimumScaleFactor(0.6)
-                    .frame(maxWidth: 22, alignment: .trailing)
+                    .fixedSize()
             }
             .foregroundStyle(.white)
-            .padding(.horizontal, 12)
+            // Each flank is ~32pt (pillExtraWidth / 2); "0:44" at 9pt is ~22pt,
+            // so 8pt of edge padding keeps the digits clear of the notch
+            // (10pt text + 12pt padding overlapped it on-device).
+            .padding(.horizontal, 8)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(spokenLabel)
             // The pill has no visible button (Join lives in the hover peek),
