@@ -45,7 +45,9 @@ struct MeetingActivityContent: LiveActivityContent {
                 Text(MeetingCountdown.pillText(remaining: meeting.start.timeIntervalSince(context.date)))
             }
         case .started:
-            Text("Now")
+            // A word ("Now") is ~22pt, wider than the flank's usable ~18pt;
+            // a live dot says "on now" without touching the notch.
+            Circle().fill(Color.green).frame(width: 6, height: 6)
         }
     }
 
@@ -55,14 +57,18 @@ struct MeetingActivityContent: LiveActivityContent {
                 Image(systemName: "video.fill")
                     .font(.system(size: 10, weight: .semibold))
                 Spacer(minLength: 0)
+                // Same budget as `BatteryActivityContent`: the flank's usable
+                // width is ~18pt after the shape's edge inset and the 12pt
+                // padding, so text is capped there and scales down rather
+                // than overlapping the notch (confirmed on-device).
                 pillCountdown
                     .font(.system(size: 10, weight: .medium).monospacedDigit())
                     .lineLimit(1)
-                    .fixedSize()
+                    .minimumScaleFactor(0.6)
+                    .frame(maxWidth: 18, alignment: .trailing)
             }
             .foregroundStyle(.white)
-            // Same 12pt edge inset as `BatteryActivityContent`'s pill; each
-            // flank is ~32pt (pillExtraWidth / 2), and "44s" at 10pt is ~17pt.
+            // Same 12pt edge inset as `BatteryActivityContent`'s pill.
             .padding(.horizontal, 12)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(spokenLabel)
