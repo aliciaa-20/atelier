@@ -414,7 +414,6 @@ logic lifted from dynamicnotch/Atoll's swipe handling, kept AppKit-free
 so it's unit-testable like NotchStateMachine. Not wired up yet.
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_0124yKTWHuLdrDfjcebwgfwU
 EOF
 )"
 ```
@@ -596,7 +595,6 @@ jelly tuning pass has one place to edit. Precedent: dynamicnotch's own
 NotchAnimations.swift, read via gh api during Phase 7 design.
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_0124yKTWHuLdrDfjcebwgfwU
 EOF
 )"
 ```
@@ -679,7 +677,6 @@ Mirrors the existing peekOnTrackChangeEnabled pattern exactly. Not
 consumed anywhere yet -- NotchGestureModifier reads it in the next task.
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_0124yKTWHuLdrDfjcebwgfwU
 EOF
 )"
 ```
@@ -934,7 +931,6 @@ Not wired into NotchRootView yet. Manual-verification only, per this
 codebase's treatment of AppKit event plumbing.
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_0124yKTWHuLdrDfjcebwgfwU
 EOF
 )"
 ```
@@ -1052,7 +1048,6 @@ left/right skips tracks when now-playing is the active content. Gated
 by AtelierSettings.gesturesEnabled. Confirmed on-device.
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_0124yKTWHuLdrDfjcebwgfwU
 EOF
 )"
 ```
@@ -1132,7 +1127,6 @@ Dynamic Island motion. close/peekClose stay damped -- an overshoot there
 read as the panel bouncing back open.
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_0124yKTWHuLdrDfjcebwgfwU
 EOF
 )"
 ```
@@ -1175,7 +1169,6 @@ git commit -m "$(cat <<'EOF'
 docs: sync ROADMAP.md with Phase 7's shipped interaction feel work
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_0124yKTWHuLdrDfjcebwgfwU
 EOF
 )"
 ```
