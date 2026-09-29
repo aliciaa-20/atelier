@@ -45,4 +45,91 @@ enum EnergyMath {
         case .breakfast: "\(appName) is eating your battery for breakfast."
         }
     }
+
+    // MARK: Per-process readings and grouping
+
+    /// A gap longer than this between two samples (the Mac slept, the loop
+    /// stalled) would dilute every reading to ~0 and mislabel the whole
+    /// list "napping", so such a sample is discarded and becomes the new
+    /// baseline instead. Poll interval is 3s.
+    static let maxElapsed: TimeInterval = 10
+
+    struct ProcessReading: Equatable {
+        let pid: Int32
+        let watts: Double
+    }
+
+    /// A user-visible app (bundle id + display name). Helper processes are
+    /// folded into one of these; anything else is "System".
+    struct AppIdentity: Equatable {
+        let id: String
+        let name: String
+    }
+
+    struct AppEnergy: Equatable, Identifiable {
+        let id: String
+        let name: String
+        let watts: Double
+    }
+
+    static let systemID = "system"
+
+    /// Per-pid watts between two snapshots of `ri_energy_nj`. Only pids
+    /// present in both produce a reading: a new pid has no baseline and an
+    /// exited pid has no current value.
+    static func readings(
+        previous: [Int32: UInt64],
+        current: [Int32: UInt64],
+        elapsed: TimeInterval
+    ) -> [ProcessReading] {
+        guard elapsed > 0, elapsed <= maxElapsed else { return [] }
+        return current.compactMap { pid, currentNJ in
+            guard let previousNJ = previous[pid] else { return nil }
+            return ProcessReading(
+                pid: pid,
+                watts: watts(previousNJ: previousNJ, currentNJ: currentNJ, elapsed: elapsed)
+            )
+        }
+    }
+
+    /// The app a process belongs to: itself if it is an app, otherwise the
+    /// nearest ancestor that is (Chrome Helper -> Chrome). `nil` for
+    /// daemons. Hop-capped so a cyclic or absurdly deep parent map can't
+    /// loop forever.
+    static func owner(of pid: Int32, parents: [Int32: Int32], apps: Set<Int32>) -> Int32? {
+        var current = pid
+        for _ in 0..<32 {
+            if apps.contains(current) { return current }
+            guard let parent = parents[current], parent > 1, parent != current else { return nil }
+            current = parent
+        }
+        return nil
+    }
+
+    /// Sums watts per app (helpers folded in), rolls non-app processes into
+    /// one "System" row, drops zero-watt entries, ranks descending and
+    /// truncates to `limit`.
+    static func topApps(
+        readings: [ProcessReading],
+        parents: [Int32: Int32],
+        apps: [Int32: AppIdentity],
+        limit: Int
+    ) -> [AppEnergy] {
+        let appPids = Set(apps.keys)
+        var totals: [String: (name: String, watts: Double)] = [:]
+        for reading in readings {
+            if let ownerPid = owner(of: reading.pid, parents: parents, apps: appPids),
+               let app = apps[ownerPid] {
+                totals[app.id, default: (app.name, 0)].watts += reading.watts
+            } else {
+                totals[systemID, default: ("System", 0)].watts += reading.watts
+            }
+        }
+        return totals
+            .map { AppEnergy(id: $0.key, name: $0.value.name, watts: $0.value.watts) }
+            .filter { $0.watts > 0 }
+            .sorted { $0.watts != $1.watts ? $0.watts > $1.watts : $0.name < $1.name }
+            .prefix(limit)
+            .map { $0 }
+    }
 }
