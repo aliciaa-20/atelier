@@ -61,6 +61,11 @@ pause. Ghost Mode keeps it invisible to screen shares and recordings.
 **Weather, at a glance.** A quiet read on the idle Home card — tap for
 the full forecast, five days out.
 
+**Never late to a call.** Turn on Meeting Join and, two minutes before
+an event with a Zoom, Meet, Teams or Webex link, the notch peeks with a Join
+button, then keeps a countdown pill until the meeting is under way. Hover the
+pill to bring Join back. Off by default; it only needs Calendar access.
+
 **Light on your battery, on purpose.** Everything idles to nothing
 when it isn't visible. A menu-bar accessory that behaves like one.
 
@@ -80,7 +85,7 @@ Click the menu-bar icon → **Settings** (⌘, while the menu is open).
 | General | Launch at login, peek behavior, gestures |
 | Appearance | Liquid Glass |
 | Tabs | Enable and drag to reorder — Home stays pinned first |
-| Widgets | Calendar, Camera, Color Picker |
+| Widgets | Calendar, Camera, Color Picker, Meeting Join |
 | Teleprompter | Script, reading speed, font, Ghost Mode, shortcuts |
 | Bend Effect | Enable, appearance (style/perspective/blur/shadow), lid behavior, preview |
 | Permissions | Live status for everything below, with a shortcut into System Settings |

@@ -1173,7 +1173,9 @@ Items not part of the Phase 6–16 feature survey (see
 - **Next-features queue (agreed 2026-09-29, in build order).** Each is its own
   brainstorm → spec → plan → build cycle; ideas drawn from MeetingBar,
   FineTune, Background Music, Oversight, Show HN survey.
-  1. **Meeting Join** — peek with a Join button for the next call (Zoom/Meet/
+  1. ✅ **Meeting Join** *(2026-09-29: code-complete on `feat/meeting-join`, unit-tested
+     parser/schedule/state machine; on-device checklist pending — see the plan,
+     Task 6 step 6)* — peek with a Join button for the next call (Zoom/Meet/
      Teams link parsed from the event); button only, no auto-open. Reuses
      `CalendarSource`; link parsing + peek timing are pure/testable. Ref:
      leits/MeetingBar (Apache-2.0).
