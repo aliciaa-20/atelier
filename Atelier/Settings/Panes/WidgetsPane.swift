@@ -11,6 +11,8 @@ struct WidgetsPane: View {
     @AppStorage(AtelierSettings.cameraEnabledKey) private var cameraEnabled = true
     @AppStorage(AtelierSettings.cameraHoldOpenKey) private var cameraHoldOpen = false
     @AppStorage(AtelierSettings.colorPickerEnabledKey) private var colorPickerEnabled = true
+    @AppStorage(AtelierSettings.meetingJoinEnabledKey) private var meetingJoinEnabled = false
+    @State private var meetingAccessDenied = false
 
     var body: some View {
         Form {
@@ -31,6 +33,25 @@ struct WidgetsPane: View {
 
             Section("Color Picker") {
                 Toggle("Enable Color Picker", isOn: $colorPickerEnabled)
+            }
+
+            Section("Meeting Join") {
+                Toggle("Show a Join button before video calls", isOn: $meetingJoinEnabled)
+                    .onChange(of: meetingJoinEnabled) { _, on in
+                        guard on else { meetingAccessDenied = false; return }
+                        guard CalendarPermission.status != .fullAccess else { return }
+                        Task {
+                            if await !CalendarPermission.requestAccess() {
+                                meetingJoinEnabled = false
+                                meetingAccessDenied = true
+                            }
+                        }
+                    }
+                if meetingAccessDenied {
+                    Text("Calendar access is off, so Meeting Join can't see your events.")
+                        .foregroundStyle(.secondary)
+                    Button("Open System Settings") { CalendarPermission.openSystemSettings() }
+                }
             }
         }
         .formStyle(.grouped)
