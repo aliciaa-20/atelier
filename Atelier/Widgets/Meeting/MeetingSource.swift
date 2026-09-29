@@ -34,6 +34,9 @@ final class MeetingSource: LiveActivitySource {
     private var timer: Timer?
     private var observers: [(center: NotificationCenter, token: NSObjectProtocol)] = []
     private(set) var isRunning = false
+    private var hotkeyEnabled = false
+    /// The meeting currently being offered (pill/peek showing) -- what ⌃⌥J joins.
+    private var offered: (meeting: MeetingCandidate, url: URL)?
     /// Called after Join opens the link so the notch can retract the (now
     /// stale) peek instead of leaving it up under the pointer.
     var onJoined: (() -> Void)?
@@ -59,6 +62,25 @@ final class MeetingSource: LiveActivitySource {
         enabled ? start() : stop()
     }
 
+    /// Idempotent, like `setEnabled`.
+    func setHotkeyEnabled(_ enabled: Bool) {
+        guard enabled != hotkeyEnabled else { return }
+        hotkeyEnabled = enabled
+        syncHotkey()
+    }
+
+    /// ⌃⌥J exists only while the setting is on AND a meeting is on offer.
+    private func syncHotkey() {
+        if hotkeyEnabled, isRunning, offered != nil {
+            MeetingHotkey.shared.register { [weak self] in
+                guard let offered = self?.offered else { return }
+                self?.join(offered.meeting, url: offered.url)
+            }
+        } else {
+            MeetingHotkey.shared.unregister()
+        }
+    }
+
     private func start() {
         // Never prompt from here -- the Settings toggle owns the request. If
         // access isn't granted, stay stopped so a later setEnabled(true) retries.
@@ -81,6 +103,8 @@ final class MeetingSource: LiveActivitySource {
         candidates = []
         joinedIDs = []
         store = nil
+        offered = nil
+        syncHotkey()
         subject.send(nil)
     }
 
@@ -132,12 +156,15 @@ final class MeetingSource: LiveActivitySource {
         let now = Date()
         if let snapshot = MeetingSchedule.current(candidates: candidates, now: now, excluding: joinedIDs),
            let url = snapshot.meeting.joinURL {
+            offered = (snapshot.meeting, url)
             subject.send(MeetingActivityContent(
                 meeting: snapshot.meeting, phase: snapshot.phase, notchHeight: notchHeight,
                 onJoin: { [weak self] in self?.join(snapshot.meeting, url: url) }))
         } else {
+            offered = nil
             subject.send(nil)
         }
+        syncHotkey()
         timer?.invalidate()
         let next = MeetingSchedule.nextChange(candidates: candidates, now: now, excluding: joinedIDs)
         let fire = min(next ?? .distantFuture, now.addingTimeInterval(3600))

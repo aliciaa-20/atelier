@@ -123,6 +123,7 @@ final class NotchController {
     private func applyLiveSettings() {
         panel.sharingType = AtelierSettings.ghostModeEnabled ? .none : .readOnly
         meetingSource.setEnabled(AtelierSettings.meetingJoinEnabled)
+        meetingSource.setHotkeyEnabled(AtelierSettings.meetingJoinHotkeyEnabled)
 
         // Disabling the tab mid-play must not leave hold-open keeping the
         // notch up with no way to pause.

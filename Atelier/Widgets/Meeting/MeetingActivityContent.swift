@@ -98,16 +98,30 @@ struct MeetingActivityContent: LiveActivityContent {
     }
 }
 
-/// Capsule button with press feedback (scale via `NotchAnimations.press`).
+/// Capsule button with press feedback (scale via `NotchAnimations.press`) and
+/// hover feedback (a light wash) -- a hover-revealed control that ignored the
+/// pointer would read as dead.
 private struct MeetingJoinButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.system(size: 11, weight: .semibold))
-            .padding(.horizontal, 12)
-            .padding(.vertical, 4)
-            .background(Capsule().fill(Color.green))
-            .foregroundStyle(.black)
-            .scaleEffect(configuration.isPressed ? 0.94 : 1)
-            .animation(NotchAnimations.press, value: configuration.isPressed)
+        JoinButtonLabel(configuration: configuration)
+    }
+
+    private struct JoinButtonLabel: View {
+        let configuration: ButtonStyleConfiguration
+        @State private var hovering = false
+
+        var body: some View {
+            configuration.label
+                .font(.system(size: 11, weight: .semibold))
+                .padding(.horizontal, 12)
+                .padding(.vertical, 4)
+                .background(Capsule().fill(Color.green))
+                .overlay(Capsule().fill(Color.white.opacity(hovering ? 0.22 : 0)))
+                .foregroundStyle(.black)
+                .scaleEffect(configuration.isPressed ? 0.94 : 1)
+                .animation(NotchAnimations.press, value: configuration.isPressed)
+                .animation(NotchAnimations.standard, value: hovering)
+                .onHover { hovering = $0 }
+        }
     }
 }

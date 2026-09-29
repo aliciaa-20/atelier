@@ -45,3 +45,16 @@ state to pill/collapsed. Two supporting rules:
 - The meeting priority (12, above `colorPicker`/`nowPlaying`) suppresses a
   picked-colour peek while a meeting pill is up. Stacked live activities
   (ROADMAP queue #8) is the planned fix for pills competing for one slot.
+
+## Follow-ups from the final review (same day)
+
+- The hover-guard and peek-setting decisions moved into a pure, tested
+  `NotchHoverPolicy` (`Notch/`). It also lets *leaving* a peek always retract
+  unless a HUD owns it: without that, a hover-peek that outlived its content
+  (Join clicked, grace expired) with non-expandable Battery underneath stayed
+  open. Hover-peek content is exempt from the "Peek on track change" setting.
+- Keyboard path: an opt-in ⌃⌥J (`MeetingHotkey`, Carbon) joins the offered
+  meeting. Registered only while a meeting pill/peek is up, and separate from
+  `GlobalHotkeys`, which is all-or-nothing and tied to the teleprompter.
+- The pill shows a compact locale-aware `2m` / `44s` (`MeetingCountdown`)
+  because each flank fits ~20pt of digits; the peek keeps the exact `m:ss`.

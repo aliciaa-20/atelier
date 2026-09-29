@@ -64,7 +64,8 @@ the full forecast, five days out.
 **Never late to a call.** Turn on Meeting Join and, two minutes before
 an event with a Zoom, Meet, Teams or Webex link, the notch peeks with a Join
 button, then keeps a countdown pill until the meeting is under way. Hover the
-pill to bring Join back. Off by default; it only needs Calendar access.
+pill to bring Join back, or press ⌃⌥J if you enable the shortcut. Off by
+default; it only needs Calendar access.
 
 **Light on your battery, on purpose.** Everything idles to nothing
 when it isn't visible. A menu-bar accessory that behaves like one.

@@ -26,6 +26,7 @@ enum AtelierSettings {
     static let calendarScrollSwipeKey = "calendarScrollSwipe"
     static let colorPickerEnabledKey = "colorPickerEnabled"
     static let meetingJoinEnabledKey = "meetingJoinEnabled"
+    static let meetingJoinHotkeyEnabledKey = "meetingJoinHotkeyEnabled"
     static let glassEffectEnabledKey = "glassEffectEnabled"
     static let glassIntensityKey = "glassIntensity"
     static let tabOrderKey = "tabOrder"
@@ -58,6 +59,7 @@ enum AtelierSettings {
             // Off by default -- opt-in: no Calendar prompt or background work
             // until the user turns Meeting Join on.
             meetingJoinEnabledKey: false,
+            meetingJoinHotkeyEnabledKey: false,
             // Off by default -- ships conservatively (today's flat-black
             // look) until a user opts in, rather than changing the
             // default notch appearance out from under an existing install.
@@ -212,6 +214,12 @@ enum AtelierSettings {
     /// until the user asks for it.
     static var meetingJoinEnabled: Bool {
         UserDefaults.standard.bool(forKey: meetingJoinEnabledKey)
+    }
+
+    /// Opt-in ⌃⌥J to join the offered meeting. The key is only registered
+    /// while a meeting pill/peek is actually showing.
+    static var meetingJoinHotkeyEnabled: Bool {
+        UserDefaults.standard.bool(forKey: meetingJoinHotkeyEnabledKey)
     }
 
     /// Gates `NotchRootView.usesGlassBackground` -- whether `.expanded`/

@@ -69,12 +69,18 @@ enum MeetingSchedule {
 }
 
 /// Countdown text for the pill, whose flanks (~32pt each beside the notch) fit
-/// only ~20pt of digits -- so "2m" / "44s" rather than "1:53". The peek has
-/// room and shows the exact `m:ss` via `Text(timerInterval:)`.
+/// only ~20pt of digits -- so a single narrow unit ("2m" / "44s") rather than
+/// "1:53". Locale-aware via `Duration.UnitsFormatStyle`. The peek has room and
+/// shows the exact `m:ss` via `Text(timerInterval:)`.
 enum MeetingCountdown {
-    static func pillText(remaining: TimeInterval) -> String {
+    static func pillText(locale: Locale = .current, remaining: TimeInterval) -> String {
         let seconds = max(0, remaining)
-        if seconds >= 60 { return "\(Int((seconds / 60).rounded(.up)))m" }
-        return "\(Int(seconds.rounded(.up)))s"
+        if seconds >= 60 {
+            let minutes = Int((seconds / 60).rounded(.up))
+            return Duration.seconds(minutes * 60)
+                .formatted(.units(allowed: [.minutes], width: .narrow).locale(locale))
+        }
+        return Duration.seconds(Int(seconds.rounded(.up)))
+            .formatted(.units(allowed: [.seconds], width: .narrow).locale(locale))
     }
 }
