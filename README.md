@@ -44,6 +44,10 @@ pretending to be one.
 self-view before a call. The camera only turns on while you're
 looking, and nothing is ever recorded.
 
+**Your desktop bends as the lid closes.** A physical, dimensional
+fold instead of a flat fade to sleep — screen capture only runs while
+the lid is actually mid-fold, never sitting idle in the background.
+
 **A calm home base.** Home, Shelf, System Monitor, and Calendar tabs
 give you somewhere to land when nothing's playing — a week strip with
 a line of personality for each day, one swipe away from your full
@@ -78,6 +82,7 @@ Click the menu-bar icon → **Settings** (⌘, while the menu is open).
 | Tabs | Enable and drag to reorder — Home stays pinned first |
 | Widgets | Calendar, Camera, Color Picker |
 | Teleprompter | Script, reading speed, font, Ghost Mode, shortcuts |
+| Bend Effect | Enable, appearance (style/perspective/blur/shadow), lid behavior, preview |
 | Permissions | Live status for everything below, with a shortcut into System Settings |
 
 ## Permissions
