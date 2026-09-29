@@ -9,7 +9,11 @@ struct SpotifySource: NowPlayingSource {
     /// check and the Apple Event, and the event relaunches it (confirmed:
     /// quitting Spotify with Atelier open brought it straight back).
     var isAvailable: Bool {
-        NSWorkspace.shared.runningApplications.contains { $0.bundleIdentifier == Self.bundleID }
+        // Targeted lookup, not `runningApplications.contains { $0.bundleIdentifier ... }`:
+        // that reads the bundle id of *every* running app (a LaunchServices
+        // lookup each), and it runs several times per 1 s idle poll. The
+        // idle-CPU profile put ~85% of Atelier's busy time there.
+        !NSRunningApplication.runningApplications(withBundleIdentifier: Self.bundleID).isEmpty
     }
 
     func fetch() async -> NowPlayingInfo? {

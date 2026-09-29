@@ -79,7 +79,6 @@ final class SystemMonitorSource: LiveActivitySource, ObservableObject {
         guard AtelierSettings.systemMonitorEnabled else { return }
         guard let free = Self.readMemoryFreePercentage() else { return }
         let memoryPercent = SystemMonitorMath.memoryUsedPercent(freePercentage: free)
-        self.memoryPercent = memoryPercent
 
         guard let ticks = Self.readCPUTicks() else { return }
         defer { previousTicks = ticks }
@@ -90,8 +89,21 @@ final class SystemMonitorSource: LiveActivitySource, ObservableObject {
         // for needing two samples. Nothing is published (to either the
         // pill stack or the always-current `@Published` reading) until
         // the second poll, ~4s after launch.
-        guard let previousTicks else { return }
+        guard let previousTicks else {
+            self.memoryPercent = memoryPercent
+            return
+        }
         let cpuPercent = SystemMonitorMath.cpuPercent(previous: previousTicks, current: ticks)
+
+        // Every view shows whole percents, so republish only when one
+        // changes. An identical `@Published` assignment still re-renders
+        // `NotchRootView` (it observes this source), which at a 4 s poll was
+        // a steady idle cost even with the notch collapsed.
+        let changed = !hasCPUSample
+            || Int(cpuPercent.rounded()) != Int(self.cpuPercent.rounded())
+            || Int(memoryPercent.rounded()) != Int(self.memoryPercent.rounded())
+        guard changed else { return }
+        self.memoryPercent = memoryPercent
         self.cpuPercent = cpuPercent
         hasCPUSample = true
 
