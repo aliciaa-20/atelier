@@ -23,6 +23,11 @@ enum NotchEvent {
     /// is `.pill` (still playing) or `.collapsed` (not), without the pure
     /// reducer needing to remember anything across calls.
     case hoverEnded(isPlaying: Bool)
+    /// Hover over a pill whose content opts in via
+    /// `LiveActivityContent.hoversToPeek` (e.g. Meeting Join's countdown):
+    /// shows that content's peek instead of the full player. Exit reuses
+    /// `.hoverEnded`, which already resolves any state to pill/collapsed.
+    case hoverPeekStarted
     /// Fired by `NowPlayingCoordinator` whenever playback starts/stops.
     case isPlayingChanged(Bool)
     /// Fired on a detected track change, gated by the user's "peek on
@@ -57,6 +62,13 @@ enum NotchStateMachine {
             return state == .shelf ? .shelf : .expanded
         case .hoverEnded(let isPlaying):
             return isPlaying ? .pill : .collapsed
+        case .hoverPeekStarted:
+            switch state {
+            case .collapsed, .pill:
+                return .peeking
+            case .expanded, .peeking, .shelf:
+                return state
+            }
         case .isPlayingChanged(let isPlaying):
             switch state {
             case .expanded, .peeking, .shelf:
