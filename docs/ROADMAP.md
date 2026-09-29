@@ -5,7 +5,7 @@ something runnable, a green test suite, and a commit. Source of truth for the
 overall plan is [the design spec](superpowers/specs/2026-08-31-atelier-notch-design.md);
 this file tracks progress against it.
 
-**Where we are:** Meeting Join shipped 2026-09-29 (first item of the Backlog's Next-features queue; next up: battery drain list, share card, Claude usage meter). Phases 0–12 and 14 (camera mirror) shipped, Phase 17 stages 1–3 (teleprompter tab + Ghost Mode + hotkeys) shipped, stage 4 voice sync shipped on its branch (unit-tested, core flow verified on-device; edge-case checks still optional), Phase 16 (Settings window) mostly shipped (Phase 12 so far: color picker + Calendar tab + weather; quick notes/timers not started). Phase 13 (system resource monitor),
+**Where we are:** Meeting Join shipped 2026-09-29 (first item of the Backlog's Next-features queue; Battery drain list shipped the same day, on the System Monitor tab; next up: share card, Claude usage meter). Phases 0–12 and 14 (camera mirror) shipped, Phase 17 stages 1–3 (teleprompter tab + Ghost Mode + hotkeys) shipped, stage 4 voice sync shipped on its branch (unit-tested, core flow verified on-device; edge-case checks still optional), Phase 16 (Settings window) mostly shipped (Phase 12 so far: color picker + Calendar tab + weather; quick notes/timers not started). Phase 13 (system resource monitor),
 Phase 16 (stable signing still open; the menu-bar icon is a placeholder until the app icon exists), and Phase 18 (Liquid Glass notch background) are all 🟨 partial — see
 their entries below for what's still open (Phase 18 has a known
 unresolved visual bug on close, a tab-switch retract flicker, and a
@@ -1179,8 +1179,15 @@ Items not part of the Phase 6–16 feature survey (see
      Teams link parsed from the event); button only, no auto-open. Reuses
      `CalendarSource`; link parsing + peek timing are pure/testable. Ref:
      leits/MeetingBar (Apache-2.0).
-  2. **Battery drain list** — top energy-using apps, sampled only while the
-     notch is hover-open.
+  2. ✅ **Battery drain list** *(shipped 2026-09-29; `EnergyMath` unit-tested,
+     `EnergySource` + views verified on-device by looking, not by
+     instrumentation: that sampling stops on collapse rests on the view
+     unmounting plus an explicit `energy.stop()`, not on an Activity Monitor
+     measurement; ADR 0029)* — top 3 apps on the System Monitor tab behind a
+     corner-icon switch, icon + name + relative bar (no numbers), sampled only
+     while that view is on screen. Lists apps you own only: root-owned
+     processes (WindowServer) are unreadable without root. Verdict tiers
+     (1/3/8 W) calibrated against busy loops on the M3.
   3. **Now-playing share card** — render the current track as a draggable image.
   4. **Claude usage meter** — starts as a *spike*: do local `~/.claude` logs
      hold enough to compute usage vs limits? No API key/network.

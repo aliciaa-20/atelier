@@ -31,10 +31,72 @@ import SwiftUI
 /// dashboard.
 struct SystemMonitorPageView: View {
     @ObservedObject var source: SystemMonitorSource
+    let energy: EnergySource
     @State private var showingDetail = false
+    @State private var segment: Segment = .gauges
+    @State private var isSwitchHovering = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
+    private enum Segment: String, CaseIterable {
+        case gauges = "Gauges"
+        case energy = "Energy"
+    }
+
     var body: some View {
+        // Swapping the view (not hiding it) is what fires
+        // `EnergyListView`'s onDisappear, which stops sampling.
+        Group {
+            switch segment {
+            case .gauges: gauges
+            case .energy: EnergyListView(source: energy)
+            }
+        }
+        .padding(.horizontal, NotchLayout.pageHorizontalInset)
+        .padding(.top, 6)
+        // Matches `ShelfView`'s own bottom inset -- this view never applied
+        // one, so centering had more room to push into below the content
+        // than above it (no matching pull from the top edge), reading as
+        // the two cards sitting low with a big gap overhead. Symmetric
+        // insets now pull the centered content up without hard-anchoring
+        // it to the top, which overcorrected into a big gap underneath
+        // instead.
+        .padding(.bottom, NotchLayout.pageBottomInset)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+        // A corner icon rather than a segmented control: it costs no
+        // vertical space, so the gauges keep their full height (a Picker
+        // here clipped the "Memory" label).
+        .overlay(alignment: .topTrailing) { switchButton }
+    }
+
+    /// Empty space between the 11pt glyph and the edge of its 24pt tap
+    /// target, so the *glyph* (not the frame) sits `pageHorizontalInset`
+    /// from the panel edge like every other page's content.
+    private static let switchGlyphSlack: CGFloat = 6
+
+    private var switchButton: some View {
+        Button {
+            withAnimation(reduceMotion ? .easeInOut(duration: 0.15) : NotchAnimations.standard) {
+                segment = (segment == .gauges) ? .energy : .gauges
+            }
+        } label: {
+            Image(systemName: segment == .gauges ? "bolt.fill" : "speedometer")
+                .font(.system(size: 11, weight: .semibold))
+                .dimmedText()
+                .opacity(isSwitchHovering ? 0.7 : 1)
+                .animation(reduceMotion ? nil : NotchAnimations.press, value: isSwitchHovering)
+                .frame(width: 24, height: 24)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .focusEffectDisabled()
+        .onHover { isSwitchHovering = $0 }
+        .padding(.trailing, NotchLayout.pageHorizontalInset - Self.switchGlyphSlack)
+        .padding(.top, 2)
+        .help(segment == .gauges ? "Show top energy users" : "Show gauges")
+        .accessibilityLabel(segment == .gauges ? "Show top energy users" : "Show gauges")
+    }
+
+    private var gauges: some View {
         Button {
             withAnimation(reduceMotion ? .easeInOut(duration: 0.15) : .spring(response: 0.35, dampingFraction: 0.85)) {
                 showingDetail.toggle()
@@ -76,17 +138,6 @@ struct SystemMonitorPageView: View {
         .accessibilityLabel(showingDetail ? "System status detail" : "System status rings")
         .accessibilityHint(showingDetail ? "Press to show gauges" : "Press for a plain-language status")
         .help(showingDetail ? "Show gauges" : "Show a plain-language status")
-        .padding(.horizontal, NotchLayout.pageHorizontalInset)
-        .padding(.top, 6)
-        // Matches `ShelfView`'s own bottom inset -- this view never applied
-        // one, so centering had more room to push into below the content
-        // than above it (no matching pull from the top edge), reading as
-        // the two cards sitting low with a big gap overhead. Symmetric
-        // insets now pull the centered content up without hard-anchoring
-        // it to the top, which overcorrected into a big gap underneath
-        // instead.
-        .padding(.bottom, NotchLayout.pageBottomInset)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
     }
 }
 
