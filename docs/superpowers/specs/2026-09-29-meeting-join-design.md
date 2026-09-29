@@ -1,6 +1,6 @@
 # Meeting Join — design
 
-**Status:** approved in conversation 2026-09-29; awaiting spec review.
+**Status:** approved 2026-09-29 (updated same day for hover-to-peek).
 **Roadmap:** first item in the ROADMAP Backlog's "Next-features queue".
 **Reference:** [leits/MeetingBar](https://github.com/leits/MeetingBar) (Apache-2.0) — pull real source for link-detection patterns before implementing (`check-reference-apps-first`); adapt with credit.
 
@@ -18,6 +18,13 @@ Solves: fumbling for the link and joining late.
   starts watching. Nothing runs, and no prompt appears, while it is off.
 - **Lead time:** peek at 2 minutes before start (fixed for now).
 - **Button only** — never auto-opens a link.
+- **Join stays reachable via hover (decided 2026-09-29):** the initial peek
+  keeps the normal 2.5 s length, then the countdown lives in the slim pill.
+  Hovering the pill brings the compact peek (with Join) back and holds it
+  while the pointer is over it. Rejected: a long-lived peek (covers the menu
+  bar for minutes) and click-the-pill-to-join (tiny target, easy to
+  mis-click into a call). Tradeoff accepted: while a meeting pill is up,
+  hovering shows Join instead of opening the now-playing player.
 - **Approach:** a separate `MeetingSource` (`LiveActivitySource`) with its own
   `EKEventStore`, independent of `CalendarSource`'s lazy tab lifecycle.
   Rejected: extending `CalendarSource` — it is built around "the week on
@@ -52,10 +59,21 @@ Solves: fumbling for the link and joining late.
   `NSSystemClockDidChange`. No polling. Publishes `LiveActivityContent?`.
   Gets a new slot in `NotchLiveActivityPriority` (value chosen at plan time
   after reading the existing ranking).
-- `MeetingJoinView` (`UI/`) — peek + pill content: title, countdown
-  (`TimelineView`, capped schedule, only while visible), Join button, dismiss
-  (X). Join opens the URL via `NSWorkspace` and dismisses that event;
-  dismissal is in-memory only.
+- `MeetingActivityContent` (`Widgets/Meeting/`) — the `LiveActivityContent`:
+  pill (video glyph + countdown) and compact peek (title, countdown, Join).
+  Countdown is `Text(timerInterval:)` over a fixed range, so nothing of ours
+  ticks. Join opens the URL via `NSWorkspace` and hides that occurrence
+  (in-memory). No dismiss button — the peek self-retracts and the pill is
+  slim.
+- **Hover-to-peek wiring** (touches core hover code, so verify on-device):
+  new `LiveActivityContent.hoversToPeek` flag (default false); new pure
+  `NotchEvent.hoverPeekStarted` (collapsed/pill → peeking, else unchanged;
+  unit-tested); `NotchRootView`'s hover guard lets `hoversToPeek` content
+  through and sends `.hoverPeekStarted` instead of `.hoverStarted`;
+  `hoversToPeek` content is excluded from `transientHUD` (otherwise hover-out
+  would be skipped while it's on top); `NotchController`'s peek-decay task
+  skips retracting while the pointer is inside for such content
+  (`NotchViewModel.pointerInside`).
 - Settings → Widgets toggle; when access is denied the toggle stays off and
   shows a hint linking to the Permissions pane.
 
@@ -64,9 +82,9 @@ Solves: fumbling for the link and joining late.
 | Time | Notch |
 |---|---|
 | before -2 min | nothing |
-| at -2 min | peeks once (title, countdown, Join), then retracts to a pill |
-| -2 min to +5 min | slim pill with countdown / "started" |
-| after +5 min, Join, or dismiss | pill removed; next meeting takes over |
+| at -2 min | peeks once (title, countdown, Join) for 2.5 s, then retracts to a pill |
+| -2 min to +5 min | slim pill with countdown / "Started"; hover it -> compact peek with Join, held while hovered |
+| after +5 min, or after Join | pill removed; next meeting takes over |
 
 ## Accessibility and feel
 
@@ -92,5 +110,5 @@ when the toggle is off. Countdown ticking only while the pill/peek is visible.
 
 ## Out of scope
 
-Configurable lead time, snooze, auto-join, non-video (in-person) events,
+Configurable lead time, snooze, dismiss button, auto-join, non-video (in-person) events,
 Reminders. Add via ROADMAP if wanted.
