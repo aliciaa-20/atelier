@@ -70,7 +70,7 @@ struct BendEffectPane: View {
             Section("Preview") {
                 BendEffectMetalPreview(controller: controller)
                     .aspectRatio(1.6, contentMode: .fit)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .clipShape(RoundedRectangle(cornerRadius: NotchLayout.cardCornerRadius, style: .continuous))
                     .accessibilityLabel("Animated desktop fold preview")
                 HStack {
                     Button {
@@ -106,19 +106,37 @@ struct BendEffectPane: View {
                 }
                 .pickerStyle(.segmented)
                 LabeledContent("Perspective") {
-                    Slider(value: $perspective, in: 0...1) { Text("Perspective") }
-                        .labelsHidden()
-                        .frame(maxWidth: 200)
+                    HStack {
+                        Slider(value: $perspective, in: 0...1) { Text("Perspective") }
+                            .labelsHidden()
+                            .frame(maxWidth: 200)
+                        Text(perspective, format: .number.precision(.fractionLength(2)))
+                            .monospacedDigit()
+                            .foregroundStyle(.secondary)
+                            .frame(width: 36, alignment: .trailing)
+                    }
                 }
                 LabeledContent("Blur") {
-                    Slider(value: $blur, in: 0...1) { Text("Blur") }
-                        .labelsHidden()
-                        .frame(maxWidth: 200)
+                    HStack {
+                        Slider(value: $blur, in: 0...1) { Text("Blur") }
+                            .labelsHidden()
+                            .frame(maxWidth: 200)
+                        Text(blur, format: .number.precision(.fractionLength(2)))
+                            .monospacedDigit()
+                            .foregroundStyle(.secondary)
+                            .frame(width: 36, alignment: .trailing)
+                    }
                 }
                 LabeledContent("Shadow") {
-                    Slider(value: $shadow, in: 0...1) { Text("Shadow") }
-                        .labelsHidden()
-                        .frame(maxWidth: 200)
+                    HStack {
+                        Slider(value: $shadow, in: 0...1) { Text("Shadow") }
+                            .labelsHidden()
+                            .frame(maxWidth: 200)
+                        Text(shadow, format: .number.precision(.fractionLength(2)))
+                            .monospacedDigit()
+                            .foregroundStyle(.secondary)
+                            .frame(width: 36, alignment: .trailing)
+                    }
                 }
                 Button("Reset appearance") { controller.resetAppearance() }
             }
