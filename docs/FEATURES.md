@@ -96,6 +96,7 @@ architecture than to bolting features on individually.
 | Weather ✅ (`Widgets/Weather/`, Open-Meteo + CoreLocation; glance + detail card on idle Home; [ADR 0015](decisions/0015-weather-open-meteo-corelocation.md)) | Atoll, Sapphire |
 | Quick notes | notchify |
 | Timers / Pomodoro | QuartzNotch, NotchIA, Atoll |
+| Meeting Join ✅ — pill + Join peek before calls with a Zoom/Meet/Teams/Webex link; `Widgets/Meeting/`, [ADR 0028](decisions/0028-hover-to-peek-live-activity-content.md) | MeetingBar |
 | Color picker ✅ (`Widgets/ColorPicker/`, `NSColorSampler`) | Atoll |
 
 ---
@@ -283,6 +284,22 @@ broader permission grant than anything else Atelier asks for today.
 Confirmed working on this machine (MacBook Pro M3) by probing the same
 `IOHIDManager` match criteria BendMac's own `LidSensor.swift` uses, even
 though their README only lists an M5 MacBook Air as tested hardware.
+
+---
+
+## 13. Small system utilities (quick wins)
+
+Ideas from [Notchy](https://notchy.dev) (closed source, free — product ideas
+only; nothing to pull). Queued in ROADMAP's Next-features queue.
+
+| Feature | Notes |
+|---|---|
+| Drive Eject island | Mount notification → one-tap Eject + "Safe to disconnect"; no permission. |
+| Caps Lock HUD | Brief island per toggle; reads modifier flags only. |
+| Keyboard cleaning lock | Locks all keys with a countdown island, `⌘⎋` unlocks; event tap (Accessibility already granted). |
+| Full-charge island | Pill at a user-chosen level (80–100%) as the cue to unplug; extends `BatterySource`. |
+| Finder Cut (⌘X / ⌘V) | Not a notch feature. Ref: [YONN2222/cmdX](https://github.com/YONN2222/cmdX) (MIT): Finder-frontmost only, ⌘X = copy + arm, ⌘V = Finder's ⌘⌥V move. Reuses the Accessibility/event-tap path. |
+| Stacked live activities | Several activities share the collapsed pill instead of one winning the slot. Follow-up to Meeting Join. |
 
 ---
 

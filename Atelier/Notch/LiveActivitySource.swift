@@ -57,6 +57,12 @@ protocol LiveActivityContent {
     /// peek every time the charger state changes reads as noisy, not
     /// informative, on-device (confirmed by the user directly).
     var peeksOnChange: Bool { get }
+    /// Whether hovering the pill while this content is on top should bring
+    /// its `peekView()` back (held while hovered) instead of ignoring hover
+    /// (non-expandable default) or opening the full player. For content whose
+    /// peek has a control the user must be able to reach after the initial
+    /// peek decays (Meeting Join's Join button).
+    var hoversToPeek: Bool { get }
     @ViewBuilder func pillView() -> AnyView
     @ViewBuilder func peekView() -> AnyView
 }
@@ -64,4 +70,5 @@ protocol LiveActivityContent {
 extension LiveActivityContent {
     var isExpandable: Bool { false }
     var peeksOnChange: Bool { true }
+    var hoversToPeek: Bool { false }
 }

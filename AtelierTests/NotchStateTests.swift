@@ -201,4 +201,20 @@ extension NotchStateTests {
 
         #expect(result == .expanded)
     }
+
+    @Test func hoverPeekStartedPeeksFromRestingStates() {
+        #expect(NotchStateMachine.reduce(.pill, on: .hoverPeekStarted) == .peeking)
+        #expect(NotchStateMachine.reduce(.collapsed, on: .hoverPeekStarted) == .peeking)
+    }
+
+    @Test func hoverPeekStartedDoesNotDisturbActiveStates() {
+        #expect(NotchStateMachine.reduce(.expanded, on: .hoverPeekStarted) == .expanded)
+        #expect(NotchStateMachine.reduce(.peeking, on: .hoverPeekStarted) == .peeking)
+        #expect(NotchStateMachine.reduce(.shelf, on: .hoverPeekStarted) == .shelf)
+    }
+
+    @Test func hoverEndedRetractsAHoverPeek() {
+        let peeking = NotchStateMachine.reduce(.pill, on: .hoverPeekStarted)
+        #expect(NotchStateMachine.reduce(peeking, on: .hoverEnded(isPlaying: true)) == .pill)
+    }
 }
