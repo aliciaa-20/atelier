@@ -135,11 +135,17 @@ enum EnergyMath {
                 totals[systemID, default: ("System", 0)].watts += reading.watts
             }
         }
-        return totals
-            .map { AppEnergy(id: $0.key, name: $0.value.name, watts: $0.value.watts) }
-            .filter { $0.watts > 0 }
-            .sorted { $0.watts != $1.watts ? $0.watts > $1.watts : $0.name < $1.name }
-            .prefix(limit)
-            .map { $0 }
+        // Explicitly typed steps, not one chained expression: the chain
+        // compiled on Xcode 27 but the CI runner's Xcode 26.6 gave up with
+        // "unable to type-check this expression in reasonable time".
+        let all: [AppEnergy] = totals.map { entry in
+            AppEnergy(id: entry.key, name: entry.value.name, watts: entry.value.watts)
+        }
+        let active: [AppEnergy] = all.filter { $0.watts > 0 }
+        let ranked: [AppEnergy] = active.sorted { (a: AppEnergy, b: AppEnergy) -> Bool in
+            if a.watts != b.watts { return a.watts > b.watts }
+            return a.name < b.name
+        }
+        return Array(ranked.prefix(limit))
     }
 }
