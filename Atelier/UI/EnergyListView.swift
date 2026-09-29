@@ -23,7 +23,7 @@ struct EnergyListView: View {
                     .lineLimit(1)
                     .accessibilityAddTraits(.isHeader)
                 ForEach(source.rows) { row in
-                    EnergyRow(row: row, fraction: EnergyMath.fraction(watts: row.watts, topWatts: top.watts))
+                    EnergyRow(row: row, fraction: EnergyMath.barFraction(watts: row.watts, topWatts: top.watts))
                 }
             }
         }
@@ -53,26 +53,17 @@ private struct EnergyRow: View {
     let row: EnergyMath.AppEnergy
     let fraction: Double
 
-    private var isAtelier: Bool { row.id == Bundle.main.bundleIdentifier }
-
     var body: some View {
         HStack(spacing: 8) {
             Image(nsImage: AppIconCache.icon(forBundleID: row.id))
                 .resizable()
                 .frame(width: NotchLayout.energyIconSize, height: NotchLayout.energyIconSize)
                 .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 0) {
-                Text(row.name)
-                    .font(.system(size: 12, weight: .medium))
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-                if isAtelier {
-                    Text("that's me, hi")
-                        .font(.system(size: 9))
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .frame(width: NotchLayout.energyNameWidth, alignment: .leading)
+            Text(row.name)
+                .font(.system(size: 12, weight: .medium))
+                .lineLimit(1)
+                .truncationMode(.tail)
+                .frame(width: NotchLayout.energyNameWidth, alignment: .leading)
             GeometryReader { geo in
                 Capsule().fill(.white.opacity(0.10))
                     .overlay(alignment: .leading) {

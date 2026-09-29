@@ -36,6 +36,16 @@ struct EnergyMathTests {
         #expect(EnergyMath.fraction(watts: 9, topWatts: 4) == 1)
     }
 
+    @Test func barFractionKeepsIdleBarsShortInsteadOfFillingTheTopOne() {
+        // At idle the top app is ~0.03 W; its bar must not read as "full".
+        #expect(EnergyMath.barFraction(watts: 0.03, topWatts: 0.03) < 0.02)
+    }
+
+    @Test func barFractionIsRelativeOnceTheTopAppPassesTheFloor() {
+        #expect(EnergyMath.barFraction(watts: 3, topWatts: 6) == 0.5)
+        #expect(EnergyMath.barFraction(watts: 6, topWatts: 6) == 1)
+    }
+
     // MARK: tier boundaries (provisional thresholds: 1 / 3 / 8 W)
 
     @Test func tierBoundaries() {

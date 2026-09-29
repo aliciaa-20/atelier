@@ -42,18 +42,9 @@ struct SystemMonitorPageView: View {
     }
 
     var body: some View {
-        VStack(spacing: 8) {
-            Picker("View", selection: $segment) {
-                ForEach(Segment.allCases, id: \.self) { Text($0.rawValue).tag($0) }
-            }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-            .controlSize(.small)
-            .frame(width: 150)
-            .help("Switch between gauges and top energy users")
-
-            // Swapping the view (not hiding it) is what fires
-            // `EnergyListView`'s onDisappear, which stops sampling.
+        // Swapping the view (not hiding it) is what fires
+        // `EnergyListView`'s onDisappear, which stops sampling.
+        Group {
             switch segment {
             case .gauges: gauges
             case .energy: EnergyListView(source: energy)
@@ -70,6 +61,30 @@ struct SystemMonitorPageView: View {
         // instead.
         .padding(.bottom, NotchLayout.pageBottomInset)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+        // A corner icon rather than a segmented control: it costs no
+        // vertical space, so the gauges keep their full height (a Picker
+        // here clipped the "Memory" label).
+        .overlay(alignment: .topTrailing) { switchButton }
+    }
+
+    private var switchButton: some View {
+        Button {
+            withAnimation(reduceMotion ? .easeInOut(duration: 0.15) : NotchAnimations.standard) {
+                segment = (segment == .gauges) ? .energy : .gauges
+            }
+        } label: {
+            Image(systemName: segment == .gauges ? "bolt.fill" : "speedometer")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(.secondary)
+                .frame(width: 24, height: 24)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .focusEffectDisabled()
+        .padding(.trailing, NotchLayout.pageHorizontalInset - 12)
+        .padding(.top, 2)
+        .help(segment == .gauges ? "Show top energy users" : "Show gauges")
+        .accessibilityLabel(segment == .gauges ? "Show top energy users" : "Show gauges")
     }
 
     private var gauges: some View {

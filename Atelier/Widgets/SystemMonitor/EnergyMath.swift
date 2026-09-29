@@ -21,6 +21,16 @@ enum EnergyMath {
         return min(watts / topWatts, 1)
     }
 
+    /// Below this the top app's bar is scaled against the floor instead of
+    /// itself, so an idle Mac shows short bars that match "napping" rather
+    /// than a full bar for an app using ~0.03 W. Equals the "peckish" tier
+    /// boundary.
+    static let barFloorWatts: Double = 3
+
+    static func barFraction(watts: Double, topWatts: Double) -> Double {
+        fraction(watts: watts, topWatts: max(topWatts, barFloorWatts))
+    }
+
     /// How hungry the top app is. Thresholds are provisional -- tune them
     /// after comparing against `top -o power` on the target machine. Watts
     /// are never shown; they only pick the line of copy.

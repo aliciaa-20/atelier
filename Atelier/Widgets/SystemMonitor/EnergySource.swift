@@ -20,7 +20,7 @@ final class EnergySource: ObservableObject {
     @Published private(set) var hasSample = false
 
     private static let pollInterval: Duration = .seconds(3)
-    private static let rowLimit = 5
+    private static let rowLimit = 3
 
     private struct Snapshot: Sendable {
         let energyNJ: [Int32: UInt64]
@@ -69,16 +69,22 @@ final class EnergySource: ObservableObject {
         guard !readings.isEmpty else { return }
 
         var apps: [Int32: EnergyMath.AppIdentity] = [:]
-        for app in NSWorkspace.shared.runningApplications where app.activationPolicy != .prohibited {
+        for app in NSWorkspace.shared.runningApplications where app.activationPolicy == .regular {
             let name = app.localizedName ?? app.bundleIdentifier ?? "App"
             apps[app.processIdentifier] = EnergyMath.AppIdentity(
                 id: app.bundleIdentifier ?? "pid\(app.processIdentifier)",
                 name: name
             )
         }
+        // Only real apps: daemons and background agents roll into the
+        // "System" row, which is plumbing rather than something to act on,
+        // so it's dropped here (the math keeps it for testability).
         rows = EnergyMath.topApps(
-            readings: readings, parents: current.parents, apps: apps, limit: Self.rowLimit
+            readings: readings, parents: current.parents, apps: apps, limit: .max
         )
+        .filter { $0.id != EnergyMath.systemID }
+        .prefix(Self.rowLimit)
+        .map { $0 }
         hasSample = true
     }
 
