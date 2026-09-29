@@ -1189,6 +1189,20 @@ Items not part of the Phase 6–16 feature survey (see
      for battery. Read FineTune (GPL-3.0) / Background Music (GPL-2.0) for
      technique only; don't copy code.
   7. **Screenshot peek** — after the shelf is fixed.
+  8. **Stacked live activities** — follow-up to Meeting Join (#1): today only
+     the top-priority source shows, so a meeting pill hides the music pill for
+     ~7 min. Let several activities share the collapsed pill. Changes
+     `LiveActivityCoordinator`/`NotchRootView`, so it needs its own design pass.
+  9. **Quick wins** (small, order flexible; ideas from notchy.dev — closed
+     source, product ideas only):
+     - **Drive Eject island** — USB/volume mount → one-tap Eject, then "Safe to
+       disconnect". Public mount notifications, no permission.
+     - **Caps Lock HUD** — brief island on each toggle (modifier flags only).
+     - **Keyboard cleaning lock** — lock every key with a countdown island;
+       `⌘⎋` unlocks. Event tap; Accessibility already granted for
+       `MediaKeyInterceptor`.
+     - **Full-charge island** — pill at a chosen charge level (80–100%) as the
+       cue to unplug. Extends `BatterySource`.
 - ~~**Apple Music source** — a second `NowPlayingSource` conformer.~~ Shipped
   2026-09-27: `AppleMusicSource` + `MultiNowPlayingSource` (auto-detects
   whichever app is actually playing, `NowPlayingArbiter` is the pure/tested

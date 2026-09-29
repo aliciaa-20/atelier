@@ -286,6 +286,21 @@ though their README only lists an M5 MacBook Air as tested hardware.
 
 ---
 
+## 13. Small system utilities (quick wins)
+
+Ideas from [Notchy](https://notchy.dev) (closed source, free — product ideas
+only; nothing to pull). Queued in ROADMAP's Next-features queue.
+
+| Feature | Notes |
+|---|---|
+| Drive Eject island | Mount notification → one-tap Eject + "Safe to disconnect"; no permission. |
+| Caps Lock HUD | Brief island per toggle; reads modifier flags only. |
+| Keyboard cleaning lock | Locks all keys with a countdown island, `⌘⎋` unlocks; event tap (Accessibility already granted). |
+| Full-charge island | Pill at a user-chosen level (80–100%) as the cue to unplug; extends `BatterySource`. |
+| Stacked live activities | Several activities share the collapsed pill instead of one winning the slot. Follow-up to Meeting Join. |
+
+---
+
 ## Not pulled from the survey
 
 - **Clipboard history** — excluded, user already uses Maccy.
