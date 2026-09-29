@@ -34,15 +34,30 @@ struct MeetingActivityContent: LiveActivityContent {
         }
     }
 
+    /// Short enough for a flank: the pill's middle is the physical notch, so
+    /// content goes in the two ears (like `BatteryActivityContent`), never
+    /// centred. "Now" instead of "Started" -- the ears are ~32pt wide.
+    @ViewBuilder private var pillCountdown: some View {
+        switch phase {
+        case .imminent: Text(timerInterval: countdownRange, countsDown: true, showsHours: false)
+        case .started: Text("Now")
+        }
+    }
+
     func pillView() -> AnyView {
         AnyView(
-            HStack(spacing: 5) {
-                Image(systemName: "video.fill").font(.system(size: 9, weight: .semibold))
-                countdown
+            HStack(spacing: 0) {
+                Image(systemName: "video.fill")
+                    .font(.system(size: 10, weight: .semibold))
+                Spacer(minLength: 0)
+                pillCountdown
                     .font(.system(size: 10, weight: .medium).monospacedDigit())
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
+                    .frame(maxWidth: 22, alignment: .trailing)
             }
             .foregroundStyle(.white)
-            .frame(maxWidth: .infinity)
+            .padding(.horizontal, 12)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(spokenLabel)
             // The pill has no visible button (Join lives in the hover peek),

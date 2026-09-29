@@ -353,6 +353,12 @@ final class NotchController {
         panel.setFrame(maxRect, display: true)
         panel.orderFrontRegardless()
 
+        meetingSource.onJoined = { [weak self] in
+            guard let self else { return }
+            withAnimation(NotchAnimations.close) {
+                viewModel.handle(.hoverEnded(isPlaying: liveActivityCoordinator.hasContent))
+            }
+        }
         applyLiveSettings()
         settingsObserver = NotificationCenter.default.addObserver(
             forName: UserDefaults.didChangeNotification, object: nil, queue: .main
@@ -477,7 +483,10 @@ final class NotchController {
     }
 
     private func triggerPeek(with event: NotchEvent) {
-        guard AtelierSettings.peekOnTrackChangeEnabled else { return }
+        guard NotchHoverPolicy.allowsPeek(
+            peekSettingEnabled: AtelierSettings.peekOnTrackChangeEnabled,
+            contentHoversToPeek: liveActivityCoordinator.topContent?.hoversToPeek == true
+        ) else { return }
         // Reuses the exact same curves as hovering (`NotchRootView`'s
         // `onHover`), not separate peek-only constants -- a peek is the
         // same open/close motion as hover, just triggered a different way.

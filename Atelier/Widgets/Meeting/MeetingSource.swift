@@ -3,6 +3,14 @@ import Combine
 import EventKit
 import Foundation
 
+extension Notification.Name {
+    /// Posted by Settings once the user grants Calendar access from the Meeting
+    /// Join toggle. Granting writes nothing to UserDefaults, so without this
+    /// `NotchController.applyLiveSettings` would never re-run `setEnabled`
+    /// and the source would stay stopped until relaunch.
+    static let meetingJoinAccessGranted = Notification.Name("atelier.meetingJoinAccessGranted")
+}
+
 /// Publishes Meeting Join's pill/peek. Own `EKEventStore` (calendar access is
 /// app-wide, so no second prompt) and independent of `CalendarSource`'s lazy
 /// tab lifecycle. Lightweight by design (CLAUDE.md): while disabled nothing
@@ -17,12 +25,18 @@ final class MeetingSource: LiveActivitySource {
 
     private let subject = CurrentValueSubject<LiveActivityContent?, Never>(nil)
     private let notchHeight: CGFloat
-    private let store = EKEventStore()
+    /// Created in `start()`, dropped in `stop()`: nothing EventKit-related
+    /// exists while the feature is off, and a store created before access was
+    /// granted can't come back stale afterwards.
+    private var store: EKEventStore?
     private var candidates: [MeetingCandidate] = []
     private var joinedIDs: Set<String> = []
     private var timer: Timer?
     private var observers: [(center: NotificationCenter, token: NSObjectProtocol)] = []
     private(set) var isRunning = false
+    /// Called after Join opens the link so the notch can retract the (now
+    /// stale) peek instead of leaving it up under the pointer.
+    var onJoined: (() -> Void)?
 
     var contentPublisher: AnyPublisher<LiveActivityContent?, Never> {
         subject.eraseToAnyPublisher()
@@ -30,6 +44,12 @@ final class MeetingSource: LiveActivitySource {
 
     init(notchHeight: CGFloat) {
         self.notchHeight = notchHeight
+        // Lives as long as the app, like the source itself.
+        NotificationCenter.default.addObserver(
+            forName: .meetingJoinAccessGranted, object: nil, queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated { self?.setEnabled(AtelierSettings.meetingJoinEnabled) }
+        }
     }
 
     /// Idempotent -- `NotchController.applyLiveSettings` calls this on every
@@ -44,6 +64,8 @@ final class MeetingSource: LiveActivitySource {
         // access isn't granted, stay stopped so a later setEnabled(true) retries.
         guard CalendarPermission.status == .fullAccess else { return }
         isRunning = true
+        let store = EKEventStore()
+        self.store = store
         observe(.EKEventStoreChanged, on: .default, object: store)
         observe(NSWorkspace.didWakeNotification, on: NSWorkspace.shared.notificationCenter)
         observe(.NSSystemClockDidChange, on: .default)
@@ -58,6 +80,7 @@ final class MeetingSource: LiveActivitySource {
         observers = []
         candidates = []
         joinedIDs = []
+        store = nil
         subject.send(nil)
     }
 
@@ -69,7 +92,7 @@ final class MeetingSource: LiveActivitySource {
     }
 
     private func reload() {
-        guard isRunning else { return }
+        guard isRunning, let store else { return }
         // Access revoked while enabled -> clear, don't leave a stale Join.
         guard CalendarPermission.status == .fullAccess else {
             candidates = []
@@ -130,5 +153,6 @@ final class MeetingSource: LiveActivitySource {
         NSWorkspace.shared.open(url)
         joinedIDs.insert(meeting.id)
         refresh()
+        onJoined?()
     }
 }

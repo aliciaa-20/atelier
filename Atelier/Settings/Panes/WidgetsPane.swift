@@ -41,7 +41,9 @@ struct WidgetsPane: View {
                         guard on else { meetingAccessDenied = false; return }
                         guard CalendarPermission.status != .fullAccess else { return }
                         Task {
-                            if await !CalendarPermission.requestAccess() {
+                            if await CalendarPermission.requestAccess() {
+                                NotificationCenter.default.post(name: .meetingJoinAccessGranted, object: nil)
+                            } else {
                                 meetingJoinEnabled = false
                                 meetingAccessDenied = true
                             }

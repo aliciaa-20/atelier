@@ -151,7 +151,10 @@ struct NotchRootView: View {
         switch viewModel.state {
         case .peeking:
             let content = liveActivity.topContent ?? lastPeekContent
-            return content?.isExpandable == false ? viewModel.compactPeekSize : viewModel.peekSize
+            // Hover-peek content (Meeting Join: two text lines + a button) needs
+            // the regular peek footprint, not the HUD-sized compact one.
+            let usesCompact = content?.isExpandable == false && content?.hoversToPeek != true
+            return usesCompact ? viewModel.compactPeekSize : viewModel.peekSize
         case .expanded:
             // A volume/brightness HUD while hover-open: the compact peek size
             // instead of the full player footprint, then back.
@@ -575,7 +578,13 @@ struct NotchRootView: View {
                 // still get through, or the notch never retracts.
                 viewModel.pointerInside = hovering
                 let hoverPeeks = liveActivity.topContent?.hoversToPeek == true
-                guard viewModel.state == .expanded || hoverPeeks || (liveActivity.topContent?.isExpandable ?? true) else { return }
+                guard NotchHoverPolicy.handlesHover(
+                    hovering: hovering,
+                    state: viewModel.state,
+                    topContentIsExpandable: liveActivity.topContent?.isExpandable,
+                    topContentHoversToPeek: hoverPeeks,
+                    hudActive: hudActive
+                ) else { return }
 
                 if hovering {
                     animateStateChange(NotchAnimations.open) {
