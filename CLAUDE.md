@@ -9,9 +9,11 @@ makes it peek briefly then retract.
 Named after the MacBook it runs on. Personal project, private repo, single target
 machine: MacBook Pro M3 (Mac15,3), macOS 27.0 (Golden Gate) as of 2026-09-28 --
 the machine updated from macOS 26 (Tahoe) mid-project; Xcode's installed SDK was
-already MacOSX27.0.sdk before this line was corrected. Deployment target is still
-`macos26.0` in the Xcode project (see Conventions below) -- that's deliberate,
-not stale, unless a future session is told to bump it.
+already MacOSX27.0.sdk before this line was corrected. Deployment target is now
+`macos27.0` in the Xcode project (see Conventions below), bumped in PR #46
+(2026-09-28) -- this is what's kept CI's Unit tests step red since (see the
+ROADMAP backlog's CI entry): the GitHub Actions runner is still on macOS 26.6.2,
+so it can build but can't run the test bundle.
 
 > **Unrelated context warning:** a `CLAUDE.md` for a different project (DevFlow)
 > lives at `~/Downloads/CLAUDE.md` and is inherited by directory traversal. It has
@@ -195,5 +197,5 @@ exists.
 
 - Swift 6, strict concurrency. SwiftUI first, AppKit where SwiftUI can't reach.
 - No third-party dependencies. If one seems necessary, discuss it first.
-- Deployment target macOS 26.0.
+- Deployment target macOS 27.0 (bumped from 26.0 in PR #46, 2026-09-28).
 - Small, focused commits with a clear subject line.

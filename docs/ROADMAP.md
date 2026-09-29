@@ -315,14 +315,15 @@ directly.*
       disabled it. **Needs a decision:** wait for an OS update, try an
       alternative Bluetooth API, or drop AirPods from this phase's scope
       entirely and revisit later.
-- [ ] **Accepted and deferred: `isExpandable` not wired into hover-gating** —
-      `LiveActivityContent.isExpandable` is declared (only now-playing returns
-      `true`) but `NotchRootView`'s hover-to-expand path isn't gated on it yet,
-      so hovering during a Battery peek (or AirPods, once its crash is fixed)
-      still opens the now-playing `ExpandedPlayerView` (which may be
-      empty/paused) instead of doing nothing.
-      Not a bug to fix this phase — only now-playing has an expanded view so
-      far; documenting it now so it isn't rediscovered later as a surprise.
+- [x] ~~**Accepted and deferred: `isExpandable` not wired into hover-gating**~~
+      **Resolved by Phase 8's peek work** — `NotchRootView.swift`'s hover
+      handler now guards on `liveActivity.topContent?.isExpandable` (see
+      its own inline comment: an earlier force-close-to-pill attempt broke
+      the volume/brightness scrub bar's drag, so hover is ignored entirely
+      instead while non-expandable content is up). Hovering during a
+      Battery peek (or AirPods, once its crash is fixed) no longer opens
+      the unrelated now-playing `ExpandedPlayerView`. This entry stayed
+      unchecked after that fix landed; corrected 2026-09-29.
 - [x] **Test suite:** 56 tests passing (up from 29 at Phase 5's end), all new logic
       unit-tested (`LiveActivityStack`, `LiveActivityCoordinator` merge/priority/
       dedup logic, `BatteryActivityState` thresholds, `AirPodsKind` classification).
