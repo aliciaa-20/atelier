@@ -12,7 +12,11 @@ struct AppleMusicSource: NowPlayingSource {
     /// stale between the check and the Apple Event, so every script below
     /// also re-checks `application "Music" is running` internally.
     var isAvailable: Bool {
-        NSWorkspace.shared.runningApplications.contains { $0.bundleIdentifier == Self.bundleID }
+        // Targeted lookup, not `runningApplications.contains { $0.bundleIdentifier ... }`:
+        // that reads the bundle id of *every* running app (a LaunchServices
+        // lookup each), and it runs several times per 1 s idle poll. The
+        // idle-CPU profile put ~85% of Atelier's busy time there.
+        !NSRunningApplication.runningApplications(withBundleIdentifier: Self.bundleID).isEmpty
     }
 
     private let artworkCache = AppleMusicArtworkCache()

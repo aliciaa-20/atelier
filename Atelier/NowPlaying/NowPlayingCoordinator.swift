@@ -72,11 +72,17 @@ final class NowPlayingCoordinator: ObservableObject {
     private static let optimisticHold: TimeInterval = 0.6
 
     private func apply(_ fetched: NowPlayingInfo?) {
+        let next: NowPlayingInfo?
         if let fetched, let held = current, Date() < optimisticHoldUntil, held.title == fetched.title {
-            current = fetched.with(isPlaying: held.isPlaying, isShuffling: held.isShuffling)
+            next = fetched.with(isPlaying: held.isPlaying, isShuffling: held.isShuffling)
         } else {
-            current = fetched
+            next = fetched
         }
+        // Assign only on a real change: `@Published` fires `objectWillChange`
+        // even for an identical value, and with nothing playing this poll
+        // used to re-render `NotchRootView` every second with `nil` -> `nil`
+        // (found in the idle-CPU profile, 2026-09-29).
+        if next != current { current = next }
     }
 
     /// Flips the icon immediately instead of waiting for the AppleScript
