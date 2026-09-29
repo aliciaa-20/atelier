@@ -5,7 +5,7 @@ something runnable, a green test suite, and a commit. Source of truth for the
 overall plan is [the design spec](superpowers/specs/2026-08-31-atelier-notch-design.md);
 this file tracks progress against it.
 
-**Where we are:** Phases 0–12 and 14 (camera mirror) shipped, Phase 17 stages 1–3 (teleprompter tab + Ghost Mode + hotkeys) shipped, stage 4 voice sync shipped on its branch (unit-tested, core flow verified on-device; edge-case checks still optional), Phase 16 (Settings window) mostly shipped (Phase 12 so far: color picker + Calendar tab + weather; quick notes/timers not started). Phase 13 (system resource monitor),
+**Where we are:** Meeting Join shipped 2026-09-29 (first item of the Backlog's Next-features queue; next up: battery drain list, share card, Claude usage meter). Phases 0–12 and 14 (camera mirror) shipped, Phase 17 stages 1–3 (teleprompter tab + Ghost Mode + hotkeys) shipped, stage 4 voice sync shipped on its branch (unit-tested, core flow verified on-device; edge-case checks still optional), Phase 16 (Settings window) mostly shipped (Phase 12 so far: color picker + Calendar tab + weather; quick notes/timers not started). Phase 13 (system resource monitor),
 Phase 16 (stable signing still open; the menu-bar icon is a placeholder until the app icon exists), and Phase 18 (Liquid Glass notch background) are all 🟨 partial — see
 their entries below for what's still open (Phase 18 has a known
 unresolved visual bug on close, a tab-switch retract flicker, and a
@@ -1173,9 +1173,9 @@ Items not part of the Phase 6–16 feature survey (see
 - **Next-features queue (agreed 2026-09-29, in build order).** Each is its own
   brainstorm → spec → plan → build cycle; ideas drawn from MeetingBar,
   FineTune, Background Music, Oversight, Show HN survey.
-  1. ✅ **Meeting Join** *(2026-09-29: code-complete on `feat/meeting-join`, unit-tested
-     parser/schedule/state machine; on-device checklist pending — see the plan,
-     Task 6 step 6)* — peek with a Join button for the next call (Zoom/Meet/
+  1. ✅ **Meeting Join** *(shipped 2026-09-29; parser/schedule/state machine/
+     hover policy unit-tested, source + pill/peek layout verified on-device;
+     ADR 0028; opt-in ⌃⌥J added after UI review)* — peek with a Join button for the next call (Zoom/Meet/
      Teams link parsed from the event); button only, no auto-open. Reuses
      `CalendarSource`; link parsing + peek timing are pure/testable. Ref:
      leits/MeetingBar (Apache-2.0).

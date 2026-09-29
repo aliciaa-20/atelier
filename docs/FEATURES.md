@@ -96,7 +96,7 @@ architecture than to bolting features on individually.
 | Weather ✅ (`Widgets/Weather/`, Open-Meteo + CoreLocation; glance + detail card on idle Home; [ADR 0015](decisions/0015-weather-open-meteo-corelocation.md)) | Atoll, Sapphire |
 | Quick notes | notchify |
 | Timers / Pomodoro | QuartzNotch, NotchIA, Atoll |
-| Meeting Join ✅ *(code-complete, pending on-device verification)* — pill + Join peek before calls with a Zoom/Meet/Teams/Webex link; `Widgets/Meeting/`, [ADR 0028](decisions/0028-hover-to-peek-live-activity-content.md) | MeetingBar |
+| Meeting Join ✅ — pill + Join peek before calls with a Zoom/Meet/Teams/Webex link; `Widgets/Meeting/`, [ADR 0028](decisions/0028-hover-to-peek-live-activity-content.md) | MeetingBar |
 | Color picker ✅ (`Widgets/ColorPicker/`, `NSColorSampler`) | Atoll |
 
 ---
