@@ -17,7 +17,9 @@ enum AppleScriptRunner {
         var errorInfo: NSDictionary?
         let result = script.executeAndReturnError(&errorInfo)
         if let errorInfo {
+            #if DEBUG
             print("AppleScriptRunner error: \(errorInfo)")
+            #endif
             return nil
         }
         return result

@@ -60,6 +60,9 @@ your pace — literally. Turn on **Follow my voice** and the script
 tracks what you're actually saying, on-device, and waits when you
 pause. Ghost Mode keeps it invisible to screen shares and recordings.
 
+**A color picker in the notch.** Sample any pixel on screen and copy it
+as hex — turn it on under Settings → Widgets.
+
 **Weather, at a glance.** A quiet read on the idle Home card — tap for
 the full forecast, five days out.
 
@@ -77,7 +80,19 @@ when it isn't visible. A menu-bar accessory that behaves like one.
 ## Requirements
 
 - macOS 27.0+
-- Xcode 26+
+- Xcode 27+ (the project targets the macOS 27 SDK)
+
+## Build & run
+
+```sh
+xcodebuild -scheme Atelier -configuration Debug build        # build
+xcodebuild test -scheme Atelier -destination 'platform=macOS' # unit tests
+```
+
+Or open `Atelier.xcodeproj` in Xcode and press ⌘R. Atelier is a menu-bar
+accessory (no Dock icon). CI builds every PR on GitHub Actions, but the
+hosted runner is still on macOS 26, so it can't yet *run* the test bundle —
+run the tests locally.
 
 ## Settings
 
