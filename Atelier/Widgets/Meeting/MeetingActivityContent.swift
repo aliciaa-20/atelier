@@ -22,8 +22,8 @@ struct MeetingActivityContent: LiveActivityContent {
 
     private var spokenLabel: String {
         switch phase {
-        case .imminent: "\(meeting.title), video call starting soon. Join available."
-        case .started: "\(meeting.title), video call started. Join available."
+        case .imminent: "\(meeting.title), video call starting soon"
+        case .started: "\(meeting.title), video call started"
         }
     }
 
@@ -45,6 +45,9 @@ struct MeetingActivityContent: LiveActivityContent {
             .frame(maxWidth: .infinity)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(spokenLabel)
+            // The pill has no visible button (Join lives in the hover peek),
+            // so VoiceOver users, who can't hover, get it as an action.
+            .accessibilityAction(named: "Join meeting", onJoin)
         )
     }
 
@@ -57,7 +60,7 @@ struct MeetingActivityContent: LiveActivityContent {
                         .lineLimit(1)
                     countdown
                         .font(.system(size: 11).monospacedDigit())
-                        .foregroundStyle(.white.opacity(0.7))
+                        .dimmedText()
                 }
                 Spacer(minLength: 8)
                 Button("Join", action: onJoin)
