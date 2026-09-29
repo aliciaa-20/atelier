@@ -86,7 +86,7 @@ Click the menu-bar icon → **Settings** (⌘, while the menu is open).
 | General | Launch at login, peek behavior, gestures |
 | Appearance | Liquid Glass |
 | Tabs | Enable and drag to reorder — Home stays pinned first |
-| Widgets | Calendar, Camera, Color Picker, Meeting Join |
+| Widgets | Calendar, Camera, Color Picker, Meeting Join (opt-in, with an optional ⌃⌥J shortcut) |
 | Teleprompter | Script, reading speed, font, Ghost Mode, shortcuts |
 | Bend Effect | Enable, appearance (style/perspective/blur/shadow), lid behavior, preview |
 | Permissions | Live status for everything below, with a shortcut into System Settings |
@@ -100,7 +100,7 @@ say no.
 | Permission | Why |
 |---|---|
 | Automation | Reads now-playing data from Spotify and Apple Music, and jumps Calendar.app to a day |
-| Calendars (full access) | Read-only — shows your week and events. Atelier never adds or edits anything |
+| Calendars (full access) | Read-only — shows your week and events, and powers Meeting Join's countdown. Atelier never adds or edits anything |
 | Camera | Powers the Camera tab's live mirror. Requested only on your first tap |
 | Location (While Using) | Approximate, one-shot, just to fetch a forecast. Weather simply hides if declined |
 | Microphone + Speech Recognition | Teleprompter voice sync — on-device word tracking, only while actively listening |
