@@ -31,6 +31,8 @@ final class NotchController {
     /// Owned here so `pickColor()` below has a stable instance to call
     /// `.pick()` on -- same reasoning as `volumeSource`.
     private let colorPickerSource: ColorPickerSource
+    /// Opt-in (Settings > Widgets); `applyLiveSettings` starts/stops it.
+    private let meetingSource: MeetingSource
     /// Installs its `CGEventTap` on creation and tears it down on deinit --
     /// held for exactly that lifetime, same as `panel`/`viewModel`.
     private let mediaKeyInterceptor: MediaKeyInterceptor
@@ -120,6 +122,7 @@ final class NotchController {
     /// is `NSWindow`'s normal default.
     private func applyLiveSettings() {
         panel.sharingType = AtelierSettings.ghostModeEnabled ? .none : .readOnly
+        meetingSource.setEnabled(AtelierSettings.meetingJoinEnabled)
 
         // Disabling the tab mid-play must not leave hold-open keeping the
         // notch up with no way to pause.
@@ -180,11 +183,13 @@ final class NotchController {
             let batterySource = BatterySource(notchHeight: 0)
             let systemMonitorSource = SystemMonitorSource(notchHeight: 0)
             let colorPickerSource = ColorPickerSource(notchHeight: 0)
+            let meetingSource = MeetingSource(notchHeight: 0)
             self.volumeSource = volumeSource
             self.brightnessSource = brightnessSource
             self.batterySource = batterySource
             self.systemMonitorSource = systemMonitorSource
             self.colorPickerSource = colorPickerSource
+            self.meetingSource = meetingSource
             let lockScreenManager = LockScreenManager()
             self.lockScreenManager = lockScreenManager
             self.lockScreenPanelController = LockScreenPanelController(
@@ -198,6 +203,7 @@ final class NotchController {
                 batterySource,
                 ScreenRecordingSource(notchHeight: 0),
                 colorPickerSource,
+                meetingSource,
                 volumeSource,
                 brightnessSource,
                 systemMonitorSource
@@ -241,11 +247,13 @@ final class NotchController {
         let batterySource = BatterySource(notchHeight: collapsedRect.height)
         let systemMonitorSource = SystemMonitorSource(notchHeight: collapsedRect.height)
         let colorPickerSource = ColorPickerSource(notchHeight: collapsedRect.height)
+        let meetingSource = MeetingSource(notchHeight: collapsedRect.height)
         self.volumeSource = volumeSource
         self.brightnessSource = brightnessSource
         self.batterySource = batterySource
         self.systemMonitorSource = systemMonitorSource
         self.colorPickerSource = colorPickerSource
+        self.meetingSource = meetingSource
         let lockScreenManager = LockScreenManager()
         self.lockScreenManager = lockScreenManager
         self.lockScreenPanelController = LockScreenPanelController(
@@ -259,6 +267,7 @@ final class NotchController {
             batterySource,
             ScreenRecordingSource(notchHeight: collapsedRect.height),
             colorPickerSource,
+            meetingSource,
             volumeSource,
             brightnessSource,
             systemMonitorSource
@@ -485,6 +494,9 @@ final class NotchController {
         peekDecayTask = Task { [weak self] in
             try? await Task.sleep(for: Self.peekDuration)
             guard !Task.isCancelled, let self else { return }
+            // A hover-peek (Meeting Join) is held while the pointer is over
+            // it; `.hoverEnded` retracts it afterwards.
+            if liveActivityCoordinator.topContent?.hoversToPeek == true, viewModel.pointerInside { return }
             let hasContent = liveActivityCoordinator.hasContent
             withAnimation(NotchAnimations.close) {
                 viewModel.handle(.peekTimerElapsed(isPlaying: hasContent))

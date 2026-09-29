@@ -573,11 +573,13 @@ struct NotchRootView: View {
                 // hover-to-open behavior for the plain notch/pill.
                 // Already hover-open (e.g. a volume HUD took over): exits must
                 // still get through, or the notch never retracts.
-                guard viewModel.state == .expanded || (liveActivity.topContent?.isExpandable ?? true) else { return }
+                viewModel.pointerInside = hovering
+                let hoverPeeks = liveActivity.topContent?.hoversToPeek == true
+                guard viewModel.state == .expanded || hoverPeeks || (liveActivity.topContent?.isExpandable ?? true) else { return }
 
                 if hovering {
                     animateStateChange(NotchAnimations.open) {
-                        viewModel.handle(.hoverStarted)
+                        viewModel.handle(hoverPeeks && viewModel.state != .expanded ? .hoverPeekStarted : .hoverStarted)
                     }
                 } else {
                     if menuTracking { return }
@@ -861,7 +863,7 @@ struct NotchRootView: View {
     private var hudActive: Bool { transientHUD != nil }
 
     private var transientHUD: LiveActivityContent? {
-        guard let content = liveActivity.topContent, !content.isExpandable, content.peeksOnChange else { return nil }
+        guard let content = liveActivity.topContent, !content.isExpandable, content.peeksOnChange, !content.hoversToPeek else { return nil }
         return content
     }
 
