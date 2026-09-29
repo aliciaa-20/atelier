@@ -51,7 +51,9 @@ the lid is actually mid-fold, never sitting idle in the background.
 **A calm home base.** Home, Shelf, System Monitor, and Calendar tabs
 give you somewhere to land when nothing's playing — a week strip with
 a line of personality for each day, one swipe away from your full
-calendar.
+calendar. Flip System Monitor's corner icon to see which apps are
+draining your battery, as bars with a one-line verdict — sampled only while
+you're looking at it.
 
 **A teleprompter that scrolls itself.** Paste a script and read at
 your pace — literally. Turn on **Follow my voice** and the script

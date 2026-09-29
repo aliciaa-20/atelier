@@ -7,6 +7,12 @@ import CoreGraphics
 enum NotchLayout {
     static let pageHorizontalInset: CGFloat = 26
 
+    /// System Monitor > Energy list rows.
+    static let energyRowSpacing: CGFloat = 7
+    static let energyIconSize: CGFloat = 18
+    static let energyBarHeight: CGFloat = 5
+    static let energyNameWidth: CGFloat = 96
+
     /// Corner radii of the expanded/shelf panel (`NotchRootView.cornerRadii`).
     /// `NotchShape` insets its vertical edges by the top radius, so the
     /// *visible* gap from a page's side inset to the panel edge is
