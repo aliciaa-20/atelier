@@ -50,4 +50,33 @@ struct NotchHoverPolicyTests {
         #expect(!NotchHoverPolicy.allowsPeek(peekSettingEnabled: false, contentHoversToPeek: false))
         #expect(NotchHoverPolicy.allowsPeek(peekSettingEnabled: true, contentHoversToPeek: false))
     }
+
+    // MARK: replaying a hover-out swallowed mid-animation
+
+    // `onHover` drops an exit that arrives while the open/close/tab spring is
+    // running (the hit-test region is moving under the cursor). Nothing
+    // replayed it, so a fast flick out during the open left the notch stuck
+    // open with `pointerInside` still true.
+    @Test func settleRetractsWhenExitWasSwallowedAndPointerIsAway() {
+        #expect(NotchHoverPolicy.shouldRetractAfterSettle(state: .expanded, pointerOverPanel: false, pointerInsideFlag: true))
+        #expect(NotchHoverPolicy.shouldRetractAfterSettle(state: .peeking, pointerOverPanel: false, pointerInsideFlag: true))
+    }
+
+    @Test func settleDoesNothingWhilePointerIsStillOverThePanel() {
+        #expect(!NotchHoverPolicy.shouldRetractAfterSettle(state: .expanded, pointerOverPanel: true, pointerInsideFlag: true))
+    }
+
+    @Test func settleDoesNothingWhenTheExitWasAlreadyHandled() {
+        // Flag already false: the exit got through normally, or the pointer
+        // never entered (e.g. a track-change peek) -- don't retract it.
+        #expect(!NotchHoverPolicy.shouldRetractAfterSettle(state: .expanded, pointerOverPanel: false, pointerInsideFlag: false))
+        #expect(!NotchHoverPolicy.shouldRetractAfterSettle(state: .peeking, pointerOverPanel: false, pointerInsideFlag: false))
+    }
+
+    @Test func settleOnlyAppliesToOpenStates() {
+        for state in [NotchState.collapsed, .pill, .shelf] {
+            #expect(!NotchHoverPolicy.shouldRetractAfterSettle(state: state, pointerOverPanel: false, pointerInsideFlag: true))
+        }
+    }
 }
+

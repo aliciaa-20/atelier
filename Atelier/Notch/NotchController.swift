@@ -66,7 +66,11 @@ final class NotchController {
     /// player. At 76 the content (time+date+top/bottom padding) left a lot
     /// of margin -- shrunk to match `IdleHomeView`'s own smaller time font
     /// (22->18) so the card reads as compact rather than mostly empty.
-    private static let idleHomeContentHeight: CGFloat = 56
+    /// 56 -> 86: the tab bar (37 clearance + 24 dots) plus the clock needs
+    /// ~118pt against the old 88pt frame, and SwiftUI centres that overflow,
+    /// which lifted Home's dots ~15pt above every other tab's. Sized so the
+    /// tab bar sits at the same y on every page.
+    private static let idleHomeContentHeight: CGFloat = 86
     /// Narrower than `expandedWidth` for the same reason -- a short
     /// time/date block doesn't need the full player's width.
     private static let idleHomeWidth: CGFloat = 215

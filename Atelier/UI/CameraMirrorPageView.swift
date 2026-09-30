@@ -116,6 +116,12 @@ private struct CameraPreviewView: NSViewRepresentable {
         return view
     }
 
+    /// The preview layer is owned by the source and outlives this view, so
+    /// detach it rather than leave it parented to a view SwiftUI discarded.
+    static func dismantleNSView(_ view: NSView, coordinator: ()) {
+        (view as? HostView)?.previewLayer?.removeFromSuperlayer()
+    }
+
     func updateNSView(_ view: NSView, context: Context) {
         // The connection only exists once the session has an input, so
         // (re)apply mirroring on every update rather than once in make.
