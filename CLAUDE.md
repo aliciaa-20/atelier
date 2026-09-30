@@ -24,18 +24,6 @@ so it can build but can't run the test bundle.
 `docs/ROADMAP.md` is the single source of truth for status (there is no `STAGES.md`;
 it was retired 2026-09-26). This overrides the global "create STAGES.md" preference.
 
-## Who I'm working with
-
-Alicia is new to Swift, macOS development, and Claude Code. This project is
-deliberately also a vehicle for learning all three.
-
-- Explain Swift and AppKit/SwiftUI concepts as they come up, briefly, in context.
-- Keep steps small and verifiable. Prefer "build it and look at it" checkpoints.
-- When a Claude Code mechanic is genuinely the right tool for the step at hand
-  (plan mode, a skill, a subagent, a hook, a slash command), name it and say why.
-  Don't manufacture excuses to demo features.
-- She reviews every diff. Keep them small and legible.
-
 ## UI/UX polish — use these skills proactively, not just on request
 
 Alicia wants this app to feel genuinely Apple-native (Dynamic Island/
